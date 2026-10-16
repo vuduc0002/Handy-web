@@ -23,6 +23,7 @@ import {
   Sparkles,
   ArrowLeft
 } from 'lucide-react'
+import { getEmbedYoutubeUrl } from '@/lib/utils'
 
 interface Topic {
   id: string
@@ -214,6 +215,7 @@ export default function AdminPage() {
 
     try {
       setActionLoading(true)
+      const formattedUrl = getEmbedYoutubeUrl(newVocab.video_url.trim())
       const { data, error } = await supabase
         .from('vocabularies')
         .insert({
@@ -221,7 +223,7 @@ export default function AdminPage() {
           word: newVocab.word.trim(),
           meaning: newVocab.meaning.trim(),
           description: newVocab.description.trim() || null,
-          video_url: newVocab.video_url.trim(),
+          video_url: formattedUrl,
           is_deleted: false,
         })
         .select()
@@ -257,6 +259,7 @@ export default function AdminPage() {
 
     try {
       setActionLoading(true)
+      const formattedUrl = getEmbedYoutubeUrl(editingVocab.video_url.trim())
       const { error } = await supabase
         .from('vocabularies')
         .update({
@@ -264,14 +267,14 @@ export default function AdminPage() {
           word: editingVocab.word.trim(),
           meaning: editingVocab.meaning.trim(),
           description: editingVocab.description?.trim() || null,
-          video_url: editingVocab.video_url.trim(),
+          video_url: formattedUrl,
         })
         .eq('id', editingVocab.id)
 
       if (error) throw error
 
       setVocabularies((prev) =>
-        prev.map((v) => (v.id === editingVocab.id ? { ...editingVocab } : v))
+        prev.map((v) => (v.id === editingVocab.id ? { ...editingVocab, video_url: formattedUrl } : v))
       )
       setEditingVocab(null)
       showNotification('success', `Cập nhật từ "${editingVocab.word}" thành công!`)
@@ -620,7 +623,7 @@ export default function AdminPage() {
             </div>
 
             {/* Table */}
-            <div className="overflow-x-auto">
+            <div className="w-full overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-amber-100/50 text-gray-700 text-xs font-extrabold uppercase tracking-wider border-b border-amber-200">

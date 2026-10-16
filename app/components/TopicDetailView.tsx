@@ -39,27 +39,8 @@ interface TopicDetailViewProps {
   initialVocabularies: Vocabulary[]
 }
 
-// Chuyển đổi link YouTube thông thường thành link embed chạy trong iframe
-function formatVideoUrl(url: string): string {
-  if (!url) return ''
-  try {
-    if (url.includes('youtube.com/watch')) {
-      const urlObj = new URL(url)
-      const v = urlObj.searchParams.get('v')
-      if (v) return `https://www.youtube.com/embed/${v}?autoplay=1&rel=0`
-    }
-    if (url.includes('youtu.be/')) {
-      const id = url.split('youtu.be/')[1]?.split('?')[0]
-      if (id) return `https://www.youtube.com/embed/${id}?autoplay=1&rel=0`
-    }
-    if (url.includes('youtube.com/embed')) {
-      return url.includes('?') ? `${url}&autoplay=1` : `${url}?autoplay=1`
-    }
-    return url
-  } catch {
-    return url
-  }
-}
+import { getEmbedYoutubeUrl } from '@/lib/utils'
+
 
 export default function TopicDetailView({
   topicId,
@@ -91,12 +72,13 @@ export default function TopicDetailView({
 
         const { data: profile } = await supabase
           .from('profiles')
-          .select('is_premium')
+          .select('is_premium, role')
           .eq('id', user.id)
           .maybeSingle()
 
         if (isMounted) {
-          if (!profile?.is_premium) {
+          const hasAccess = profile?.role === 'ADMIN' || profile?.is_premium === true
+          if (!hasAccess) {
             setIsLocked(true)
           }
           setCheckingAccess(false)
@@ -251,11 +233,11 @@ export default function TopicDetailView({
                 ) : (
                   <iframe
                     key={selectedVocab.id}
-                    src={formatVideoUrl(selectedVocab.video_url)}
+                    src={getEmbedYoutubeUrl(selectedVocab.video_url)}
                     title={selectedVocab.word}
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
-                    className="w-full h-full border-0"
+                    className="w-full aspect-video rounded-xl shadow-md border-0 h-full"
                   />
                 )
               ) : (
