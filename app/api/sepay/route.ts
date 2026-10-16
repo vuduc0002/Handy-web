@@ -50,17 +50,19 @@ export async function POST(req: NextRequest) {
       content: transferContent,
     });
 
-    // Tìm mã nhận diện dạng HANDY_[USER_ID] (USER_ID dạng UUID hoặc string ID)
-    const match = transferContent.match(/HANDY_([0-9a-fA-F-]+)/i);
+    // Tìm mã nhận diện linh hoạt với regex: hỗ trợ cả có hoặc không có dấu gạch dưới / khoảng trắng
+    const match = transferContent.match(/HANDY[\s_]*([a-zA-Z0-9]+)/i);
     if (!match) {
-      console.log('[SePAY Webhook] Không tìm thấy mã HANDY_[USER_ID] trong nội dung:', transferContent);
+      console.log('[SePAY Webhook] Không tìm thấy mã nhận diện HANDY trong nội dung:', transferContent);
       return Response.json(
-        { message: 'Bỏ qua: Không tìm thấy mã HANDY_[USER_ID]' },
+        { message: 'Bỏ qua: Không tìm thấy mã nhận diện HANDY' },
         { status: 200 }
       );
     }
 
-    const userId = match[1];
+    // Lấy 8 ký tự đầu tiên của chuỗi trích xuất được (8 ký tự đầu UUID chuẩn không chứa dấu -)
+    const rawExtracted = match[1];
+    const shortId = rawExtracted.substring(0, 8).toLowerCase();
 
     // Kiểm tra số tiền chuyển khoản có đủ nâng cấp VIP hay không
     if (isNaN(amount) || amount < REQUIRED_VIP_AMOUNT) {
@@ -70,6 +72,34 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Lấy danh sách profiles từ Supabase để so khớp id bằng JavaScript, tránh lỗi ép kiểu UUID
+    const { data: profiles, error: fetchError } = await supabaseAdmin
+      .from('profiles')
+      .select('id');
+
+    if (fetchError || !profiles) {
+      console.error('[SePAY Webhook] Lỗi khi truy vấn danh sách profiles:', fetchError);
+      return Response.json(
+        { error: 'Lỗi khi truy vấn dữ liệu người dùng' },
+        { status: 500 }
+      );
+    }
+
+    // Tìm profile có id bắt đầu bằng shortId (so sánh không phân biệt hoa thường)
+    const targetUser = profiles.find((p) =>
+      p.id.toLowerCase().startsWith(shortId)
+    );
+
+    if (!targetUser) {
+      console.warn(`[SePAY Webhook] Không tìm thấy user nào có ID khớp với prefix "${shortId}" (trích xuất từ "${rawExtracted}")`);
+      return Response.json(
+        { error: `Không tìm thấy tài khoản người dùng tương ứng với mã ${shortId}` },
+        { status: 404 }
+      );
+    }
+
+    const userId = targetUser.id;
 
     // Cập nhật trạng thái is_premium = true cho user trong bảng profiles
     const { error: profileError } = await supabaseAdmin
