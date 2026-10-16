@@ -2,16 +2,6 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { supabase as defaultSupabase } from '@/lib/supabaseClient';
-
-// Sử dụng Service Role Key nếu có để bypass RLS ở phía server webhook, nếu không dùng default client
-const supabaseAdmin = process.env.SUPABASE_SERVICE_ROLE_KEY
-  ? createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY,
-      { auth: { persistSession: false } }
-    )
-  : defaultSupabase;
 
 // Mức tiền thanh toán gói VIP HANDY (199.000 VNĐ)
 const REQUIRED_VIP_AMOUNT = 199000;
@@ -36,7 +26,23 @@ export async function POST(req: NextRequest) {
     }
 
     // =========================================================================
-    // 2. Xử lý Dữ liệu Giao dịch
+    // 2. Khởi tạo Supabase bằng Service Role Key để bypass hoàn toàn RLS
+    // =========================================================================
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!serviceRoleKey) {
+      console.error('[SePAY Webhook] Thiếu biến môi trường SUPABASE_SERVICE_ROLE_KEY!');
+    }
+
+    const supabase = createClient(
+      supabaseUrl!,
+      serviceRoleKey || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      { auth: { persistSession: false } }
+    );
+
+    // =========================================================================
+    // 3. Xử lý Dữ liệu Giao dịch
     // =========================================================================
     const body = await req.json();
     const { content, transferAmount, referenceCode } = body;
@@ -60,9 +66,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Lấy 8 ký tự đầu tiên của chuỗi trích xuất được (8 ký tự đầu UUID chuẩn không chứa dấu -)
+    // Lấy 8 ký tự đầu tiên của chuỗi trích xuất được (VD: '5f7299dd')
     const rawExtracted = match[1];
-    const shortId = rawExtracted.substring(0, 8).toLowerCase();
+    const shortId = rawExtracted.substring(0, 8);
 
     // Kiểm tra số tiền chuyển khoản có đủ nâng cấp VIP hay không
     if (isNaN(amount) || amount < REQUIRED_VIP_AMOUNT) {
@@ -73,51 +79,31 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Lấy danh sách profiles từ Supabase để so khớp id bằng JavaScript, tránh lỗi ép kiểu UUID
-    const { data: profiles, error: fetchError } = await supabaseAdmin
+    // Cập nhật User bằng .ilike() trực tiếp qua Service Role
+    const { data, error } = await supabase
       .from('profiles')
-      .select('id');
+      .update({ is_premium: true })
+      .ilike('id', shortId + '%')
+      .select();
 
-    if (fetchError || !profiles) {
-      console.error('[SePAY Webhook] Lỗi khi truy vấn danh sách profiles:', fetchError);
+    if (error || !data || data.length === 0) {
+      console.error('[SePAY Webhook] Không thể cập nhật profile hoặc không tìm thấy user:', {
+        shortId,
+        error,
+        data,
+      });
       return Response.json(
-        { error: 'Lỗi khi truy vấn dữ liệu người dùng' },
-        { status: 500 }
-      );
-    }
-
-    // Tìm profile có id bắt đầu bằng shortId (so sánh không phân biệt hoa thường)
-    const targetUser = profiles.find((p) =>
-      p.id.toLowerCase().startsWith(shortId)
-    );
-
-    if (!targetUser) {
-      console.warn(`[SePAY Webhook] Không tìm thấy user nào có ID khớp với prefix "${shortId}" (trích xuất từ "${rawExtracted}")`);
-      return Response.json(
-        { error: `Không tìm thấy tài khoản người dùng tương ứng với mã ${shortId}` },
+        { error: `Không tìm thấy user hoặc lỗi cập nhật với mã ${shortId}` },
         { status: 404 }
       );
     }
 
-    const userId = targetUser.id;
+    const updatedUser = data[0];
+    const userId = updatedUser.id;
 
-    // Cập nhật trạng thái is_premium = true cho user trong bảng profiles
-    const { error: profileError } = await supabaseAdmin
-      .from('profiles')
-      .update({ is_premium: true })
-      .eq('id', userId);
-
-    if (profileError) {
-      console.error('[SePAY Webhook] Lỗi khi cập nhật profile:', profileError);
-      return Response.json(
-        { error: 'Không thể cập nhật trạng thái VIP cho người dùng' },
-        { status: 500 }
-      );
-    }
-
-    // Thêm 1 dòng ghi chép lịch sử thanh toán vào bảng transactions
+    // Ghi chép lịch sử thanh toán vào bảng transactions (nếu có)
     try {
-      await supabaseAdmin.from('transactions').insert({
+      await supabase.from('transactions').insert({
         user_id: userId,
         amount: amount,
         status: 'SUCCESS',
@@ -125,7 +111,6 @@ export async function POST(req: NextRequest) {
       });
     } catch (txError) {
       console.warn('[SePAY Webhook] Không thể ghi lịch sử giao dịch vào transactions:', txError);
-      // Không throw lỗi ở đây để đảm bảo SePAY nhận status 200 không gửi lại nhiều lần
     }
 
     console.log(`[SePAY Webhook] Đã nâng cấp VIP thành công cho User: ${userId}`);
