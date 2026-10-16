@@ -13,6 +13,15 @@ const beVietnamPro = Be_Vietnam_Pro({
 export const metadata: Metadata = {
   title: "HANDY - Học Từ Vựng Vui",
   description: "Ứng dụng học từ vựng thú vị dành cho trẻ em",
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/favicon.png", type: "image/png" },
+      { url: "/handy-logo.png", type: "image/png" }
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/handy-logo.png",
+  },
 };
 
 export default function RootLayout({
