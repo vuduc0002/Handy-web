@@ -195,9 +195,20 @@ export default function TopicDetailView({
           </div>
         </div>
 
-        <div className="text-sm font-bold text-amber-700 bg-amber-50 px-4 py-2 rounded-2xl border border-amber-200 flex items-center gap-2 self-start md:self-auto shrink-0">
-          <BookOpen className="w-4 h-4 text-orange-500" />
-          <span>{vocabularies.length} từ vựng</span>
+        <div className="flex flex-wrap items-center gap-2.5 self-start md:self-auto shrink-0">
+          <Link
+            href={`/practice/${topic.id}`}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-gradient-to-r from-orange-400 to-amber-400 hover:from-orange-500 hover:to-amber-500 text-white font-extrabold text-xs shadow-md shadow-amber-200 transition active:scale-95"
+            title="Luyện tập Flashcard Quizlet"
+          >
+            <span>Luyện tập Quiz</span>
+            <Sparkles className="w-3.5 h-3.5" />
+          </Link>
+
+          <div className="text-sm font-bold text-amber-700 bg-amber-50 px-4 py-2 rounded-2xl border border-amber-200 flex items-center gap-2">
+            <BookOpen className="w-4 h-4 text-orange-500" />
+            <span>{vocabularies.length} từ vựng</span>
+          </div>
         </div>
       </div>
 

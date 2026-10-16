@@ -4,7 +4,7 @@ import { NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 // Mức tiền thanh toán gói VIP HANDY (199.000 VNĐ)
-const REQUIRED_VIP_AMOUNT = 199000;
+const REQUIRED_VIP_AMOUNT = 6000;
 
 export async function POST(req: NextRequest) {
   try {
