@@ -221,11 +221,9 @@ CREATE POLICY "Cho phép đọc vocabularies" ON public.vocabularies FOR SELECT 
               className={`group relative flex flex-col justify-between p-6 rounded-3xl border-2 ${color.bg} ${color.border} shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 cursor-pointer bg-white`}
             >
               <div>
-                {/* Badge miễn phí */}
+                {/* Nhãn Miễn phí: tag nhỏ màu hồng/đỏ bo góc nằm góc trên thẻ */}
                 {topic.is_free && (
-                  <span
-                    className={`absolute top-4 right-4 text-xs font-bold text-white px-3 py-1 rounded-full shadow-sm ${color.badge}`}
-                  >
+                  <span className="absolute top-4 right-4 text-xs font-bold text-white px-3 py-1 rounded-full shadow-sm bg-gradient-to-r from-rose-500 to-pink-500">
                     Miễn phí
                   </span>
                 )}
@@ -236,7 +234,7 @@ CREATE POLICY "Cho phép đọc vocabularies" ON public.vocabularies FOR SELECT 
                   >
                     {emoji}
                   </div>
-                  <div className="flex-1 min-w-0 pr-14">
+                  <div className="flex-1 min-w-0 pr-16">
                     <h3 className="font-extrabold text-gray-800 text-lg leading-snug line-clamp-2">
                       {topic.title}
                     </h3>
@@ -259,11 +257,11 @@ CREATE POLICY "Cho phép đọc vocabularies" ON public.vocabularies FOR SELECT 
           )
         }
 
-        // Card bị khóa dành cho chủ đề VIP
+        // Card bị khóa dành cho chủ đề VIP: ổ khóa vàng nhỏ tinh xảo kèm nút Nâng cấp VIP màu cam gradient rực rỡ
         return (
           <div
             key={topic.id}
-            className="relative flex flex-col justify-between p-6 rounded-3xl border-2 border-amber-200 bg-white/70 overflow-hidden shadow-sm"
+            className="relative flex flex-col justify-between p-6 rounded-3xl border-2 border-amber-200 bg-white/80 overflow-hidden shadow-sm hover:-translate-y-1 hover:shadow-lg transition-all duration-200"
           >
             {/* Lớp phủ mờ */}
             <div className="absolute inset-0 bg-amber-50/70 backdrop-blur-[2px] rounded-3xl z-10" />
@@ -292,18 +290,19 @@ CREATE POLICY "Cho phép đọc vocabularies" ON public.vocabularies FOR SELECT 
             {/* Hộp thoại mở khóa VIP */}
             <div className="absolute inset-0 z-20 flex flex-col items-center justify-center p-4">
               <div className="bg-white rounded-3xl shadow-xl border-2 border-amber-300 px-6 py-5 flex flex-col items-center gap-3 w-full max-w-[240px]">
-                <div className="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-500 border border-amber-300 flex items-center justify-center shadow-inner">
                   <Lock className="w-6 h-6 text-amber-500" />
                 </div>
                 <div className="text-center">
-                  <p className="text-xs font-bold text-amber-600 uppercase tracking-wide">
+                  <p className="text-xs font-bold text-amber-700 uppercase tracking-wide flex items-center justify-center gap-1">
+                    <Crown className="w-3.5 h-3.5 text-amber-500" />
                     Chủ đề VIP
                   </p>
                   <p className="text-xs text-gray-500 mt-0.5">Mở khóa toàn bộ nội dung</p>
                 </div>
                 <button
                   onClick={() => router.push('/checkout')}
-                  className="flex items-center gap-2 bg-gradient-to-r from-orange-400 to-amber-400 hover:from-orange-500 hover:to-amber-500 text-white font-extrabold text-sm px-4 py-2.5 rounded-full shadow-md transition active:scale-95 w-full justify-center"
+                  className="flex items-center gap-2 bg-gradient-to-r from-orange-400 to-amber-400 hover:from-orange-500 hover:to-amber-500 text-white font-extrabold text-sm px-5 py-2.5 rounded-full shadow-md shadow-amber-200 transition active:scale-95 w-full justify-center cursor-pointer"
                 >
                   <Crown className="w-4 h-4" />
                   Nâng cấp VIP

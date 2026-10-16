@@ -1,7 +1,9 @@
 import { Suspense } from 'react'
 import HeroSection from '@/app/components/HeroSection'
-import FeaturesSection from '@/app/components/FeaturesSection'
+import StatsAndBenefitsSection from '@/app/components/StatsAndBenefitsSection'
 import TopicsGrid from '@/app/components/TopicsGrid'
+import TestimonialsSection from '@/app/components/TestimonialsSection'
+import FAQSection from '@/app/components/FAQSection'
 import { Loader2 } from 'lucide-react'
 
 function GridSkeleton() {
@@ -14,29 +16,38 @@ function GridSkeleton() {
 
 export default function HomePage() {
   return (
-    <div className="max-w-6xl mx-auto px-4 pb-16">
-      {/* 1. Hero Section */}
+    <div className="max-w-6xl mx-auto px-4 pb-20">
+      {/* 1. HERO SECTION (Hấp dẫn, giàu thị giác, 2 cột) */}
       <HeroSection />
 
-      {/* 2. Features Section */}
-      <FeaturesSection />
+      {/* 2. STATS & BENEFITS SECTION (4 chỉ số uy tín + 3 bước chinh phục) */}
+      <StatsAndBenefitsSection />
 
-      {/* 3. Topics Section */}
-      <section id="topics-section" className="pt-8 md:pt-12 scroll-mt-20">
-        <div className="text-center mb-8">
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-800 tracking-tight mb-2">
-            [Điền Tiêu đề: Giới thiệu danh sách bài học hoặc lộ trình]
+      {/* 3. LỘ TRÌNH HỌC TẬP (Topics Section) */}
+      <section id="topics-section" className="pt-8 md:pt-14 pb-8 scroll-mt-20">
+        <div className="text-center mb-10">
+          <span className="text-xs font-black text-orange-600 uppercase tracking-widest bg-orange-100 px-3.5 py-1.5 rounded-full inline-block mb-3">
+            Kho Bài Giảng Phong Phú
+          </span>
+          <h2 className="text-2xl sm:text-4xl font-black text-gray-800 tracking-tight mb-3">
+            Lộ Trình Học Tập Của Bạn
           </h2>
           <p className="text-sm sm:text-base text-gray-600 max-w-xl mx-auto">
-            [Điền Mô tả: Hướng dẫn người dùng chọn chủ đề để bắt đầu]
+            Hãy chọn chủ đề và bắt đầu hành trình của bạn ngay hôm nay!
           </p>
         </div>
 
-        {/* Topics grid with Supabase integration */}
+        {/* Lưới danh sách chủ đề học tập kết nối Supabase */}
         <Suspense fallback={<GridSkeleton />}>
           <TopicsGrid />
         </Suspense>
       </section>
+
+      {/* 4. TESTIMONIALS (Đánh giá học viên & phụ huynh) */}
+      <TestimonialsSection />
+
+      {/* 5. FAQ SECTION (Giải đáp thắc mắc thường gặp) */}
+      <FAQSection />
     </div>
   )
 }
