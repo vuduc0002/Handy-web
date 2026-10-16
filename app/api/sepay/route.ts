@@ -56,19 +56,30 @@ export async function POST(req: NextRequest) {
       content: transferContent,
     });
 
-    // Tìm mã nhận diện linh hoạt với regex: hỗ trợ cả có hoặc không có dấu gạch dưới / khoảng trắng
-    const match = transferContent.match(/HANDY[\s_]*([a-zA-Z0-9]+)/i);
-    if (!match) {
-      console.log('[SePAY Webhook] Không tìm thấy mã nhận diện HANDY trong nội dung:', transferContent);
+    // Tìm mã nhận diện: hỗ trợ chuỗi 32 ký tự hex (ngân hàng bỏ dấu gạch ngang) hoặc UUID chuẩn
+    // 1. Thử bắt chuỗi 32 ký tự hex liền nhau (không có dấu gạch ngang)
+    let formattedUuid: string | null = null;
+    const match32 = transferContent.match(/HANDY[\s_]*([a-fA-F0-9]{32})/i);
+
+    if (match32) {
+      const rawId = match32[1];
+      // Phục hồi định dạng UUID chuẩn: 8-4-4-4-12
+      formattedUuid = `${rawId.slice(0, 8)}-${rawId.slice(8, 12)}-${rawId.slice(12, 16)}-${rawId.slice(16, 20)}-${rawId.slice(20)}`.toLowerCase();
+    } else {
+      // 2. Dự phòng trường hợp ngân hàng giữ nguyên dấu gạch ngang UUID
+      const matchUuid = transferContent.match(/HANDY[\s_]*([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})/i);
+      if (matchUuid) {
+        formattedUuid = matchUuid[1].toLowerCase();
+      }
+    }
+
+    if (!formattedUuid) {
+      console.log('[SePAY Webhook] Không tìm thấy mã nhận diện UUID 32 ký tự hợp lệ trong nội dung:', transferContent);
       return Response.json(
-        { message: 'Bỏ qua: Không tìm thấy mã nhận diện HANDY' },
+        { message: 'Bỏ qua: Không tìm thấy mã nhận diện HANDY hợp lệ' },
         { status: 200 }
       );
     }
-
-    // Lấy 8 ký tự đầu tiên của chuỗi trích xuất được (VD: '5f7299dd')
-    const rawExtracted = match[1];
-    const shortId = rawExtracted.substring(0, 8);
 
     // Kiểm tra số tiền chuyển khoản có đủ nâng cấp VIP hay không
     if (isNaN(amount) || amount < REQUIRED_VIP_AMOUNT) {
@@ -79,21 +90,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Cập nhật User bằng .ilike() trực tiếp qua Service Role
+    // Cập nhật User bằng .eq() với UUID chuẩn đã phục hồi
     const { data, error } = await supabase
       .from('profiles')
       .update({ is_premium: true })
-      .ilike('id', shortId + '%')
+      .eq('id', formattedUuid)
       .select();
 
     if (error || !data || data.length === 0) {
-      console.error('[SePAY Webhook] Không thể cập nhật profile hoặc không tìm thấy user:', {
-        shortId,
+      console.error('[SePAY Webhook] Không tìm thấy user hoặc lỗi cập nhật với UUID:', {
+        formattedUuid,
         error,
         data,
       });
       return Response.json(
-        { error: `Không tìm thấy user hoặc lỗi cập nhật với mã ${shortId}` },
+        { error: `Không tìm thấy user hoặc lỗi cập nhật với mã ${formattedUuid}` },
         { status: 404 }
       );
     }
