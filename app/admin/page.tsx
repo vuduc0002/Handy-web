@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import {
   BookOpen,
@@ -43,6 +44,9 @@ interface Vocabulary {
 }
 
 export default function AdminPage() {
+  const router = useRouter()
+  const [checkingAuth, setCheckingAuth] = useState(true)
+  const [authorized, setAuthorized] = useState(false)
   const [topics, setTopics] = useState<Topic[]>([])
   const [vocabularies, setVocabularies] = useState<Vocabulary[]>([])
   const [loading, setLoading] = useState(true)
@@ -108,9 +112,49 @@ export default function AdminPage() {
     }
   }
 
+  // Bảo vệ route: Kiểm tra đăng nhập và role === 'ADMIN'
   useEffect(() => {
-    fetchData()
-  }, [])
+    let isMounted = true
+
+    const verifyAdmin = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) {
+          alert('Bạn không có quyền truy cập trang này')
+          router.push('/')
+          return
+        }
+
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .maybeSingle()
+
+        if (!profile || profile.role !== 'ADMIN') {
+          alert('Bạn không có quyền truy cập trang này')
+          router.push('/')
+          return
+        }
+
+        if (isMounted) {
+          setAuthorized(true)
+          setCheckingAuth(false)
+          fetchData()
+        }
+      } catch (err) {
+        console.error('Lỗi xác thực Admin:', err)
+        alert('Bạn không có quyền truy cập trang này')
+        router.push('/')
+      }
+    }
+
+    verifyAdmin()
+
+    return () => {
+      isMounted = false
+    }
+  }, [router])
 
   // Map tên topic để hiển thị nhanh
   const topicMap = useMemo(() => {
@@ -286,6 +330,21 @@ export default function AdminPage() {
     })
   }, [vocabularies, searchQuery, selectedTopicFilter, statusFilter])
 
+  if (checkingAuth) {
+    return (
+      <div className="min-h-[70vh] flex flex-col items-center justify-center px-4">
+        <Loader2 className="w-10 h-10 text-orange-500 animate-spin mb-4" />
+        <p className="text-gray-600 font-extrabold text-base">
+          Đang kiểm tra quyền quản trị viên...
+        </p>
+      </div>
+    )
+  }
+
+  if (!authorized) {
+    return null
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       {/* Toast thông báo nổi */}
@@ -313,24 +372,27 @@ export default function AdminPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <Link
-              href="/"
-              className="w-9 h-9 rounded-xl bg-white border border-amber-200 text-amber-700 flex items-center justify-center hover:bg-amber-100 transition shadow-sm"
-              title="Về trang chủ"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </Link>
             <h1 className="text-2xl md:text-3xl font-extrabold text-gray-800 tracking-tight flex items-center gap-2">
               <span>⚡</span> Bảng Quản Trị HANDY
             </h1>
           </div>
-          <p className="text-sm text-gray-500 ml-12">
+          <p className="text-sm text-gray-500">
             Quản lý kho chủ đề học và danh sách từ vựng ngôn ngữ ký hiệu
           </p>
         </div>
 
-        {/* Tab switcher */}
-        <div className="flex rounded-2xl bg-white p-1.5 border-2 border-amber-200 shadow-sm self-start md:self-auto">
+        {/* Action Controls: Nút Quay lại Trang chủ & Tab switcher */}
+        <div className="flex flex-wrap items-center gap-3 self-start md:self-auto">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white border-2 border-amber-300 hover:bg-amber-50 text-amber-900 font-extrabold text-xs shadow-sm transition active:scale-95 shrink-0"
+          >
+            <ArrowLeft className="w-4 h-4 text-orange-500" />
+            <span>Quay lại Trang chủ</span>
+          </Link>
+
+          {/* Tab switcher */}
+          <div className="flex rounded-2xl bg-white p-1.5 border-2 border-amber-200 shadow-sm">
           <button
             onClick={() => setActiveTab('vocab')}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-extrabold transition-all duration-200 ${
@@ -355,6 +417,7 @@ export default function AdminPage() {
           </button>
         </div>
       </div>
+    </div>
 
       {/* Thống kê nhanh */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
