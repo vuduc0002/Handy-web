@@ -1,4 +1,6 @@
 import { Suspense } from 'react'
+import HeroSection from '@/app/components/HeroSection'
+import FeaturesSection from '@/app/components/FeaturesSection'
 import TopicsGrid from '@/app/components/TopicsGrid'
 import { Loader2 } from 'lucide-react'
 
@@ -12,21 +14,29 @@ function GridSkeleton() {
 
 export default function HomePage() {
   return (
-    <div className="max-w-6xl mx-auto px-4 py-10">
-      {/* Hero section */}
-      <div className="text-center mb-10">
-        <h1 className="text-4xl font-extrabold text-gray-800 mb-3">
-          🌟 Học Ngôn Ngữ Ký Hiệu
-        </h1>
-        <p className="text-gray-500 text-lg max-w-xl mx-auto">
-          Khám phá từ vựng qua video sinh động, học cùng <span className="text-orange-500 font-bold">HANDY</span> thật vui và dễ dàng!
-        </p>
-      </div>
+    <div className="max-w-6xl mx-auto px-4 pb-16">
+      {/* 1. Hero Section */}
+      <HeroSection />
 
-      {/* Topics grid */}
-      <Suspense fallback={<GridSkeleton />}>
-        <TopicsGrid />
-      </Suspense>
+      {/* 2. Features Section */}
+      <FeaturesSection />
+
+      {/* 3. Topics Section */}
+      <section id="topics-section" className="pt-8 md:pt-12 scroll-mt-20">
+        <div className="text-center mb-8">
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-800 tracking-tight mb-2">
+            [Điền Tiêu đề: Giới thiệu danh sách bài học hoặc lộ trình]
+          </h2>
+          <p className="text-sm sm:text-base text-gray-600 max-w-xl mx-auto">
+            [Điền Mô tả: Hướng dẫn người dùng chọn chủ đề để bắt đầu]
+          </p>
+        </div>
+
+        {/* Topics grid with Supabase integration */}
+        <Suspense fallback={<GridSkeleton />}>
+          <TopicsGrid />
+        </Suspense>
+      </section>
     </div>
   )
 }
