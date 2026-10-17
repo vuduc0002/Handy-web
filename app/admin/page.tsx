@@ -20,8 +20,8 @@ import {
   Loader2,
   Layers,
   Video,
-  Sparkles,
-  ArrowLeft
+  Check,
+  RefreshCw,
 } from 'lucide-react'
 import { getEmbedYoutubeUrl } from '@/lib/utils'
 
@@ -79,11 +79,11 @@ export default function AdminPage() {
   const [editingVocab, setEditingVocab] = useState<Vocabulary | null>(null)
 
   // Notification feedback
-  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null)
 
-  const showNotification = (type: 'success' | 'error', message: string) => {
-    setFeedback({ type, message })
-    setTimeout(() => setFeedback(null), 4500)
+  const showToast = (text: string, type: 'success' | 'error' = 'success') => {
+    setToastMessage({ text, type })
+    setTimeout(() => setToastMessage(null), 3500)
   }
 
   // Load tất cả topics và vocabularies
@@ -107,7 +107,7 @@ export default function AdminPage() {
         setNewVocab((prev) => ({ ...prev, topic_id: topicList[0].id }))
       }
     } catch (err: unknown) {
-      showNotification('error', err instanceof Error ? err.message : 'Lỗi khi tải dữ liệu.')
+      showToast(err instanceof Error ? err.message : 'Lỗi khi tải dữ liệu.', 'error')
     } finally {
       setLoading(false)
     }
@@ -168,7 +168,7 @@ export default function AdminPage() {
   const handleAddTopic = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newTopic.title.trim()) {
-      showNotification('error', 'Vui lòng nhập tiêu đề chủ đề!')
+      showToast('Vui lòng nhập tiêu đề chủ đề!', 'error')
       return
     }
 
@@ -188,13 +188,13 @@ export default function AdminPage() {
 
       setTopics((prev) => [...prev, data])
       setNewTopic({ title: '', description: '', is_free: true })
-      showNotification('success', `Đã thêm chủ đề "${data.title}" thành công!`)
+      showToast(`Đã thêm chủ đề "${data.title}" thành công!`, 'success')
     } catch (err: unknown) {
-      showNotification(
-        'error',
+      showToast(
         err instanceof Error
           ? err.message
-          : 'Không thể thêm chủ đề. Kiểm tra lại chính sách RLS trong Supabase!'
+          : 'Không thể thêm chủ đề. Kiểm tra lại chính sách RLS trong Supabase!',
+        'error'
       )
     } finally {
       setActionLoading(false)
@@ -205,11 +205,11 @@ export default function AdminPage() {
   const handleAddVocab = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newVocab.topic_id) {
-      showNotification('error', 'Vui lòng chọn một chủ đề!')
+      showToast('Vui lòng chọn một chủ đề!', 'error')
       return
     }
     if (!newVocab.word.trim() || !newVocab.meaning.trim() || !newVocab.video_url.trim()) {
-      showNotification('error', 'Vui lòng nhập đầy đủ Từ vựng, Ý nghĩa và Link video!')
+      showToast('Vui lòng nhập đầy đủ Từ vựng, Ý nghĩa và Link video!', 'error')
       return
     }
 
@@ -239,13 +239,13 @@ export default function AdminPage() {
         description: '',
         video_url: '',
       })
-      showNotification('success', `Đã thêm từ vựng "${data.word}" thành công!`)
+      showToast(`Đã thêm từ vựng "${data.word}" thành công!`, 'success')
     } catch (err: unknown) {
-      showNotification(
-        'error',
+      showToast(
         err instanceof Error
           ? err.message
-          : 'Không thể thêm từ vựng. Kiểm tra lại chính sách RLS trong Supabase!'
+          : 'Không thể thêm từ vựng. Kiểm tra lại chính sách RLS trong Supabase!',
+        'error'
       )
     } finally {
       setActionLoading(false)
@@ -277,9 +277,9 @@ export default function AdminPage() {
         prev.map((v) => (v.id === editingVocab.id ? { ...editingVocab, video_url: formattedUrl } : v))
       )
       setEditingVocab(null)
-      showNotification('success', `Cập nhật từ "${editingVocab.word}" thành công!`)
+      showToast(`Cập nhật từ "${editingVocab.word}" thành công!`, 'success')
     } catch (err: unknown) {
-      showNotification('error', err instanceof Error ? err.message : 'Lỗi khi cập nhật từ vựng.')
+      showToast(err instanceof Error ? err.message : 'Lỗi khi cập nhật từ vựng.', 'error')
     } finally {
       setActionLoading(false)
     }
@@ -302,12 +302,9 @@ export default function AdminPage() {
         prev.map((v) => (v.id === vocab.id ? { ...v, is_deleted: nextDeletedState } : v))
       )
 
-      showNotification(
-        'success',
-        `${actionName} thành công từ "${vocab.word}"!`
-      )
+      showToast(`${actionName} thành công từ "${vocab.word}"!`, 'success')
     } catch (err: unknown) {
-      showNotification('error', err instanceof Error ? err.message : `Lỗi khi ${actionName.toLowerCase()} từ vựng.`)
+      showToast(err instanceof Error ? err.message : `Lỗi khi ${actionName.toLowerCase()} từ vựng.`, 'error')
     }
   }
 
@@ -335,10 +332,10 @@ export default function AdminPage() {
 
   if (checkingAuth) {
     return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center px-4">
-        <Loader2 className="w-10 h-10 text-orange-500 animate-spin mb-4" />
-        <p className="text-gray-600 font-extrabold text-base">
-          Đang kiểm tra quyền quản trị viên...
+      <div className="fixed inset-0 z-50 bg-gray-50 flex flex-col items-center justify-center">
+        <Loader2 className="w-8 h-8 text-gray-800 animate-spin mb-3" />
+        <p className="text-gray-500 font-medium text-sm">
+          Đang xác thực quyền quản trị viên...
         </p>
       </div>
     )
@@ -349,125 +346,174 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      {/* Toast thông báo nổi */}
-      {feedback && (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 font-sans antialiased text-gray-900">
+      {/* Toast thông báo nổi phong cách SaaS */}
+      {toastMessage && (
         <div
-          className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl border text-sm font-bold transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 ${
-            feedback.type === 'success'
-              ? 'bg-emerald-600 text-white border-emerald-500'
-              : 'bg-red-600 text-white border-red-500'
+          className={`fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-lg shadow-lg border text-xs font-semibold animate-in fade-in slide-in-from-bottom-2 ${
+            toastMessage.type === 'success'
+              ? 'bg-gray-900 text-white border-gray-800'
+              : 'bg-rose-600 text-white border-rose-700'
           }`}
         >
-          {feedback.type === 'success' ? (
-            <CheckCircle2 className="w-5 h-5 shrink-0" />
+          {toastMessage.type === 'success' ? (
+            <Check className="w-4 h-4 text-emerald-400" />
           ) : (
-            <ShieldAlert className="w-5 h-5 shrink-0" />
+            <X className="w-4 h-4 text-white" />
           )}
-          <span>{feedback.message}</span>
-          <button onClick={() => setFeedback(null)} className="ml-2 hover:opacity-75">
-            <X className="w-4 h-4" />
-          </button>
+          <span>{toastMessage.text}</span>
         </div>
       )}
 
-      {/* Top Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+      {/* Page Heading & Tabs */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-gray-200/60">
         <div>
-          <div className="flex items-center gap-3 mb-1">
-            <h1 className="text-2xl md:text-3xl font-extrabold text-gray-800 tracking-tight flex items-center gap-2">
-              <span>⚡</span> Bảng Quản Trị HANDY
-            </h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">
+            Quản lý Nội dung & Bài học
+          </h1>
+          <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
+            Quản trị danh mục chủ đề học tập và kho từ vựng ngôn ngữ ký hiệu
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={fetchData}
+            disabled={loading}
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-300 rounded-lg shadow-2xs transition active:scale-95 disabled:opacity-50"
+            title="Làm mới dữ liệu"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-gray-500' : 'text-gray-600'}`} />
+            <span>Làm mới</span>
+          </button>
+
+          {/* Tab Selector */}
+          <div className="inline-flex rounded-lg bg-gray-100 p-1 border border-gray-200">
+            <button
+              onClick={() => setActiveTab('vocab')}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all duration-150 ${
+                activeTab === 'vocab'
+                  ? 'bg-white text-gray-900 shadow-xs'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>Từ vựng ({vocabularies.length})</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('topics')}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all duration-150 ${
+                activeTab === 'topics'
+                  ? 'bg-white text-gray-900 shadow-xs'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Layers className="w-3.5 h-3.5" />
+              <span>Chủ đề ({topics.length})</span>
+            </button>
           </div>
-          <p className="text-sm text-gray-500">
-            Quản lý kho chủ đề học và danh sách từ vựng ngôn ngữ ký hiệu
-          </p>
-        </div>
-
-        {/* Action Controls: Nút Quay lại Trang chủ & Tab switcher */}
-        <div className="flex flex-wrap items-center gap-3 self-start md:self-auto">
-          <Link
-            href="/admin/dashboard"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-orange-400 to-amber-400 hover:from-orange-500 hover:to-amber-500 text-white font-extrabold text-xs shadow-md shadow-amber-200 transition active:scale-95 shrink-0"
-          >
-            <span>Báo cáo & Giao dịch</span>
-          </Link>
-
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white border-2 border-amber-300 hover:bg-amber-50 text-amber-900 font-extrabold text-xs shadow-sm transition active:scale-95 shrink-0"
-          >
-            <ArrowLeft className="w-4 h-4 text-orange-500" />
-            <span>Quay lại Trang chủ</span>
-          </Link>
-
-          {/* Tab switcher */}
-          <div className="flex rounded-2xl bg-white p-1.5 border-2 border-amber-200 shadow-sm">
-          <button
-            onClick={() => setActiveTab('vocab')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-extrabold transition-all duration-200 ${
-              activeTab === 'vocab'
-                ? 'bg-gradient-to-r from-orange-400 to-amber-400 text-white shadow-md'
-                : 'text-gray-600 hover:text-orange-500'
-            }`}
-          >
-            <BookOpen className="w-4 h-4" />
-            Quản lý Từ vựng ({vocabularies.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('topics')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-extrabold transition-all duration-200 ${
-              activeTab === 'topics'
-                ? 'bg-gradient-to-r from-orange-400 to-amber-400 text-white shadow-md'
-                : 'text-gray-600 hover:text-orange-500'
-            }`}
-          >
-            <Layers className="w-4 h-4" />
-            Chủ đề học ({topics.length})
-          </button>
-        </div>
-      </div>
-    </div>
-
-      {/* Thống kê nhanh */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white rounded-3xl p-5 border-2 border-amber-200 shadow-sm">
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Tổng chủ đề</p>
-          <p className="text-3xl font-black text-gray-800 mt-1">{topics.length}</p>
-        </div>
-        <div className="bg-white rounded-3xl p-5 border-2 border-amber-200 shadow-sm">
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Tổng từ vựng</p>
-          <p className="text-3xl font-black text-orange-500 mt-1">{vocabularies.length}</p>
-        </div>
-        <div className="bg-white rounded-3xl p-5 border-2 border-emerald-200 shadow-sm">
-          <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider">Đang hiển thị</p>
-          <p className="text-3xl font-black text-emerald-600 mt-1">
-            {vocabularies.filter((v) => !v.is_deleted).length}
-          </p>
-        </div>
-        <div className="bg-white rounded-3xl p-5 border-2 border-red-200 shadow-sm">
-          <p className="text-xs font-bold text-red-500 uppercase tracking-wider">Đã xóa mềm</p>
-          <p className="text-3xl font-black text-red-500 mt-1">
-            {vocabularies.filter((v) => v.is_deleted).length}
-          </p>
         </div>
       </div>
 
       {/* ========================================================================= */}
-      {/* TAB 1: QUẢN LÝ TỪ VỰNG */}
+      {/* 1. OVERVIEW METRICS CARDS (Style: Vercel / Stripe Data-driven)             */}
+      {/* ========================================================================= */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Card 1: Tổng chủ đề */}
+        <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:border-gray-300 transition-colors">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              Tổng Chủ Đề
+            </span>
+            <div className="w-8 h-8 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-500">
+              <Layers className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <p className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
+              {loading ? '...' : topics.length}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              Chủ đề học tập trên hệ thống
+            </p>
+          </div>
+        </div>
+
+        {/* Card 2: Tổng từ vựng */}
+        <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:border-gray-300 transition-colors">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              Tổng Từ Vựng
+            </span>
+            <div className="w-8 h-8 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-500">
+              <BookOpen className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <p className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
+              {loading ? '...' : vocabularies.length}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              Định dạng video và cử chỉ tay
+            </p>
+          </div>
+        </div>
+
+        {/* Card 3: Đang hiển thị */}
+        <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:border-gray-300 transition-colors">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              Đang Hiển Thị
+            </span>
+            <div className="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
+              <CheckCircle2 className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <p className="text-2xl sm:text-3xl font-bold text-emerald-600 tracking-tight">
+              {loading ? '...' : vocabularies.filter((v) => !v.is_deleted).length}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              Người dùng có thể truy cập
+            </p>
+          </div>
+        </div>
+
+        {/* Card 4: Đã xóa mềm */}
+        <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:border-gray-300 transition-colors">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              Đã Ẩn / Xóa Mềm
+            </span>
+            <div className="w-8 h-8 rounded-lg bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600">
+              <Trash2 className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <p className="text-2xl sm:text-3xl font-bold text-rose-600 tracking-tight">
+              {loading ? '...' : vocabularies.filter((v) => v.is_deleted).length}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              Có thể khôi phục bất cứ lúc nào
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* TAB 1: QUẢN LÝ TỪ VỰNG                                                    */}
       {/* ========================================================================= */}
       {activeTab === 'vocab' && (
-        <div className="space-y-8">
-          {/* FORM THÊM TỪ VỰNG MỚI */}
-          <div className="bg-white rounded-3xl border-2 border-amber-300 p-6 md:p-8 shadow-sm">
-            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-amber-100">
-              <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold">
-                <Plus className="w-5 h-5" />
-              </div>
+        <div className="space-y-6">
+          {/* Form Thêm Từ Vựng Mới */}
+          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+            <div className="flex items-center justify-between pb-4 mb-5 border-b border-gray-100">
               <div>
-                <h2 className="text-lg font-extrabold text-gray-800">Thêm Từ Vựng Mới</h2>
-                <p className="text-xs text-gray-500">
-                  Nhập thông tin từ và link video thủ ngữ (YouTube hoặc file MP4)
+                <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wider">
+                  Thêm Từ Vựng Mới
+                </h2>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Nhập thông tin từ và đường dẫn video thủ ngữ (YouTube hoặc file MP4)
                 </p>
               </div>
             </div>
@@ -476,19 +522,19 @@ export default function AdminPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Chọn Topic */}
                 <div>
-                  <label className="block text-xs font-extrabold text-gray-700 uppercase mb-1.5">
+                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
                     Chủ đề thuộc về *
                   </label>
                   <select
                     value={newVocab.topic_id}
                     onChange={(e) => setNewVocab({ ...newVocab, topic_id: e.target.value })}
                     required
-                    className="w-full px-4 py-3 rounded-2xl bg-amber-50/70 border-2 border-amber-200 text-gray-800 text-sm font-semibold focus:outline-none focus:border-orange-400"
+                    className="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-gray-900 text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900"
                   >
                     {topics.length === 0 && <option value="">Chưa có chủ đề nào</option>}
                     {topics.map((t) => (
                       <option key={t.id} value={t.id}>
-                        {t.title} {t.is_free ? '(Miễn phí)' : '(VIP)'}
+                        {t.title} {t.is_free ? '(Miễn phí)' : '(Khóa VIP)'}
                       </option>
                     ))}
                   </select>
@@ -496,7 +542,7 @@ export default function AdminPage() {
 
                 {/* Từ vựng */}
                 <div>
-                  <label className="block text-xs font-extrabold text-gray-700 uppercase mb-1.5">
+                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
                     Từ vựng (Word) *
                   </label>
                   <input
@@ -505,13 +551,13 @@ export default function AdminPage() {
                     onChange={(e) => setNewVocab({ ...newVocab, word: e.target.value })}
                     required
                     placeholder="VD: Cảm ơn, Xin chào..."
-                    className="w-full px-4 py-3 rounded-2xl bg-amber-50/70 border-2 border-amber-200 text-gray-800 text-sm font-semibold focus:outline-none focus:border-orange-400 placeholder-gray-400"
+                    className="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-gray-900 text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900 placeholder-gray-400"
                   />
                 </div>
 
                 {/* Nghĩa của từ */}
                 <div>
-                  <label className="block text-xs font-extrabold text-gray-700 uppercase mb-1.5">
+                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
                     Ý nghĩa (Meaning) *
                   </label>
                   <input
@@ -520,7 +566,7 @@ export default function AdminPage() {
                     onChange={(e) => setNewVocab({ ...newVocab, meaning: e.target.value })}
                     required
                     placeholder="VD: Bày tỏ sự biết ơn..."
-                    className="w-full px-4 py-3 rounded-2xl bg-amber-50/70 border-2 border-amber-200 text-gray-800 text-sm font-semibold focus:outline-none focus:border-orange-400 placeholder-gray-400"
+                    className="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-gray-900 text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900 placeholder-gray-400"
                   />
                 </div>
               </div>
@@ -528,25 +574,25 @@ export default function AdminPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Link video */}
                 <div>
-                  <label className="block text-xs font-extrabold text-gray-700 uppercase mb-1.5">
+                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
                     Link video thủ ngữ (YouTube/MP4) *
                   </label>
                   <div className="relative">
-                    <Video className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <Video className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input
                       type="url"
                       value={newVocab.video_url}
                       onChange={(e) => setNewVocab({ ...newVocab, video_url: e.target.value })}
                       required
                       placeholder="https://www.youtube.com/embed/... hoặc https://youtu.be/..."
-                      className="w-full pl-10 pr-4 py-3 rounded-2xl bg-amber-50/70 border-2 border-amber-200 text-gray-800 text-sm font-semibold focus:outline-none focus:border-orange-400 placeholder-gray-400"
+                      className="w-full pl-9 pr-3 py-2 rounded-lg bg-white border border-gray-300 text-gray-900 text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900 placeholder-gray-400"
                     />
                   </div>
                 </div>
 
                 {/* Hướng dẫn thao tác tay */}
                 <div>
-                  <label className="block text-xs font-extrabold text-gray-700 uppercase mb-1.5">
+                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
                     Mô tả cử chỉ bàn tay (Tùy chọn)
                   </label>
                   <input
@@ -554,7 +600,7 @@ export default function AdminPage() {
                     value={newVocab.description}
                     onChange={(e) => setNewVocab({ ...newVocab, description: e.target.value })}
                     placeholder="VD: Đưa tay phải lên ngang trán và vẫy nhẹ..."
-                    className="w-full px-4 py-3 rounded-2xl bg-amber-50/70 border-2 border-amber-200 text-gray-800 text-sm font-semibold focus:outline-none focus:border-orange-400 placeholder-gray-400"
+                    className="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-gray-900 text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900 placeholder-gray-400"
                   />
                 </div>
               </div>
@@ -563,17 +609,17 @@ export default function AdminPage() {
                 <button
                   type="submit"
                   disabled={actionLoading}
-                  className="flex items-center gap-2 px-8 py-3 rounded-2xl bg-gradient-to-r from-orange-400 to-amber-400 hover:from-orange-500 hover:to-amber-500 text-white font-extrabold text-sm shadow-md shadow-amber-200 transition active:scale-95 disabled:opacity-50"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-900 hover:bg-gray-800 text-white font-semibold text-xs shadow-sm transition active:scale-95 disabled:opacity-50"
                 >
                   {actionLoading ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Đang lưu...
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Đang lưu...</span>
                     </>
                   ) : (
                     <>
-                      <Plus className="w-4 h-4" />
-                      Thêm từ vựng vào bài
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Thêm từ vựng vào bài</span>
                     </>
                   )}
                 </button>
@@ -581,33 +627,41 @@ export default function AdminPage() {
             </form>
           </div>
 
-          {/* BẢNG DANH SÁCH TỪ VỰNG */}
-          <div className="bg-white rounded-3xl border-2 border-amber-200 shadow-sm overflow-hidden">
-            {/* Thanh tìm kiếm và bộ lọc */}
-            <div className="p-5 border-b border-amber-100 bg-amber-50/40 flex flex-col md:flex-row gap-3 items-center justify-between">
-              {/* Input tìm kiếm */}
-              <div className="relative w-full md:w-80">
-                <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+          {/* Bảng Danh Sách Từ Vựng */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            {/* Filter Toolbar */}
+            <div className="p-4 border-b border-gray-200 bg-white flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+              {/* Search */}
+              <div className="relative flex-1 max-w-sm">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Tìm theo từ hoặc nghĩa..."
-                  className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-white border-2 border-amber-200 text-gray-800 text-xs font-semibold focus:outline-none focus:border-orange-400"
+                  placeholder="Tìm theo từ vựng hoặc nghĩa..."
+                  className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-white border border-gray-300 text-gray-900 text-xs focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900 placeholder-gray-400"
                 />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
 
-              {/* Bộ lọc Topic & Status */}
-              <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-gray-500">
-                  <Filter className="w-3.5 h-3.5" />
-                  <span>Lọc:</span>
+              {/* Filters */}
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                <div className="flex items-center gap-1.5 text-gray-500 font-medium">
+                  <Filter className="w-3.5 h-3.5 text-gray-400" />
+                  <span className="hidden sm:inline">Lọc:</span>
                 </div>
 
                 <select
                   value={selectedTopicFilter}
                   onChange={(e) => setSelectedTopicFilter(e.target.value)}
-                  className="px-3 py-2 rounded-xl bg-white border border-amber-200 text-xs font-bold text-gray-700 focus:outline-none focus:border-orange-400"
+                  className="px-2.5 py-1.5 rounded-lg bg-white border border-gray-300 text-xs font-medium text-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 >
                   <option value="ALL">Tất cả chủ đề</option>
                   {topics.map((t) => (
@@ -620,40 +674,46 @@ export default function AdminPage() {
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value as any)}
-                  className="px-3 py-2 rounded-xl bg-white border border-amber-200 text-xs font-bold text-gray-700 focus:outline-none focus:border-orange-400"
+                  className="px-2.5 py-1.5 rounded-lg bg-white border border-gray-300 text-xs font-medium text-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 >
                   <option value="ALL">Mọi trạng thái</option>
-                  <option value="ACTIVE">Chỉ từ đang hiển thị</option>
-                  <option value="DELETED">Chỉ từ đã xóa mềm</option>
+                  <option value="ACTIVE">Đang hiển thị</option>
+                  <option value="DELETED">Đã xóa mềm</option>
                 </select>
               </div>
             </div>
 
             {/* Table */}
             <div className="w-full overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+              <table className="w-full text-left border-collapse min-w-[700px]">
                 <thead>
-                  <tr className="bg-amber-100/50 text-gray-700 text-xs font-extrabold uppercase tracking-wider border-b border-amber-200">
-                    <th className="py-4 px-6">Từ vựng</th>
-                    <th className="py-4 px-6">Ý nghĩa</th>
-                    <th className="py-4 px-6">Chủ đề</th>
-                    <th className="py-4 px-6">Video URL</th>
-                    <th className="py-4 px-6 text-center">Trạng thái</th>
-                    <th className="py-4 px-6 text-right">Thao tác</th>
+                  <tr className="bg-gray-50 border-b border-gray-200 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
+                    <th className="py-3 px-5">Từ vựng</th>
+                    <th className="py-3 px-5">Ý nghĩa</th>
+                    <th className="py-3 px-5">Chủ đề</th>
+                    <th className="py-3 px-5">Video</th>
+                    <th className="py-3 px-5 text-center">Trạng thái</th>
+                    <th className="py-3 px-5 text-right">Thao tác</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-amber-100 text-sm">
+                <tbody className="divide-y divide-gray-100 text-xs">
                   {loading ? (
                     <tr>
-                      <td colSpan={6} className="py-12 text-center text-gray-400">
-                        <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-orange-400" />
-                        Đang tải danh sách từ vựng...
+                      <td colSpan={6} className="py-16 text-center text-gray-400">
+                        <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-gray-600" />
+                        <span>Đang tải danh sách từ vựng...</span>
                       </td>
                     </tr>
                   ) : filteredVocabularies.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="py-12 text-center text-gray-400">
-                        Không tìm thấy từ vựng nào phù hợp.
+                      <td colSpan={6} className="py-16 text-center text-gray-500">
+                        <div className="max-w-xs mx-auto space-y-1">
+                          <BookOpen className="w-6 h-6 mx-auto text-gray-400 mb-2" />
+                          <p className="font-semibold text-gray-700">Không tìm thấy từ vựng nào</p>
+                          <p className="text-xs text-gray-400">
+                            Thử tìm kiếm với từ khóa khác hoặc thêm từ vựng mới.
+                          </p>
+                        </div>
                       </td>
                     </tr>
                   ) : (
@@ -663,91 +723,93 @@ export default function AdminPage() {
                       return (
                         <tr
                           key={vocab.id}
-                          className={`hover:bg-amber-50/50 transition ${
-                            vocab.is_deleted ? 'bg-red-50/30 opacity-70' : ''
+                          className={`hover:bg-gray-50/80 transition-colors ${
+                            vocab.is_deleted ? 'bg-rose-50/30' : ''
                           }`}
                         >
                           {/* Từ vựng */}
-                          <td className="py-4 px-6 font-extrabold text-gray-800">
-                            <span className="text-base">{vocab.word}</span>
+                          <td className="py-3.5 px-5">
+                            <span className="font-semibold text-gray-900 text-sm">
+                              {vocab.word}
+                            </span>
                             {vocab.description && (
-                              <p className="text-xs font-normal text-gray-400 mt-0.5 line-clamp-1">
+                              <p className="text-[11px] text-gray-500 mt-0.5 line-clamp-1">
                                 {vocab.description}
                               </p>
                             )}
                           </td>
 
                           {/* Nghĩa */}
-                          <td className="py-4 px-6 font-medium text-gray-600">
+                          <td className="py-3.5 px-5 text-gray-600">
                             {vocab.meaning}
                           </td>
 
                           {/* Chủ đề */}
-                          <td className="py-4 px-6">
-                            <span className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 line-clamp-1 max-w-[200px]">
+                          <td className="py-3.5 px-5">
+                            <span className="inline-block px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 text-gray-700 border border-gray-200 line-clamp-1 max-w-[200px]">
                               {topicTitle}
                             </span>
                           </td>
 
                           {/* Video */}
-                          <td className="py-4 px-6">
+                          <td className="py-3.5 px-5">
                             <a
                               href={vocab.video_url}
                               target="_blank"
                               rel="noreferrer"
-                              className="inline-flex items-center gap-1.5 text-xs font-bold text-orange-500 hover:text-orange-600 hover:underline max-w-[180px] truncate"
+                              className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-700 hover:text-gray-900 hover:underline max-w-[160px] truncate"
                               title={vocab.video_url}
                             >
-                              <ExternalLink className="w-3.5 h-3.5 shrink-0" />
+                              <ExternalLink className="w-3.5 h-3.5 shrink-0 text-gray-400" />
                               <span className="truncate">{vocab.video_url}</span>
                             </a>
                           </td>
 
-                          {/* Trạng thái xóa mềm */}
-                          <td className="py-4 px-6 text-center">
+                          {/* Trạng thái */}
+                          <td className="py-3.5 px-5 text-center">
                             {vocab.is_deleted ? (
-                              <span className="inline-block px-3 py-1 rounded-full text-xs font-extrabold bg-red-100 text-red-600 border border-red-200">
-                                Đã xóa mềm
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-rose-100 text-rose-800">
+                                <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />
+                                <span>Đã xóa mềm</span>
                               </span>
                             ) : (
-                              <span className="inline-block px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-700 border border-emerald-200">
-                                Đang hiển thị
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-green-100 text-green-800">
+                                <span className="w-1.5 h-1.5 rounded-full bg-green-600" />
+                                <span>Đang hiển thị</span>
                               </span>
                             )}
                           </td>
 
-                          {/* Nút hành động */}
-                          <td className="py-4 px-6 text-right">
-                            <div className="flex items-center justify-end gap-2">
-                              {/* Nút Edit */}
+                          {/* Thao tác */}
+                          <td className="py-3.5 px-5 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
                               <button
                                 onClick={() => setEditingVocab(vocab)}
-                                className="p-2 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-800 transition active:scale-95"
+                                className="p-1.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-100 text-gray-600 hover:text-gray-900 transition active:scale-95"
                                 title="Chỉnh sửa từ vựng"
                               >
-                                <Edit3 className="w-4 h-4" />
+                                <Edit3 className="w-3.5 h-3.5" />
                               </button>
 
-                              {/* Nút Xóa mềm / Khôi phục */}
                               <button
                                 onClick={() => handleToggleDelete(vocab)}
-                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 active:scale-95 ${
+                                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition active:scale-95 border ${
                                   vocab.is_deleted
-                                    ? 'bg-emerald-100 hover:bg-emerald-200 text-emerald-700'
-                                    : 'bg-red-100 hover:bg-red-200 text-red-600'
+                                    ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200'
+                                    : 'bg-white hover:bg-rose-50 text-rose-600 border-gray-200 hover:border-rose-200'
                                 }`}
-                                title={vocab.is_deleted ? 'Khôi phục từ này' : 'Xóa mềm từ này'}
+                                title={vocab.is_deleted ? 'Khôi phục từ vựng này' : 'Xóa mềm từ vựng này'}
                               >
                                 {vocab.is_deleted ? (
-                                  <>
-                                    <RotateCcw className="w-3.5 h-3.5" />
-                                    Khôi phục
-                                  </>
+                                  <span className="inline-flex items-center gap-1">
+                                    <RotateCcw className="w-3 h-3" />
+                                    <span>Khôi phục</span>
+                                  </span>
                                 ) : (
-                                  <>
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                    Xóa mềm
-                                  </>
+                                  <span className="inline-flex items-center gap-1">
+                                    <Trash2 className="w-3 h-3" />
+                                    <span>Xóa</span>
+                                  </span>
                                 )}
                               </button>
                             </div>
@@ -764,25 +826,24 @@ export default function AdminPage() {
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 2: QUẢN LÝ CHỦ ĐỀ (TOPICS) */}
+      {/* TAB 2: QUẢN LÝ CHỦ ĐỀ (TOPICS)                                            */}
       {/* ========================================================================= */}
       {activeTab === 'topics' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* FORM THÊM CHỦ ĐỀ */}
-          <div className="lg:col-span-5 bg-white rounded-3xl border-2 border-amber-300 p-6 md:p-8 shadow-sm h-fit">
-            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-amber-100">
-              <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold">
-                <FolderPlus className="w-5 h-5" />
-              </div>
-              <div>
-                <h2 className="text-lg font-extrabold text-gray-800">Thêm Chủ Đề Mới</h2>
-                <p className="text-xs text-gray-500">Tạo chủ đề bài học mới cho hệ thống</p>
-              </div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Form Thêm Chủ Đề */}
+          <div className="lg:col-span-5 bg-white rounded-xl border border-gray-200 p-6 shadow-sm h-fit">
+            <div className="pb-4 mb-5 border-b border-gray-100">
+              <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wider">
+                Thêm Chủ Đề Mới
+              </h2>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Tạo chủ đề bài học mới cho hệ thống
+              </p>
             </div>
 
             <form onSubmit={handleAddTopic} className="space-y-4">
               <div>
-                <label className="block text-xs font-extrabold text-gray-700 uppercase mb-1.5">
+                <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
                   Tên chủ đề (Title) *
                 </label>
                 <input
@@ -791,12 +852,12 @@ export default function AdminPage() {
                   onChange={(e) => setNewTopic({ ...newTopic, title: e.target.value })}
                   required
                   placeholder="VD: Chủ đề 4: Động vật quen thuộc"
-                  className="w-full px-4 py-3 rounded-2xl bg-amber-50/70 border-2 border-amber-200 text-gray-800 text-sm font-semibold focus:outline-none focus:border-orange-400 placeholder-gray-400"
+                  className="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-gray-900 text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900 placeholder-gray-400"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-extrabold text-gray-700 uppercase mb-1.5">
+                <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
                   Mô tả ngắn
                 </label>
                 <textarea
@@ -804,23 +865,23 @@ export default function AdminPage() {
                   value={newTopic.description}
                   onChange={(e) => setNewTopic({ ...newTopic, description: e.target.value })}
                   placeholder="VD: Nhận biết ký hiệu các con vật quen thuộc quanh em..."
-                  className="w-full px-4 py-3 rounded-2xl bg-amber-50/70 border-2 border-amber-200 text-gray-800 text-sm font-semibold focus:outline-none focus:border-orange-400 placeholder-gray-400"
+                  className="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-gray-900 text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900 placeholder-gray-400"
                 />
               </div>
 
-              <div className="p-4 bg-amber-50/60 rounded-2xl border border-amber-200">
+              <div className="p-3.5 bg-gray-50 rounded-lg border border-gray-200">
                 <label className="flex items-center gap-3 cursor-pointer select-none">
                   <input
                     type="checkbox"
                     checked={newTopic.is_free}
                     onChange={(e) => setNewTopic({ ...newTopic, is_free: e.target.checked })}
-                    className="w-5 h-5 rounded-lg text-orange-500 focus:ring-orange-400 border-amber-300"
+                    className="w-4 h-4 rounded text-gray-900 focus:ring-gray-900 border-gray-300"
                   />
                   <div>
-                    <span className="text-sm font-extrabold text-gray-800 block">
+                    <span className="text-xs font-semibold text-gray-900 block">
                       Chủ đề miễn phí (Free)
                     </span>
-                    <span className="text-xs text-gray-500 block">
+                    <span className="text-[11px] text-gray-500 block">
                       Nếu bỏ chọn, chỉ người dùng VIP mới có thể truy cập
                     </span>
                   </div>
@@ -830,31 +891,33 @@ export default function AdminPage() {
               <button
                 type="submit"
                 disabled={actionLoading}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-gradient-to-r from-orange-400 to-amber-400 hover:from-orange-500 hover:to-amber-500 text-white font-extrabold text-sm shadow-md transition active:scale-95 disabled:opacity-50"
+                className="w-full inline-flex items-center justify-center gap-2 py-2 rounded-lg bg-gray-900 hover:bg-gray-800 text-white font-semibold text-xs shadow-sm transition active:scale-95 disabled:opacity-50"
               >
                 {actionLoading ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Đang lưu...
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Đang lưu...</span>
                   </>
                 ) : (
                   <>
-                    <Plus className="w-4 h-4" />
-                    Tạo chủ đề
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Tạo chủ đề</span>
                   </>
                 )}
               </button>
             </form>
           </div>
 
-          {/* DANH SÁCH CHỦ ĐỀ HIỆN CÓ */}
-          <div className="lg:col-span-7 bg-white rounded-3xl border-2 border-amber-200 p-6 shadow-sm">
-            <h3 className="font-extrabold text-gray-800 text-lg mb-4 flex items-center justify-between">
-              <span>Danh sách các chủ đề hiện có</span>
-              <span className="text-xs font-bold text-gray-400">
+          {/* Danh Sách Chủ Đề Hiện Có */}
+          <div className="lg:col-span-7 bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+            <div className="flex items-center justify-between pb-4 mb-4 border-b border-gray-100">
+              <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">
+                Danh sách các chủ đề hiện có
+              </h3>
+              <span className="text-xs font-medium text-gray-500">
                 {topics.length} chủ đề
               </span>
-            </h3>
+            </div>
 
             <div className="space-y-3">
               {topics.map((t) => {
@@ -863,17 +926,17 @@ export default function AdminPage() {
                 return (
                   <div
                     key={t.id}
-                    className="p-5 rounded-2xl border-2 border-amber-100 hover:border-amber-200 bg-amber-50/30 flex items-start justify-between gap-4 transition"
+                    className="p-4 rounded-lg border border-gray-200 hover:border-gray-300 bg-white hover:bg-gray-50/50 flex items-start justify-between gap-4 transition"
                   >
                     <div>
                       <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-extrabold text-gray-800 text-base">{t.title}</h4>
+                        <h4 className="font-semibold text-gray-900 text-sm">{t.title}</h4>
                         {t.is_free ? (
-                          <span className="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-700">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
                             Miễn phí
                           </span>
                         ) : (
-                          <span className="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-amber-100 text-amber-700">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-800 border border-amber-200">
                             Khóa VIP
                           </span>
                         )}
@@ -881,7 +944,7 @@ export default function AdminPage() {
                       {t.description && (
                         <p className="text-xs text-gray-500 line-clamp-2">{t.description}</p>
                       )}
-                      <p className="text-xs font-bold text-orange-500 mt-2">
+                      <p className="text-xs font-medium text-gray-600 mt-2">
                         {count} từ vựng đang hiển thị
                       </p>
                     </div>
@@ -889,10 +952,10 @@ export default function AdminPage() {
                     <Link
                       href={`/topics/${t.id}`}
                       target="_blank"
-                      className="px-3 py-1.5 rounded-xl bg-white border border-amber-200 hover:bg-amber-100 text-amber-800 text-xs font-bold transition flex items-center gap-1 shrink-0"
+                      className="px-2.5 py-1.5 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-medium transition inline-flex items-center gap-1.5 shrink-0"
                     >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                      Xem bài
+                      <ExternalLink className="w-3.5 h-3.5 text-gray-400" />
+                      <span>Xem bài</span>
                     </Link>
                   </div>
                 )
@@ -903,34 +966,34 @@ export default function AdminPage() {
       )}
 
       {/* ========================================================================= */}
-      {/* POPUP / MODAL CHỈNH SỬA TỪ VỰNG (EDIT POPUP) */}
+      {/* POPUP / MODAL CHỈNH SỬA TỪ VỰNG (Enterprise SaaS Modal)                    */}
       {/* ========================================================================= */}
       {editingVocab && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-lg rounded-3xl border-2 border-amber-300 p-6 md:p-8 shadow-2xl relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white w-full max-w-lg rounded-xl border border-gray-200 p-6 shadow-2xl relative">
             <button
               onClick={() => setEditingVocab(null)}
-              className="w-9 h-9 rounded-full bg-amber-100 hover:bg-amber-200 text-amber-800 flex items-center justify-center absolute top-5 right-5 transition"
+              className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center absolute top-5 right-5 transition"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
 
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-2xl bg-amber-100 text-orange-600 flex items-center justify-center font-bold">
-                <Edit3 className="w-5 h-5" />
+            <div className="flex items-center gap-3 mb-5 pb-3 border-b border-gray-100">
+              <div className="w-9 h-9 rounded-lg bg-gray-100 text-gray-900 flex items-center justify-center font-bold">
+                <Edit3 className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="text-xl font-extrabold text-gray-800">
+                <h3 className="text-base font-bold text-gray-900">
                   Chỉnh Sửa Từ Vựng
                 </h3>
-                <p className="text-xs text-gray-500">Cập nhật nội dung hoặc đổi link video</p>
+                <p className="text-xs text-gray-500">Cập nhật nội dung hoặc đổi link video thủ ngữ</p>
               </div>
             </div>
 
             <form onSubmit={handleUpdateVocab} className="space-y-4">
               {/* Chọn chủ đề */}
               <div>
-                <label className="block text-xs font-extrabold text-gray-700 uppercase mb-1">
+                <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
                   Chủ đề
                 </label>
                 <select
@@ -939,7 +1002,7 @@ export default function AdminPage() {
                     setEditingVocab({ ...editingVocab, topic_id: e.target.value })
                   }
                   required
-                  className="w-full px-4 py-2.5 rounded-2xl bg-amber-50/70 border-2 border-amber-200 text-gray-800 text-sm font-semibold focus:outline-none focus:border-orange-400"
+                  className="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-gray-900 text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-gray-900"
                 >
                   {topics.map((t) => (
                     <option key={t.id} value={t.id}>
@@ -952,7 +1015,7 @@ export default function AdminPage() {
               {/* Từ vựng & Nghĩa */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-extrabold text-gray-700 uppercase mb-1">
+                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
                     Từ vựng *
                   </label>
                   <input
@@ -962,11 +1025,11 @@ export default function AdminPage() {
                       setEditingVocab({ ...editingVocab, word: e.target.value })
                     }
                     required
-                    className="w-full px-4 py-2.5 rounded-2xl bg-amber-50/70 border-2 border-amber-200 text-gray-800 text-sm font-semibold focus:outline-none focus:border-orange-400"
+                    className="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-gray-900 text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-gray-900"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-extrabold text-gray-700 uppercase mb-1">
+                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
                     Ý nghĩa *
                   </label>
                   <input
@@ -976,14 +1039,14 @@ export default function AdminPage() {
                       setEditingVocab({ ...editingVocab, meaning: e.target.value })
                     }
                     required
-                    className="w-full px-4 py-2.5 rounded-2xl bg-amber-50/70 border-2 border-amber-200 text-gray-800 text-sm font-semibold focus:outline-none focus:border-orange-400"
+                    className="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-gray-900 text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-gray-900"
                   />
                 </div>
               </div>
 
               {/* Link video */}
               <div>
-                <label className="block text-xs font-extrabold text-gray-700 uppercase mb-1">
+                <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
                   Link video URL (YouTube/MP4) *
                 </label>
                 <input
@@ -993,13 +1056,13 @@ export default function AdminPage() {
                     setEditingVocab({ ...editingVocab, video_url: e.target.value })
                   }
                   required
-                  className="w-full px-4 py-2.5 rounded-2xl bg-amber-50/70 border-2 border-amber-200 text-gray-800 text-sm font-semibold focus:outline-none focus:border-orange-400"
+                  className="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-gray-900 text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-gray-900"
                 />
               </div>
 
               {/* Mô tả ký hiệu */}
               <div>
-                <label className="block text-xs font-extrabold text-gray-700 uppercase mb-1">
+                <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
                   Mô tả động tác thủ ngữ
                 </label>
                 <textarea
@@ -1009,28 +1072,28 @@ export default function AdminPage() {
                     setEditingVocab({ ...editingVocab, description: e.target.value })
                   }
                   placeholder="Hướng dẫn cách làm ký hiệu tay..."
-                  className="w-full px-4 py-2.5 rounded-2xl bg-amber-50/70 border-2 border-amber-200 text-gray-800 text-sm font-semibold focus:outline-none focus:border-orange-400"
+                  className="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-gray-900 text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-gray-900"
                 />
               </div>
 
               {/* Action buttons */}
-              <div className="flex gap-3 justify-end pt-3">
+              <div className="flex gap-2.5 justify-end pt-3 border-t border-gray-100">
                 <button
                   type="button"
                   onClick={() => setEditingVocab(null)}
-                  className="px-5 py-2.5 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm transition"
+                  className="px-4 py-2 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold text-xs transition"
                 >
                   Hủy bỏ
                 </button>
                 <button
                   type="submit"
                   disabled={actionLoading}
-                  className="flex items-center gap-2 px-6 py-2.5 rounded-2xl bg-gradient-to-r from-orange-400 to-amber-400 hover:from-orange-500 hover:to-amber-500 text-white font-extrabold text-sm shadow-md transition active:scale-95 disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gray-900 hover:bg-gray-800 text-white font-semibold text-xs shadow-sm transition active:scale-95 disabled:opacity-50"
                 >
                   {actionLoading ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Đang cập nhật...
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Đang cập nhật...</span>
                     </>
                   ) : (
                     'Lưu thay đổi'

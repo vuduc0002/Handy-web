@@ -170,6 +170,11 @@ export default function Header() {
 
   const isMp4 = selectedModalVocab?.video_url?.toLowerCase().endsWith('.mp4')
 
+  // Nếu đang ở trang Quản trị (/admin/*), ẩn Navbar học sinh để dùng Admin Layout riêng
+  if (pathname?.startsWith('/admin')) {
+    return null
+  }
+
   return (
     <>
       {/* ================================================================

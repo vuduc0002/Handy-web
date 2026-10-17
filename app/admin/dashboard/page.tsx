@@ -429,73 +429,6 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      {/* SaaS Admin Sub-Navbar */}
-      <header className="sticky top-0 z-40 bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-sm">
-                H
-              </div>
-              <div>
-                <span className="font-bold text-sm tracking-tight text-gray-900 block leading-none">
-                  HANDY
-                </span>
-                <span className="text-[10px] uppercase font-semibold text-gray-400 tracking-wider">
-                  Admin Console
-                </span>
-              </div>
-            </div>
-
-            {/* Navigation pills */}
-            <nav className="hidden sm:flex items-center gap-1">
-              <Link
-                href="/admin/dashboard"
-                className="px-3 py-1.5 rounded-md text-xs font-semibold bg-gray-100 text-gray-900 transition-colors"
-              >
-                Dashboard & Doanh thu
-              </Link>
-              <Link
-                href="/admin"
-                className="px-3 py-1.5 rounded-md text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors"
-              >
-                Quản lý Nội dung
-              </Link>
-            </nav>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Xem trang người dùng</span>
-            </Link>
-
-            <button
-              onClick={fetchDashboardData}
-              disabled={loading}
-              className="p-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-md transition disabled:opacity-50"
-              title="Làm mới dữ liệu"
-            >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            </button>
-
-            <div className="h-4 w-px bg-gray-200" />
-
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-700">
-                A
-              </div>
-              <span className="text-xs font-semibold text-gray-700 hidden md:inline">
-                Administrator
-              </span>
-            </div>
-          </div>
-        </div>
-      </header>
-
       {/* Main SaaS Container */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* Page Heading */}
@@ -509,10 +442,20 @@ export default function AdminDashboardPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
+            <button
+              onClick={fetchDashboardData}
+              disabled={loading}
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-300 rounded-lg shadow-2xs transition active:scale-95 disabled:opacity-50"
+              title="Làm mới dữ liệu"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-gray-500' : 'text-gray-600'}`} />
+              <span>Làm mới</span>
+            </button>
+
             <button
               onClick={handleExportCSV}
-              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-md bg-gray-900 hover:bg-gray-800 text-white text-xs font-semibold shadow-sm transition active:scale-95"
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-gray-900 hover:bg-gray-800 text-white text-xs font-semibold shadow-sm transition active:scale-95"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Xuất dữ liệu CSV</span>

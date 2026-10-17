@@ -1,8 +1,18 @@
+'use client'
+
 import Link from 'next/link'
 import Image from 'next/image'
+import { usePathname } from 'next/navigation'
 import { Download, ShieldCheck, Heart, Share2, Video } from 'lucide-react'
 
 export default function Footer() {
+  const pathname = usePathname()
+
+  // Không hiển thị Footer học sinh khi đang ở giao diện Quản trị (/admin/*)
+  if (pathname?.startsWith('/admin')) {
+    return null
+  }
+
   return (
     <footer className="bg-amber-950 text-amber-100 border-t-4 border-amber-400 mt-auto pt-14 pb-10">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
