@@ -17,14 +17,19 @@ import {
   ChevronLeft,
   ChevronRight,
   ArrowLeft,
-  ShieldAlert,
   Loader2,
   RefreshCw,
   FileSpreadsheet,
   CheckCircle2,
   Clock,
   Layers,
-  BookOpen
+  BookOpen,
+  LayoutDashboard,
+  Shield,
+  Activity,
+  CreditCard,
+  TrendingUp,
+  X
 } from 'lucide-react'
 
 interface Profile {
@@ -50,6 +55,7 @@ export default function AdminDashboardPage() {
   const router = useRouter()
   const [checkingAuth, setCheckingAuth] = useState(true)
   const [authorized, setAuthorized] = useState(false)
+  const [adminUser, setAdminUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
   // Raw data from Supabase
@@ -82,7 +88,7 @@ export default function AdminDashboardPage() {
 
         const { data: profile } = await supabase
           .from('profiles')
-          .select('role')
+          .select('role, email')
           .eq('id', user.id)
           .maybeSingle()
 
@@ -93,6 +99,7 @@ export default function AdminDashboardPage() {
         }
 
         if (isMounted) {
+          setAdminUser(user)
           setAuthorized(true)
           setCheckingAuth(false)
           fetchDashboardData()
@@ -224,7 +231,6 @@ export default function AdminDashboardPage() {
   // 4. Filter & Search transactions
   const filteredTransactions = useMemo(() => {
     return transactions.filter((tx) => {
-      // Search by Transaction ID or User Email or User ID
       const query = searchTerm.trim().toLowerCase()
       const matchSearch =
         !query ||
@@ -232,7 +238,6 @@ export default function AdminDashboardPage() {
         (tx.user_email && tx.user_email.toLowerCase().includes(query)) ||
         tx.user_id.toLowerCase().includes(query)
 
-      // Date range filter
       let matchDate = true
       if (startDate) {
         const start = new Date(startDate)
@@ -251,12 +256,10 @@ export default function AdminDashboardPage() {
     })
   }, [transactions, searchTerm, startDate, endDate])
 
-  // Reset to page 1 when filter changes
   useEffect(() => {
     setCurrentPage(1)
   }, [searchTerm, startDate, endDate])
 
-  // Pagination calculation
   const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage) || 1
   const paginatedTransactions = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage
@@ -304,10 +307,10 @@ export default function AdminDashboardPage() {
 
   if (checkingAuth) {
     return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center px-4">
-        <Loader2 className="w-10 h-10 text-orange-500 animate-spin mb-4" />
-        <p className="text-gray-600 font-extrabold text-base">
-          Đang kiểm tra quyền quản trị viên...
+      <div className="fixed inset-0 z-50 bg-gray-50 flex flex-col items-center justify-center">
+        <Loader2 className="w-8 h-8 text-gray-800 animate-spin mb-3" />
+        <p className="text-gray-500 font-medium text-sm">
+          Đang xác thực quyền quản trị viên...
         </p>
       </div>
     )
@@ -316,357 +319,410 @@ export default function AdminDashboardPage() {
   if (!authorized) return null
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-      {/* Top Header & Navigation Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <div>
-          <div className="flex items-center gap-3 mb-1">
-            <h1 className="text-2xl md:text-3xl font-black text-gray-800 tracking-tight flex items-center gap-2">
-              <span className="p-2 bg-gradient-to-tr from-orange-400 to-amber-400 text-white rounded-2xl shadow-sm">
-                <FileSpreadsheet className="w-6 h-6" />
-              </span>
-              <span>Bảng Điều Khiển Số Liệu & Giao Dịch</span>
-            </h1>
-          </div>
-          <p className="text-sm text-gray-500">
-            Hệ thống quản trị tài chính, tăng trưởng người dùng & xuất báo cáo Excel
-          </p>
-        </div>
-
-        {/* Action Controls */}
-        <div className="flex flex-wrap items-center gap-3">
-          <Link
-            href="/admin"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white border-2 border-amber-300 hover:bg-amber-50 text-amber-900 font-extrabold text-xs shadow-sm transition active:scale-95"
-          >
-            <BookOpen className="w-4 h-4 text-orange-500" />
-            <span>Quản lý Nội dung (Từ vựng & Chủ đề)</span>
-          </Link>
-
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white border-2 border-amber-300 hover:bg-amber-50 text-amber-900 font-extrabold text-xs shadow-sm transition active:scale-95"
-          >
-            <ArrowLeft className="w-4 h-4 text-orange-500" />
-            <span>Về Trang chủ</span>
-          </Link>
-
-          <button
-            onClick={fetchDashboardData}
-            disabled={loading}
-            className="p-2.5 rounded-2xl bg-amber-100 hover:bg-amber-200 text-amber-800 transition active:scale-95"
-            title="Làm mới dữ liệu"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          </button>
-        </div>
-      </div>
-
-      {/* ========================================================================= */}
-      {/* 1. KHU VỰC THỐNG KÊ TỔNG QUAN (4 OVERVIEW CARDS) */}
-      {/* ========================================================================= */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-        {/* Thẻ 1: Tổng số người dùng */}
-        <div className="bg-white rounded-3xl p-6 border-2 border-blue-200 shadow-sm hover:shadow-md transition relative overflow-hidden">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-black uppercase tracking-wider text-blue-700 bg-blue-50 px-3 py-1 rounded-full">
-              Người Dùng
-            </span>
-            <div className="w-10 h-10 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center shadow-inner">
-              <Users className="w-5 h-5" />
-            </div>
-          </div>
-          <p className="text-3xl font-black text-gray-800 tracking-tight">
-            {loading ? '...' : stats.totalUsers.toLocaleString('vi-VN')}
-          </p>
-          <p className="text-xs text-gray-500 font-medium mt-1">
-            Tổng tài khoản đã đăng ký trên hệ thống
-          </p>
-        </div>
-
-        {/* Thẻ 2: Tỷ lệ chuyển đổi VIP */}
-        <div className="bg-white rounded-3xl p-6 border-2 border-amber-200 shadow-sm hover:shadow-md transition relative overflow-hidden">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-black uppercase tracking-wider text-amber-700 bg-amber-50 px-3 py-1 rounded-full">
-              Chuyển Đổi VIP
-            </span>
-            <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center shadow-inner">
-              <Percent className="w-5 h-5" />
-            </div>
-          </div>
-          <p className="text-3xl font-black text-orange-500 tracking-tight">
-            {loading ? '...' : `${stats.conversionRate}%`}
-          </p>
-          <p className="text-xs text-gray-500 font-medium mt-1">
-            {stats.vipUsers} trên tổng số {stats.totalUsers} người dùng
-          </p>
-        </div>
-
-        {/* Thẻ 3: Người dùng VIP mới trong tháng này */}
-        <div className="bg-white rounded-3xl p-6 border-2 border-purple-200 shadow-sm hover:shadow-md transition relative overflow-hidden">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-black uppercase tracking-wider text-purple-700 bg-purple-50 px-3 py-1 rounded-full">
-              VIP Mới Tháng Này
-            </span>
-            <div className="w-10 h-10 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center shadow-inner">
-              <UserCheck className="w-5 h-5" />
-            </div>
-          </div>
-          <p className="text-3xl font-black text-purple-600 tracking-tight">
-            {loading ? '...' : `+${stats.newVipThisMonth}`}
-          </p>
-          <p className="text-xs text-gray-500 font-medium mt-1">
-            Tài khoản nâng cấp gói trọn đời trong tháng
-          </p>
-        </div>
-
-        {/* Thẻ 4: Tổng doanh thu */}
-        <div className="bg-gradient-to-br from-emerald-500 via-teal-600 to-emerald-700 rounded-3xl p-6 text-white shadow-xl relative overflow-hidden">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-black uppercase tracking-wider text-emerald-900 bg-white/90 px-3 py-1 rounded-full shadow-xs">
-              Tổng Doanh Thu
-            </span>
-            <div className="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-md text-white flex items-center justify-center shadow-inner">
-              <DollarSign className="w-5 h-5" />
-            </div>
-          </div>
-          <p className="text-2xl sm:text-3xl font-black tracking-tight">
-            {loading ? '...' : formatCurrency(stats.totalRevenue)}
-          </p>
-          <div className="flex items-center gap-1.5 text-xs text-emerald-100 font-bold mt-2">
-            {stats.isPositiveGrowth ? (
-              <ArrowUpRight className="w-4 h-4 text-emerald-200" />
-            ) : (
-              <ArrowDownRight className="w-4 h-4 text-rose-300" />
-            )}
-            <span>{stats.revenueGrowth} so với tháng trước</span>
-          </div>
-        </div>
-      </div>
-
-      {/* ========================================================================= */}
-      {/* 2. KHU VỰC TÌM KIẾM, BỘ LỌC THỜI GIAN & NÚT XUẤT CSV */}
-      {/* ========================================================================= */}
-      <div className="bg-white rounded-3xl border-2 border-amber-200 p-5 mb-6 shadow-sm">
-        <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between">
-          {/* Search box */}
-          <div className="relative flex-1 max-w-md">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Tìm theo Mã GD hoặc Email người dùng..."
-              className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-amber-50/70 border-2 border-amber-200 text-gray-800 text-xs font-semibold focus:outline-none focus:border-orange-400 placeholder-gray-400"
-            />
-          </div>
-
-          {/* Date Range & Export Button */}
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Start date */}
-            <div className="flex items-center gap-1.5 bg-amber-50/60 border border-amber-200 rounded-2xl px-3 py-1.5 text-xs">
-              <Calendar className="w-3.5 h-3.5 text-gray-500" />
-              <span className="font-bold text-gray-500">Từ:</span>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="bg-transparent text-gray-800 font-semibold focus:outline-none text-xs"
-              />
+    <div className="min-h-screen bg-gray-50 text-gray-900 font-sans antialiased">
+      {/* SaaS Admin Sub-Navbar */}
+      <header className="sticky top-0 z-40 bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-sm">
+                H
+              </div>
+              <div>
+                <span className="font-bold text-sm tracking-tight text-gray-900 block leading-none">
+                  HANDY
+                </span>
+                <span className="text-[10px] uppercase font-semibold text-gray-400 tracking-wider">
+                  Admin Console
+                </span>
+              </div>
             </div>
 
-            {/* End date */}
-            <div className="flex items-center gap-1.5 bg-amber-50/60 border border-amber-200 rounded-2xl px-3 py-1.5 text-xs">
-              <Calendar className="w-3.5 h-3.5 text-gray-500" />
-              <span className="font-bold text-gray-500">Đến:</span>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="bg-transparent text-gray-800 font-semibold focus:outline-none text-xs"
-              />
-            </div>
-
-            {/* Clear date filter */}
-            {(startDate || endDate || searchTerm) && (
-              <button
-                onClick={() => {
-                  setStartDate('')
-                  setEndDate('')
-                  setSearchTerm('')
-                }}
-                className="px-3 py-2 rounded-xl text-xs font-bold text-gray-500 hover:bg-gray-100 transition"
+            {/* Navigation pills */}
+            <nav className="hidden sm:flex items-center gap-1">
+              <Link
+                href="/admin/dashboard"
+                className="px-3 py-1.5 rounded-md text-xs font-semibold bg-gray-100 text-gray-900 transition-colors"
               >
-                Đặt lại
-              </button>
-            )}
+                Dashboard & Doanh thu
+              </Link>
+              <Link
+                href="/admin"
+                className="px-3 py-1.5 rounded-md text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors"
+              >
+                Quản lý Nội dung
+              </Link>
+            </nav>
+          </div>
 
-            {/* Export CSV Button */}
+          <div className="flex items-center gap-3">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Xem trang người dùng</span>
+            </Link>
+
+            <button
+              onClick={fetchDashboardData}
+              disabled={loading}
+              className="p-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-md transition disabled:opacity-50"
+              title="Làm mới dữ liệu"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            </button>
+
+            <div className="h-4 w-px bg-gray-200" />
+
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-700">
+                A
+              </div>
+              <span className="text-xs font-semibold text-gray-700 hidden md:inline">
+                Administrator
+              </span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main SaaS Container */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        {/* Page Heading */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">
+              Bảng điều khiển & Doanh thu
+            </h1>
+            <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
+              Tổng quan chỉ số tăng trưởng, người dùng VIP và giao dịch thanh toán trực tuyến
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
             <button
               onClick={handleExportCSV}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-extrabold text-xs shadow-md shadow-emerald-200 transition active:scale-95 cursor-pointer ml-auto sm:ml-0"
-              title="Xuất dữ liệu giao dịch ra file CSV (Excel)"
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-md bg-gray-900 hover:bg-gray-800 text-white text-xs font-semibold shadow-sm transition active:scale-95"
             >
-              <Download className="w-4 h-4" />
-              <span>Tải báo cáo Excel (CSV)</span>
+              <Download className="w-3.5 h-3.5" />
+              <span>Xuất dữ liệu CSV</span>
             </button>
           </div>
         </div>
-      </div>
 
-      {/* ========================================================================= */}
-      {/* 3. KHU VỰC BẢNG DỮ LIỆU GIAO DỊCH (DATA TABLE CÓ PHÂN TRANG) */}
-      {/* ========================================================================= */}
-      <div className="bg-white rounded-3xl border-2 border-amber-200 shadow-sm overflow-hidden mb-6">
-        <div className="p-5 border-b border-amber-100 bg-amber-50/40 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <h3 className="font-extrabold text-gray-800 text-base">
-              Lịch Sử Giao Dịch SePAY / VietQR
-            </h3>
-            <span className="text-xs font-bold text-amber-800 bg-amber-100 px-2.5 py-0.5 rounded-full">
+        {/* ========================================================================= */}
+        {/* 1. OVERVIEW CARDS (Style: Vercel / Stripe Data-driven) */}
+        {/* ========================================================================= */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Card 1: Tổng người dùng */}
+          <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:border-gray-300 transition-colors">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Tổng Người Dùng
+              </span>
+              <div className="w-8 h-8 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-500">
+                <Users className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-3">
+              <p className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
+                {loading ? '...' : stats.totalUsers.toLocaleString('vi-VN')}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                Tài khoản trên toàn hệ thống
+              </p>
+            </div>
+          </div>
+
+          {/* Card 2: Tỷ lệ chuyển đổi VIP */}
+          <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:border-gray-300 transition-colors">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Tỷ Lệ Chuyển Đổi VIP
+              </span>
+              <div className="w-8 h-8 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-500">
+                <Percent className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-3">
+              <p className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
+                {loading ? '...' : `${stats.conversionRate}%`}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                {stats.vipUsers} trên {stats.totalUsers} người dùng
+              </p>
+            </div>
+          </div>
+
+          {/* Card 3: VIP mới tháng này */}
+          <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:border-gray-300 transition-colors">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                VIP Mới Tháng Này
+              </span>
+              <div className="w-8 h-8 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-500">
+                <UserCheck className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-3">
+              <p className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
+                {loading ? '...' : `+${stats.newVipThisMonth}`}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                Kích hoạt trong tháng hiện tại
+              </p>
+            </div>
+          </div>
+
+          {/* Card 4: Tổng doanh thu (Enterprise Emerald Green) */}
+          <div className="bg-emerald-600 rounded-xl p-5 text-white shadow-sm border border-emerald-700">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-emerald-100 uppercase tracking-wider">
+                Tổng Doanh Thu
+              </span>
+              <div className="w-8 h-8 rounded-lg bg-emerald-700/60 flex items-center justify-center text-white">
+                <DollarSign className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-3">
+              <p className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+                {loading ? '...' : formatCurrency(stats.totalRevenue)}
+              </p>
+              <div className="flex items-center gap-1.5 text-xs text-emerald-100 font-medium mt-1">
+                {stats.isPositiveGrowth ? (
+                  <ArrowUpRight className="w-3.5 h-3.5 text-emerald-200" />
+                ) : (
+                  <ArrowDownRight className="w-3.5 h-3.5 text-rose-300" />
+                )}
+                <span>{stats.revenueGrowth} so với kỳ trước</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ========================================================================= */}
+        {/* 2. FILTER TOOLBAR (Unified clean white bar) */}
+        {/* ========================================================================= */}
+        <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+          <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
+            {/* Search Input */}
+            <div className="relative flex-1 max-w-md">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Tìm theo Mã GD, Email hoặc User ID..."
+                className="w-full pl-9 pr-3 py-1.5 rounded-md bg-white border border-gray-300 text-gray-900 text-xs focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900 placeholder-gray-400"
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* Date Pickers */}
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-md px-2.5 py-1 text-gray-600">
+                <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                <span className="text-[11px] font-medium text-gray-500">Từ:</span>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="bg-transparent text-gray-800 text-xs focus:outline-none"
+                />
+              </div>
+
+              <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-md px-2.5 py-1 text-gray-600">
+                <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                <span className="text-[11px] font-medium text-gray-500">Đến:</span>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="bg-transparent text-gray-800 text-xs focus:outline-none"
+                />
+              </div>
+
+              {(startDate || endDate || searchTerm) && (
+                <button
+                  onClick={() => {
+                    setStartDate('')
+                    setEndDate('')
+                    setSearchTerm('')
+                  }}
+                  className="px-2.5 py-1 text-xs font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition"
+                >
+                  Đặt lại
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* ========================================================================= */}
+        {/* 3. TRANSACTIONS DATA TABLE (Minimal, Clean & Enterprise) */}
+        {/* ========================================================================= */}
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-bold text-gray-900">
+                Lịch sử giao dịch
+              </h2>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Dữ liệu thanh toán từ Webhook SePAY và cổng VietQR
+              </p>
+            </div>
+            <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2.5 py-1 rounded-md">
               {filteredTransactions.length} bản ghi
             </span>
           </div>
-        </div>
 
-        {/* Data Table */}
-        <div className="w-full overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[700px]">
-            <thead>
-              <tr className="bg-amber-100/50 text-gray-700 text-xs font-extrabold uppercase tracking-wider border-b border-amber-200">
-                <th className="py-4 px-6">Mã GD</th>
-                <th className="py-4 px-6">Người dùng</th>
-                <th className="py-4 px-6">Số tiền</th>
-                <th className="py-4 px-6">Ngày giao dịch</th>
-                <th className="py-4 px-6 text-center">Phương thức</th>
-                <th className="py-4 px-6 text-center">Trạng thái</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-amber-100 text-sm">
-              {loading ? (
-                <tr>
-                  <td colSpan={6} className="py-16 text-center text-gray-400">
-                    <Loader2 className="w-7 h-7 animate-spin mx-auto mb-2 text-orange-400" />
-                    <span>Đang tải danh sách giao dịch...</span>
-                  </td>
+          <div className="w-full overflow-x-auto">
+            <table className="w-full text-left border-collapse min-w-[700px]">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-200 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
+                  <th className="py-3 px-5">Mã Giao Dịch</th>
+                  <th className="py-3 px-5">Người Dùng</th>
+                  <th className="py-3 px-5">Số Tiền</th>
+                  <th className="py-3 px-5">Thời Gian</th>
+                  <th className="py-3 px-5 text-center">Phương Thức</th>
+                  <th className="py-3 px-5 text-center">Trạng Thái</th>
                 </tr>
-              ) : paginatedTransactions.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="py-16 text-center text-gray-400">
-                    Không tìm thấy giao dịch nào phù hợp với bộ lọc.
-                  </td>
-                </tr>
-              ) : (
-                paginatedTransactions.map((tx) => {
-                  const amount = Number(tx.transferAmount ?? tx.amount ?? 0)
-                  const isSuccess = (tx.status || '').toUpperCase() === 'SUCCESS'
-                  const dateFormatted = tx.created_at
-                    ? new Date(tx.created_at).toLocaleString('vi-VN', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })
-                    : 'Chưa rõ'
+              </thead>
+              <tbody className="divide-y divide-gray-100 text-xs">
+                {loading ? (
+                  <tr>
+                    <td colSpan={6} className="py-16 text-center text-gray-400">
+                      <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-gray-600" />
+                      <span>Đang tải danh sách giao dịch...</span>
+                    </td>
+                  </tr>
+                ) : paginatedTransactions.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-16 text-center text-gray-500">
+                      <div className="max-w-xs mx-auto space-y-1">
+                        <CreditCard className="w-6 h-6 mx-auto text-gray-400 mb-2" />
+                        <p className="font-semibold text-gray-700">Không có giao dịch nào</p>
+                        <p className="text-xs text-gray-400">
+                          Chưa có lịch sử giao dịch phát sinh hoặc bộ lọc không khớp dữ liệu.
+                        </p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  paginatedTransactions.map((tx) => {
+                    const amount = Number(tx.transferAmount ?? tx.amount ?? 0)
+                    const isSuccess = (tx.status || '').toUpperCase() === 'SUCCESS'
+                    const dateFormatted = tx.created_at
+                      ? new Date(tx.created_at).toLocaleString('vi-VN', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })
+                      : '—'
 
-                  return (
-                    <tr key={tx.id} className="hover:bg-amber-50/40 transition">
-                      {/* Mã GD */}
-                      <td className="py-4 px-6 font-mono text-xs font-bold text-gray-700">
-                        <span className="p-1.5 bg-gray-100 rounded-lg select-all">
+                    return (
+                      <tr key={tx.id} className="hover:bg-gray-50 transition-colors">
+                        {/* Mã GD */}
+                        <td className="py-3.5 px-5 font-mono text-[11px] text-gray-700 font-medium select-all">
                           {tx.id.slice(0, 13)}...
-                        </span>
-                      </td>
+                        </td>
 
-                      {/* Người dùng */}
-                      <td className="py-4 px-6">
-                        <p className="font-extrabold text-gray-800 text-sm">
-                          {tx.user_email}
-                        </p>
-                        <p className="font-mono text-[11px] text-gray-400 select-all">
-                          ID: {tx.user_id.slice(0, 8)}...
-                        </p>
-                      </td>
+                        {/* Người dùng */}
+                        <td className="py-3.5 px-5">
+                          <p className="font-medium text-gray-900">
+                            {tx.user_email}
+                          </p>
+                          <p className="font-mono text-[10px] text-gray-400">
+                            {tx.user_id.slice(0, 8)}...
+                          </p>
+                        </td>
 
-                      {/* Số tiền */}
-                      <td className="py-4 px-6 font-black text-emerald-600 text-sm">
-                        +{formatCurrency(amount)}
-                      </td>
+                        {/* Số tiền */}
+                        <td className="py-3.5 px-5 font-semibold text-gray-900">
+                          {formatCurrency(amount)}
+                        </td>
 
-                      {/* Ngày giao dịch */}
-                      <td className="py-4 px-6 text-xs text-gray-500 font-medium">
-                        <div className="flex items-center gap-1.5">
-                          <Clock className="w-3.5 h-3.5 text-gray-400" />
-                          <span>{dateFormatted}</span>
-                        </div>
-                      </td>
+                        {/* Ngày giao dịch */}
+                        <td className="py-3.5 px-5 text-gray-500 text-[11px]">
+                          {dateFormatted}
+                        </td>
 
-                      {/* Phương thức */}
-                      <td className="py-4 px-6 text-center">
-                        <span className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-200">
-                          {tx.payment_method || 'VIETQR'}
-                        </span>
-                      </td>
-
-                      {/* Trạng thái */}
-                      <td className="py-4 px-6 text-center">
-                        {isSuccess ? (
-                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-700 border border-emerald-300">
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            <span>Thành công</span>
+                        {/* Phương thức */}
+                        <td className="py-3.5 px-5 text-center">
+                          <span className="inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-700 border border-gray-200">
+                            {tx.payment_method || 'VIETQR'}
                           </span>
-                        ) : (
-                          <span className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-600">
-                            {tx.status || 'Đang xử lý'}
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  )
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+                        </td>
 
-        {/* Phân trang (Pagination) */}
-        {!loading && filteredTransactions.length > 0 && (
-          <div className="p-4 border-t border-amber-100 bg-amber-50/20 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-600">
-            <div>
-              Hiển thị <span className="font-black text-gray-800">{(currentPage - 1) * itemsPerPage + 1}</span> -{' '}
-              <span className="font-black text-gray-800">
-                {Math.min(currentPage * itemsPerPage, filteredTransactions.length)}
-              </span>{' '}
-              trong tổng số <span className="font-black text-gray-800">{filteredTransactions.length}</span> giao dịch
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-amber-200 bg-white hover:bg-amber-50 text-gray-700 font-bold transition disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                <ChevronLeft className="w-4 h-4" />
-                <span>Trước</span>
-              </button>
-
-              <span className="px-3 py-1.5 font-bold text-gray-800">
-                Trang {currentPage} / {totalPages}
-              </span>
-
-              <button
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-amber-200 bg-white hover:bg-amber-50 text-gray-700 font-bold transition disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                <span>Sau</span>
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
+                        {/* Trạng thái */}
+                        <td className="py-3.5 px-5 text-center">
+                          {isSuccess ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-green-100 text-green-800">
+                              <span className="w-1.5 h-1.5 rounded-full bg-green-600" />
+                              <span>Thành công</span>
+                            </span>
+                          ) : (
+                            <span className="inline-block px-2 py-0.5 rounded-full text-[11px] font-medium bg-gray-100 text-gray-600">
+                              {tx.status || 'Đang xử lý'}
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })
+                )}
+              </tbody>
+            </table>
           </div>
-        )}
-      </div>
+
+          {/* Pagination */}
+          {!loading && filteredTransactions.length > 0 && (
+            <div className="px-5 py-3 border-t border-gray-200 bg-white flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500">
+              <div>
+                Đang xem <span className="font-semibold text-gray-900">{(currentPage - 1) * itemsPerPage + 1}</span> -{' '}
+                <span className="font-semibold text-gray-900">
+                  {Math.min(currentPage * itemsPerPage, filteredTransactions.length)}
+                </span>{' '}
+                trên <span className="font-semibold text-gray-900">{filteredTransactions.length}</span> giao dịch
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-medium transition disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Trước</span>
+                </button>
+
+                <span className="px-2 py-1 text-gray-700 font-medium">
+                  {currentPage} / {totalPages}
+                </span>
+
+                <button
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-medium transition disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <span>Sau</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </main>
     </div>
   )
 }
