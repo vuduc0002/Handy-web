@@ -40,7 +40,7 @@ export default async function QuizSelectionPage() {
           <Link
             key={t.id}
             href={`/practice/${t.id}`}
-            className="group bg-white rounded-3xl p-6 border-2 border-amber-200 hover:border-orange-400 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between"
+            className="group bg-white rounded-3xl p-6 border-2 border-amber-200 hover:border-orange-400 hover:shadow-xl hover:-translate-y-1 active:scale-95 transition-all duration-200 flex flex-col justify-between cursor-pointer"
           >
             <div>
               <div className="flex items-center justify-between mb-3">
@@ -58,7 +58,7 @@ export default async function QuizSelectionPage() {
                 )}
               </div>
 
-              <h3 className="font-black text-gray-800 text-lg group-hover:text-orange-600 transition-colors line-clamp-1 mb-1">
+              <h3 className="font-black text-gray-800 text-base sm:text-lg group-hover:text-orange-600 transition-colors break-words leading-snug mb-1.5">
                 {t.title}
               </h3>
               {t.description && (

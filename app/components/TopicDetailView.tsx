@@ -172,9 +172,9 @@ export default function TopicDetailView({
           >
             <ArrowLeft className="w-5 h-5" />
           </Link>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl md:text-2xl font-extrabold text-gray-800 line-clamp-1">
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-lg sm:text-xl md:text-2xl font-black text-gray-800 break-words leading-snug">
                 {topic.title}
               </h1>
               {topic.is_free ? (
@@ -188,7 +188,7 @@ export default function TopicDetailView({
               )}
             </div>
             {topic.description && (
-              <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">
+              <p className="text-xs text-gray-500 mt-1 line-clamp-2 leading-relaxed">
                 {topic.description}
               </p>
             )}
@@ -341,14 +341,14 @@ export default function TopicDetailView({
                     {/* Nội dung từ & nghĩa */}
                     <div className="flex-1 min-w-0">
                       <p
-                        className={`font-extrabold text-base leading-snug line-clamp-1 ${
+                        className={`font-extrabold text-base leading-snug break-words ${
                           isSelected ? 'text-white' : 'text-gray-800'
                         }`}
                       >
                         {vocab.word}
                       </p>
                       <p
-                        className={`text-xs line-clamp-1 mt-0.5 ${
+                        className={`text-xs line-clamp-2 mt-0.5 leading-relaxed ${
                           isSelected ? 'text-white/90' : 'text-gray-500'
                         }`}
                       >

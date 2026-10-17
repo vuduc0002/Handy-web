@@ -3,12 +3,11 @@ export const dynamic = 'force-dynamic';
 import { NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// Mức tiền thanh toán gói VIP HANDY (199.000 VNĐ)
+// Mức tiền thanh toán gói VIP HANDY (199.000 VNĐ, tối thiểu cho phép 6.000đ khi test)
 const REQUIRED_VIP_AMOUNT = 6000;
 
 // ============================================================================
-// ✅ Security Patch: In-memory Rate Limiting
-// Chặn DDoS / spam request: tối đa 10 lần / phút / IP.
+// ✅ Security: In-memory Rate Limiting cho các request không hợp lệ / brute-force
 // ============================================================================
 interface RateLimitEntry {
   count: number;
@@ -47,42 +46,36 @@ function cleanupRateLimitMap() {
 export async function POST(req: NextRequest) {
   try {
     // =========================================================================
-    // 0. Rate Limiting — Chặn IP spam/DDoS
-    // =========================================================================
-    // Dọn dẹp các entry cũ theo cơ hội để tránh memory leak
-    cleanupRateLimitMap();
-
-    const ip =
-      req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-      req.headers.get('x-real-ip') ||
-      'unknown';
-
-    const { allowed, retryAfterSec } = checkRateLimit(ip);
-
-    if (!allowed) {
-      console.warn(`[SePAY Webhook] Rate limit exceeded for IP: ${ip}`);
-      return Response.json(
-        { error: `Too Many Requests. Thử lại sau ${retryAfterSec} giây.` },
-        {
-          status: 429,
-          headers: { 'Retry-After': String(retryAfterSec) },
-        }
-      );
-    }
-
-    // =========================================================================
-    // 1. Xác thực Request từ SePAY
+    // 1. Xác thực Request từ SePAY & Chống Brute-Force Rate Limiting
     // =========================================================================
     const rawAuth =
       req.headers.get('authorization') ||
       req.headers.get('x-sepay-api-key') ||
       '';
 
-    // SePAY có thể gửi kèm tiền tố "Apikey " hoặc "Bearer " hoặc chỉ gửi raw token
     const token = rawAuth.replace(/^(Apikey|Bearer)\s+/i, '').trim();
     const expectedKey = process.env.SEPAY_API_KEY?.trim();
 
+    // Nếu không khớp API Key, áp dụng Rate Limiting chặt chẽ cho IP lạ
     if (!expectedKey || token !== expectedKey) {
+      cleanupRateLimitMap();
+      const ip =
+        req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+        req.headers.get('x-real-ip') ||
+        'unknown';
+
+      const { allowed, retryAfterSec } = checkRateLimit(ip);
+      if (!allowed) {
+        console.warn(`[SePAY Webhook] Rate limit exceeded for unauthorized IP: ${ip}`);
+        return Response.json(
+          { error: `Too Many Requests. Thử lại sau ${retryAfterSec} giây.` },
+          {
+            status: 429,
+            headers: { 'Retry-After': String(retryAfterSec) },
+          }
+        );
+      }
+
       console.warn('[SePAY Webhook] Unauthorized attempt:', { received: token });
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -112,38 +105,45 @@ export async function POST(req: NextRequest) {
     const transferContent: string = content || body.description || '';
     const amount = Number(transferAmount);
 
-    console.log('[SePAY Webhook] Nhận giao dịch:', {
+    console.log('[SePAY Webhook] Nhận giao dịch hợp lệ:', {
       referenceCode,
       amount,
       content: transferContent,
     });
 
-    // Tìm mã nhận diện: hỗ trợ chuỗi 32 ký tự hex (ngân hàng bỏ dấu gạch ngang) hoặc UUID chuẩn
-    // 1. Thử bắt chuỗi 32 ký tự hex liền nhau (không có dấu gạch ngang)
+    // =========================================================================
+    // 4. Trích xuất mã nhận diện UUID linh hoạt (Xử lý mọi định dạng ngân hàng)
+    // =========================================================================
     let formattedUuid: string | null = null;
-    const match32 = transferContent.match(/HANDY[\s_]*([a-fA-F0-9]{32})/i);
 
-    if (match32) {
-      const rawId = match32[1];
-      // Phục hồi định dạng UUID chuẩn: 8-4-4-4-12
-      formattedUuid = `${rawId.slice(0, 8)}-${rawId.slice(8, 12)}-${rawId.slice(12, 16)}-${rawId.slice(16, 20)}-${rawId.slice(20)}`.toLowerCase();
-    } else {
-      // 2. Dự phòng trường hợp ngân hàng giữ nguyên dấu gạch ngang UUID
-      const matchUuid = transferContent.match(/HANDY[\s_]*([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})/i);
+    // Cách 1: Tìm vị trí HANDY và gom 32 ký tự hex (bỏ qua gạch, chấm, khoảng cách)
+    const handyIndex = transferContent.search(/HANDY/i);
+    if (handyIndex !== -1) {
+      const afterHandy = transferContent.slice(handyIndex + 5);
+      const hexCandidate = afterHandy.slice(0, 50).replace(/[^a-fA-F0-9]/g, '');
+      if (hexCandidate.length >= 32) {
+        const raw32 = hexCandidate.slice(0, 32).toLowerCase();
+        formattedUuid = `${raw32.slice(0, 8)}-${raw32.slice(8, 12)}-${raw32.slice(12, 16)}-${raw32.slice(16, 20)}-${raw32.slice(20)}`;
+      }
+    }
+
+    // Cách 2: Dự phòng quét toàn chuỗi tìm UUID chuẩn (8-4-4-4-12)
+    if (!formattedUuid) {
+      const matchUuid = transferContent.match(/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})/i);
       if (matchUuid) {
         formattedUuid = matchUuid[1].toLowerCase();
       }
     }
 
     if (!formattedUuid) {
-      console.warn('[SePAY Webhook] Không tìm thấy mã nhận diện UUID 32 ký tự hợp lệ trong nội dung:', transferContent);
+      console.warn('[SePAY Webhook] Không tìm thấy mã nhận diện HANDY hợp lệ:', transferContent);
       return Response.json(
         { error: 'Không tìm thấy mã nhận diện HANDY hợp lệ trong nội dung chuyển khoản' },
         { status: 400 }
       );
     }
 
-    // Kiểm tra số tiền chuyển khoản có đủ nâng cấp VIP hay không
+    // Kiểm tra số tiền chuyển khoản
     if (isNaN(amount) || amount < REQUIRED_VIP_AMOUNT) {
       console.warn(`[SePAY Webhook] Số tiền ${amount} chưa đủ mức ${REQUIRED_VIP_AMOUNT}`);
       return Response.json(
@@ -152,7 +152,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Cập nhật User bằng .eq() với UUID chuẩn đã phục hồi
+    // =========================================================================
+    // 5. Cập nhật User bằng .eq() với UUID chuẩn đã phục hồi
+    // =========================================================================
+    let userId = formattedUuid;
     const { data, error } = await supabase
       .from('profiles')
       .update({ is_premium: true })
@@ -170,18 +173,52 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Cơ chế an toàn (Failsafe): Nếu chưa có row trong profiles (trigger lỗi lúc đăng ký),
+    // tra cứu qua auth.users và tự động tạo profile VIP dự phòng cho user
     if (!data || data.length === 0) {
-      console.error('[SePAY Webhook] Không tìm thấy user với UUID:', formattedUuid);
-      return Response.json(
-        { error: `Không tìm thấy tài khoản người dùng tương ứng với ID ${formattedUuid}` },
-        { status: 404 }
-      );
+      console.warn('[SePAY Webhook] Profile chưa có trong bảng profiles, kiểm tra auth.users...', formattedUuid);
+      try {
+        const { data: authUserData } = await supabase.auth.admin.getUserById(formattedUuid);
+        if (authUserData?.user) {
+          const { data: insertedProfile, error: insertError } = await supabase
+            .from('profiles')
+            .upsert({
+              id: authUserData.user.id,
+              email: authUserData.user.email || '',
+              role: 'USER',
+              is_premium: true,
+            })
+            .select();
+
+          if (insertError || !insertedProfile || insertedProfile.length === 0) {
+            console.error('[SePAY Webhook] Không thể tạo profile dự phòng:', insertError);
+            return Response.json(
+              { error: 'Không thể tạo profile dự phòng cho người dùng' },
+              { status: 500 }
+            );
+          }
+          userId = insertedProfile[0].id;
+        } else {
+          console.error('[SePAY Webhook] Không tìm thấy user với UUID:', formattedUuid);
+          return Response.json(
+            { error: `Không tìm thấy tài khoản người dùng tương ứng với ID ${formattedUuid}` },
+            { status: 404 }
+          );
+        }
+      } catch (authErr) {
+        console.error('[SePAY Webhook] Lỗi tra cứu auth.users:', authErr);
+        return Response.json(
+          { error: `Không tìm thấy tài khoản người dùng tương ứng với ID ${formattedUuid}` },
+          { status: 404 }
+        );
+      }
+    } else {
+      userId = data[0].id;
     }
 
-    const updatedUser = data[0];
-    const userId = updatedUser.id;
-
-    // Ghi chép lịch sử thanh toán vào bảng transactions
+    // =========================================================================
+    // 6. Ghi chép lịch sử thanh toán vào bảng transactions
+    // =========================================================================
     try {
       await supabase.from('transactions').insert({
         user_id: userId,
@@ -195,7 +232,7 @@ export async function POST(req: NextRequest) {
 
     console.log(`[SePAY Webhook] Đã nâng cấp VIP thành công cho User: ${userId}`);
 
-    // CHỈ trả về status 200 SAU KHI lệnh update is_premium: true vào database Supabase thành công
+    // CHỈ trả về status 200 SAU KHI nâng cấp VIP thành công
     return Response.json(
       {
         success: true,

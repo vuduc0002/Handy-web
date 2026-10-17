@@ -136,10 +136,10 @@ export default function ProfilePage() {
             )}
           </div>
 
-          <h2 className="text-xl font-black text-gray-800 mb-1">
+          <h2 className="text-xl font-black text-gray-800 mb-1 max-w-full truncate px-2">
             {profile?.email?.split('@')[0] || 'Học viên'}
           </h2>
-          <p className="text-xs text-gray-500 mb-4">{profile?.email}</p>
+          <p className="text-xs text-gray-500 mb-4 break-all max-w-full px-2 text-center">{profile?.email}</p>
 
           {/* Badge trạng thái */}
           <div className="mb-6">
@@ -159,7 +159,7 @@ export default function ProfilePage() {
           <div className="w-full pt-4 border-t border-amber-100 space-y-2">
             <button
               onClick={handleLogout}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-red-50 hover:bg-red-100 text-red-600 font-extrabold text-xs transition active:scale-95"
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-red-50 hover:bg-red-100 text-red-600 font-extrabold text-xs transition active:scale-95 cursor-pointer"
             >
               <LogOut className="w-4 h-4" />
               <span>Đăng xuất tài khoản</span>
@@ -177,11 +177,11 @@ export default function ProfilePage() {
 
             <div className="space-y-3.5 text-sm">
               <div className="flex items-center justify-between p-3.5 bg-amber-50/60 rounded-2xl border border-amber-200">
-                <div className="flex items-center gap-3">
-                  <Mail className="w-5 h-5 text-orange-500" />
-                  <div>
+                <div className="flex items-center gap-3 min-w-0">
+                  <Mail className="w-5 h-5 text-orange-500 shrink-0" />
+                  <div className="min-w-0">
                     <span className="text-xs text-gray-500 font-bold block">Email đăng ký</span>
-                    <span className="text-sm font-black text-gray-800">{profile?.email}</span>
+                    <span className="text-sm font-black text-gray-800 break-all">{profile?.email}</span>
                   </div>
                 </div>
               </div>

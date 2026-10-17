@@ -247,7 +247,7 @@ export default function CheckoutPage() {
               </div>
               <button
                 onClick={() => copyToClipboard(bankName, 'bank')}
-                className="p-2 rounded-xl hover:bg-amber-100 text-amber-800 transition"
+                className="p-2 rounded-xl hover:bg-amber-100 text-amber-800 transition active:scale-95 cursor-pointer"
                 title="Sao chép"
               >
                 {copiedField === 'bank' ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
@@ -262,7 +262,7 @@ export default function CheckoutPage() {
               </div>
               <button
                 onClick={() => copyToClipboard(bankAccount, 'acc')}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-amber-300 text-xs font-extrabold text-amber-800 hover:bg-amber-100 transition active:scale-95"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-amber-300 text-xs font-extrabold text-amber-800 hover:bg-amber-100 transition active:scale-95 cursor-pointer"
               >
                 {copiedField === 'acc' ? (
                   <>
@@ -294,7 +294,7 @@ export default function CheckoutPage() {
               </div>
               <button
                 onClick={() => copyToClipboard('199000', 'amount')}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-amber-300 text-xs font-extrabold text-amber-800 hover:bg-amber-100 transition active:scale-95"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-amber-300 text-xs font-extrabold text-amber-800 hover:bg-amber-100 transition active:scale-95 cursor-pointer"
               >
                 {copiedField === 'amount' ? (
                   <>
@@ -318,7 +318,7 @@ export default function CheckoutPage() {
                 </span>
                 <button
                   onClick={() => copyToClipboard(transferContent, 'content')}
-                  className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-extrabold transition shadow-sm active:scale-95 shrink-0"
+                  className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-extrabold transition shadow-sm active:scale-95 shrink-0 cursor-pointer"
                 >
                   {copiedField === 'content' ? (
                     <>

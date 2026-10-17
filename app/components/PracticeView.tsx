@@ -279,10 +279,10 @@ export default function PracticeView({
             href={`/topics/${topic.id}`}
             className="inline-flex items-center gap-2 text-xs font-extrabold text-gray-600 hover:text-orange-600 transition"
           >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Về bài học ({topic.title})</span>
+            <ArrowLeft className="w-4 h-4 shrink-0" />
+            <span className="max-w-[160px] sm:max-w-xs md:max-w-md truncate">Về bài học ({topic.title})</span>
           </Link>
-          <span className="text-xs font-black text-amber-800 bg-amber-100 px-3 py-1 rounded-full">
+          <span className="text-xs font-black text-amber-800 bg-amber-100 px-3 py-1 rounded-full shrink-0">
             Từ {currentIndex + 1} / {total}
           </span>
         </div>
@@ -320,13 +320,13 @@ export default function PracticeView({
             <span className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
               Từ vựng ngôn ngữ ký hiệu:
             </span>
-            <div className="flex items-center gap-3">
-              <h2 className="text-4xl sm:text-6xl font-black text-orange-500 tracking-tight">
+            <div className="flex items-center justify-center gap-3 max-w-full px-2">
+              <h2 className="text-3xl sm:text-5xl md:text-6xl font-black text-orange-500 tracking-tight break-words text-center">
                 {currentVocab.word}
               </h2>
               <button
                 onClick={(e) => speakWord(currentVocab.word, e)}
-                className="w-11 h-11 rounded-full bg-orange-100 hover:bg-orange-200 text-orange-600 flex items-center justify-center transition active:scale-95 shrink-0"
+                className="w-11 h-11 rounded-full bg-orange-100 hover:bg-orange-200 text-orange-600 flex items-center justify-center transition active:scale-95 shrink-0 cursor-pointer"
                 title="Phát âm"
               >
                 <Volume2 className="w-6 h-6" />
@@ -338,8 +338,8 @@ export default function PracticeView({
           </div>
         ) : (
           /* MẶT SAU: Ý NGHĨA & VIDEO THỦ NGỮ */
-          <div className="flex-1 flex flex-col items-center justify-center py-4 text-center">
-            <span className="text-xs font-bold text-orange-600 uppercase tracking-widest mb-2">
+          <div className="flex-1 flex flex-col items-center justify-center py-4 text-center px-2">
+            <span className="text-xs sm:text-sm font-bold text-orange-600 uppercase tracking-widest mb-2 break-words max-w-full">
               Ý nghĩa: {currentVocab.meaning}
             </span>
 
