@@ -3,8 +3,8 @@ export const dynamic = 'force-dynamic';
 import { NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// Mức tiền thanh toán gói VIP HANDY (199.000 VNĐ, tối thiểu cho phép 6.000đ khi test)
-const REQUIRED_VIP_AMOUNT = 6000;
+// Mức tiền thanh toán gói VIP HANDY (Cấu hình qua biến môi trường hoặc mặc định 6.000đ khi test)
+const REQUIRED_VIP_AMOUNT = Number(process.env.VIP_AMOUNT || process.env.NEXT_PUBLIC_VIP_AMOUNT) || 6000;
 
 // ============================================================================
 // ✅ Security: In-memory Rate Limiting cho các request không hợp lệ / brute-force

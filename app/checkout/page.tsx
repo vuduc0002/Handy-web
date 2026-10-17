@@ -19,7 +19,7 @@ import {
   PartyPopper
 } from 'lucide-react'
 
-const VIP_AMOUNT = 199000
+const VIP_AMOUNT = Number(process.env.NEXT_PUBLIC_VIP_AMOUNT) || 6000
 
 export default function CheckoutPage() {
   const router = useRouter()
@@ -208,7 +208,7 @@ export default function CheckoutPage() {
               </div>
 
               <div className="text-right">
-                <span className="text-2xl md:text-3xl font-black">199.000đ</span>
+                <span className="text-2xl md:text-3xl font-black">{VIP_AMOUNT.toLocaleString('vi-VN')}đ</span>
                 <span className="block text-xs text-amber-200 font-medium">Thanh toán 1 lần</span>
               </div>
             </div>
@@ -290,10 +290,10 @@ export default function CheckoutPage() {
             <div className="flex items-center justify-between p-3.5 bg-amber-50/60 rounded-2xl border border-amber-200">
               <div>
                 <span className="text-xs text-gray-500 font-bold block">Số tiền</span>
-                <span className="text-base font-black text-gray-800">199.000 VNĐ</span>
+                <span className="text-base font-black text-gray-800">{VIP_AMOUNT.toLocaleString('vi-VN')} VNĐ</span>
               </div>
               <button
-                onClick={() => copyToClipboard('199000', 'amount')}
+                onClick={() => copyToClipboard(VIP_AMOUNT.toString(), 'amount')}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-amber-300 text-xs font-extrabold text-amber-800 hover:bg-amber-100 transition active:scale-95 cursor-pointer"
               >
                 {copiedField === 'amount' ? (
