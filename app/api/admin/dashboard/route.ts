@@ -50,3 +50,43 @@ export async function GET(req: NextRequest) {
     )
   }
 }
+
+// PATCH: Cấp hoặc Hủy VIP thủ công cho người dùng (Bypass RLS qua supabaseAdmin)
+export async function PATCH(req: NextRequest) {
+  try {
+    const body = await req.json()
+    const { userId, is_premium } = body
+
+    if (!userId || typeof is_premium !== 'boolean') {
+      return Response.json(
+        { error: 'Thiếu userId hoặc trạng thái is_premium không hợp lệ' },
+        { status: 400 }
+      )
+    }
+
+    // Cập nhật trực tiếp vào bảng profiles bằng Service Role Key
+    const { data, error } = await supabaseAdmin
+      .from('profiles')
+      .update({ is_premium })
+      .eq('id', userId)
+      .select('id, email, role, is_premium, created_at')
+      .single()
+
+    if (error) {
+      console.error('[Admin API] Lỗi khi cập nhật VIP thủ công:', error)
+      return Response.json({ error: error.message }, { status: 500 })
+    }
+
+    return Response.json({
+      success: true,
+      message: `Đã ${is_premium ? 'kích hoạt' : 'hủy'} VIP thành công cho người dùng.`,
+      profile: data,
+    })
+  } catch (err: unknown) {
+    console.error('[Admin API] Lỗi ngoại lệ khi cấp VIP thủ công:', err)
+    return Response.json(
+      { error: err instanceof Error ? err.message : 'Internal Server Error' },
+      { status: 500 }
+    )
+  }
+}

@@ -19,17 +19,16 @@ import {
   ArrowLeft,
   Loader2,
   RefreshCw,
-  FileSpreadsheet,
   CheckCircle2,
   Clock,
-  Layers,
   BookOpen,
-  LayoutDashboard,
-  Shield,
-  Activity,
   CreditCard,
-  TrendingUp,
-  X
+  X,
+  Crown,
+  ToggleLeft,
+  ToggleRight,
+  UserCog,
+  Check
 } from 'lucide-react'
 
 interface Profile {
@@ -55,21 +54,35 @@ export default function AdminDashboardPage() {
   const router = useRouter()
   const [checkingAuth, setCheckingAuth] = useState(true)
   const [authorized, setAuthorized] = useState(false)
-  const [adminUser, setAdminUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
   // Raw data from Supabase
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [transactions, setTransactions] = useState<Transaction[]>([])
 
-  // Filters state
+  // Filters state (Transactions)
   const [searchTerm, setSearchTerm] = useState('')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
 
-  // Pagination state
+  // Pagination state (Transactions)
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
+
+  // Search & Pagination state (Users Management)
+  const [userSearchTerm, setUserSearchTerm] = useState('')
+  const [userFilterStatus, setUserFilterStatus] = useState<'ALL' | 'VIP' | 'REGULAR'>('ALL')
+  const [currentUserPage, setCurrentUserPage] = useState(1)
+  const usersPerPage = 10
+
+  // Action loading state for updating VIP
+  const [togglingUserId, setTogglingUserId] = useState<string | null>(null)
+  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null)
+
+  const showToast = (text: string, type: 'success' | 'error' = 'success') => {
+    setToastMessage({ text, type })
+    setTimeout(() => setToastMessage(null), 3500)
+  }
 
   // 1. Verify ADMIN role
   useEffect(() => {
@@ -99,7 +112,6 @@ export default function AdminDashboardPage() {
         }
 
         if (isMounted) {
-          setAdminUser(user)
           setAuthorized(true)
           setCheckingAuth(false)
           fetchDashboardData()
@@ -134,7 +146,7 @@ export default function AdminDashboardPage() {
         return
       }
 
-      // Fallback nếu API route gặp sự cố
+      // Fallback
       const [profilesRes, transactionsRes] = await Promise.all([
         supabase.from('profiles').select('*').order('created_at', { ascending: false }),
         supabase.from('transactions').select('*').order('created_at', { ascending: false }),
@@ -266,7 +278,74 @@ export default function AdminDashboardPage() {
     return filteredTransactions.slice(start, start + itemsPerPage)
   }, [filteredTransactions, currentPage])
 
-  // 5. Export to CSV (Excel format)
+  // 5. Filter & Search Users
+  const filteredProfiles = useMemo(() => {
+    return profiles.filter((p) => {
+      const query = userSearchTerm.trim().toLowerCase()
+      const matchSearch =
+        !query ||
+        p.id.toLowerCase().includes(query) ||
+        (p.email && p.email.toLowerCase().includes(query))
+
+      let matchStatus = true
+      if (userFilterStatus === 'VIP') matchStatus = p.is_premium
+      if (userFilterStatus === 'REGULAR') matchStatus = !p.is_premium
+
+      return matchSearch && matchStatus
+    })
+  }, [profiles, userSearchTerm, userFilterStatus])
+
+  useEffect(() => {
+    setCurrentUserPage(1)
+  }, [userSearchTerm, userFilterStatus])
+
+  const totalUserPages = Math.ceil(filteredProfiles.length / usersPerPage) || 1
+  const paginatedProfiles = useMemo(() => {
+    const start = (currentUserPage - 1) * usersPerPage
+    return filteredProfiles.slice(start, start + usersPerPage)
+  }, [filteredProfiles, currentUserPage])
+
+  // 6. Action: Cấp / Hủy VIP thủ công
+  const handleToggleVip = async (user: Profile) => {
+    const nextVipState = !user.is_premium
+    setTogglingUserId(user.id)
+
+    try {
+      const res = await fetch('/api/admin/dashboard', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          is_premium: nextVipState,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Lỗi khi cập nhật trạng thái VIP')
+      }
+
+      // Cập nhật state trực tiếp
+      setProfiles((prev) =>
+        prev.map((p) => (p.id === user.id ? { ...p, is_premium: nextVipState } : p))
+      )
+
+      showToast(
+        `Đã ${nextVipState ? 'kích hoạt VIP' : 'hủy gói VIP'} cho tài khoản: ${user.email || user.id.slice(0, 8)}`,
+        'success'
+      )
+    } catch (err: unknown) {
+      console.error('Lỗi khi cấp VIP thủ công:', err)
+      showToast(err instanceof Error ? err.message : 'Lỗi cập nhật', 'error')
+    } finally {
+      setTogglingUserId(null)
+    }
+  }
+
+  // 7. Export to CSV (Excel format)
   const handleExportCSV = () => {
     if (filteredTransactions.length === 0) {
       alert('Không có dữ liệu giao dịch nào để xuất báo cáo.')
@@ -300,7 +379,6 @@ export default function AdminDashboardPage() {
     document.body.removeChild(link)
   }
 
-  // Format currency
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val)
   }
@@ -320,6 +398,24 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 font-sans antialiased">
+      {/* Toast thông báo nổi */}
+      {toastMessage && (
+        <div
+          className={`fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-lg shadow-lg border text-xs font-semibold animate-in fade-in slide-in-from-bottom-2 ${
+            toastMessage.type === 'success'
+              ? 'bg-gray-900 text-white border-gray-800'
+              : 'bg-rose-600 text-white border-rose-700'
+          }`}
+        >
+          {toastMessage.type === 'success' ? (
+            <Check className="w-4 h-4 text-emerald-400" />
+          ) : (
+            <X className="w-4 h-4 text-white" />
+          )}
+          <span>{toastMessage.text}</span>
+        </div>
+      )}
+
       {/* SaaS Admin Sub-Navbar */}
       <header className="sticky top-0 z-40 bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
@@ -388,15 +484,15 @@ export default function AdminDashboardPage() {
       </header>
 
       {/* Main SaaS Container */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* Page Heading */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-gray-200/60">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">
               Bảng điều khiển & Doanh thu
             </h1>
             <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
-              Tổng quan chỉ số tăng trưởng, người dùng VIP và giao dịch thanh toán trực tuyến
+              Tổng quan tài chính, đối soát giao dịch và công cụ CSKH cấp VIP thủ công
             </p>
           </div>
 
@@ -502,23 +598,260 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* ========================================================================= */}
-        {/* 2. FILTER TOOLBAR (Unified clean white bar) */}
+        {/* 2. TRANSACTIONS SECTION (FILTER TOOLBAR & DATA TABLE) */}
         {/* ========================================================================= */}
-        <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-          <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
-            {/* Search Input */}
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h2 className="text-base font-bold text-gray-900">
+                Quản lý Giao dịch Thanh toán
+              </h2>
+              <p className="text-xs text-gray-500">
+                Lịch sử giao dịch trực tuyến ghi nhận từ SePAY và cổng VietQR
+              </p>
+            </div>
+          </div>
+
+          {/* Filter Bar */}
+          <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+            <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
+              {/* Search Input */}
+              <div className="relative flex-1 max-w-md">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Tìm theo Mã GD, Email hoặc User ID..."
+                  className="w-full pl-9 pr-3 py-1.5 rounded-md bg-white border border-gray-300 text-gray-900 text-xs focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900 placeholder-gray-400"
+                />
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Date Pickers */}
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-md px-2.5 py-1 text-gray-600">
+                  <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                  <span className="text-[11px] font-medium text-gray-500">Từ:</span>
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="bg-transparent text-gray-800 text-xs focus:outline-none"
+                  />
+                </div>
+
+                <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-md px-2.5 py-1 text-gray-600">
+                  <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                  <span className="text-[11px] font-medium text-gray-500">Đến:</span>
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="bg-transparent text-gray-800 text-xs focus:outline-none"
+                  />
+                </div>
+
+                {(startDate || endDate || searchTerm) && (
+                  <button
+                    onClick={() => {
+                      setStartDate('')
+                      setEndDate('')
+                      setSearchTerm('')
+                    }}
+                    className="px-2.5 py-1 text-xs font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition"
+                  >
+                    Đặt lại
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Table */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="w-full overflow-x-auto">
+              <table className="w-full text-left border-collapse min-w-[700px]">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-200 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
+                    <th className="py-3 px-5">Mã Giao Dịch</th>
+                    <th className="py-3 px-5">Người Dùng</th>
+                    <th className="py-3 px-5">Số Tiền</th>
+                    <th className="py-3 px-5">Thời Gian</th>
+                    <th className="py-3 px-5 text-center">Phương Thức</th>
+                    <th className="py-3 px-5 text-center">Trạng Thái</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 text-xs">
+                  {loading ? (
+                    <tr>
+                      <td colSpan={6} className="py-16 text-center text-gray-400">
+                        <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-gray-600" />
+                        <span>Đang tải danh sách giao dịch...</span>
+                      </td>
+                    </tr>
+                  ) : paginatedTransactions.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="py-16 text-center text-gray-500">
+                        <div className="max-w-xs mx-auto space-y-1">
+                          <CreditCard className="w-6 h-6 mx-auto text-gray-400 mb-2" />
+                          <p className="font-semibold text-gray-700">Không có giao dịch nào</p>
+                          <p className="text-xs text-gray-400">
+                            Chưa có lịch sử giao dịch phát sinh hoặc bộ lọc không khớp dữ liệu.
+                          </p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    paginatedTransactions.map((tx) => {
+                      const amount = Number(tx.transferAmount ?? tx.amount ?? 0)
+                      const isSuccess = (tx.status || '').toUpperCase() === 'SUCCESS'
+                      const dateFormatted = tx.created_at
+                        ? new Date(tx.created_at).toLocaleString('vi-VN', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
+                        : '—'
+
+                      return (
+                        <tr key={tx.id} className="hover:bg-gray-50 transition-colors">
+                          {/* Mã GD */}
+                          <td className="py-3.5 px-5 font-mono text-[11px] text-gray-700 font-medium select-all">
+                            {tx.id.slice(0, 13)}...
+                          </td>
+
+                          {/* Người dùng */}
+                          <td className="py-3.5 px-5">
+                            <p className="font-medium text-gray-900">
+                              {tx.user_email}
+                            </p>
+                            <p className="font-mono text-[10px] text-gray-400">
+                              {tx.user_id.slice(0, 8)}...
+                            </p>
+                          </td>
+
+                          {/* Số tiền */}
+                          <td className="py-3.5 px-5 font-semibold text-gray-900">
+                            {formatCurrency(amount)}
+                          </td>
+
+                          {/* Ngày giao dịch */}
+                          <td className="py-3.5 px-5 text-gray-500 text-[11px]">
+                            {dateFormatted}
+                          </td>
+
+                          {/* Phương thức */}
+                          <td className="py-3.5 px-5 text-center">
+                            <span className="inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-700 border border-gray-200">
+                              {tx.payment_method || 'VIETQR'}
+                            </span>
+                          </td>
+
+                          {/* Trạng thái */}
+                          <td className="py-3.5 px-5 text-center">
+                            {isSuccess ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-green-100 text-green-800">
+                                <span className="w-1.5 h-1.5 rounded-full bg-green-600" />
+                                <span>Thành công</span>
+                              </span>
+                            ) : (
+                              <span className="inline-block px-2 py-0.5 rounded-full text-[11px] font-medium bg-gray-100 text-gray-600">
+                                {tx.status || 'Đang xử lý'}
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      )
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            {!loading && filteredTransactions.length > 0 && (
+              <div className="px-5 py-3 border-t border-gray-200 bg-white flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500">
+                <div>
+                  Đang xem <span className="font-semibold text-gray-900">{(currentPage - 1) * itemsPerPage + 1}</span> -{' '}
+                  <span className="font-semibold text-gray-900">
+                    {Math.min(currentPage * itemsPerPage, filteredTransactions.length)}
+                  </span>{' '}
+                  trên <span className="font-semibold text-gray-900">{filteredTransactions.length}</span> giao dịch
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-medium transition disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <span>Trước</span>
+                  </button>
+
+                  <span className="px-2 py-1 text-gray-700 font-medium">
+                    {currentPage} / {totalPages}
+                  </span>
+
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-medium transition disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    <span>Sau</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ========================================================================= */}
+        {/* 3. KHU VỰC QUẢN LÝ NGƯỜI DÙNG & CẤP VIP THỦ CÔNG (CSKH / EXCEPTION HANDLING) */}
+        {/* ========================================================================= */}
+        <div className="space-y-4 pt-4 border-t border-gray-200">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <div className="flex items-center gap-2">
+                <UserCog className="w-5 h-5 text-gray-700" />
+                <h2 className="text-base font-bold text-gray-900">
+                  Quản lý Người Dùng & Cấp VIP Thủ Công
+                </h2>
+              </div>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Xử lý rủi ro khi khách chuyển khoản sai cú pháp hoặc lỗi mạng. Admin có thể kích hoạt hoặc hủy VIP ngay lập tức.
+              </p>
+            </div>
+            <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded-md self-start sm:self-auto">
+              Tổng {profiles.length} tài khoản
+            </span>
+          </div>
+
+          {/* User Search & Status Filter */}
+          <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
             <div className="relative flex-1 max-w-md">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Tìm theo Mã GD, Email hoặc User ID..."
+                value={userSearchTerm}
+                onChange={(e) => setUserSearchTerm(e.target.value)}
+                placeholder="Tìm user theo Email hoặc User ID..."
                 className="w-full pl-9 pr-3 py-1.5 rounded-md bg-white border border-gray-300 text-gray-900 text-xs focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900 placeholder-gray-400"
               />
-              {searchTerm && (
+              {userSearchTerm && (
                 <button
-                  onClick={() => setSearchTerm('')}
+                  onClick={() => setUserSearchTerm('')}
                   className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -526,201 +859,183 @@ export default function AdminDashboardPage() {
               )}
             </div>
 
-            {/* Date Pickers */}
-            <div className="flex flex-wrap items-center gap-2 text-xs">
-              <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-md px-2.5 py-1 text-gray-600">
-                <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                <span className="text-[11px] font-medium text-gray-500">Từ:</span>
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="bg-transparent text-gray-800 text-xs focus:outline-none"
-                />
-              </div>
-
-              <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-md px-2.5 py-1 text-gray-600">
-                <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                <span className="text-[11px] font-medium text-gray-500">Đến:</span>
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="bg-transparent text-gray-800 text-xs focus:outline-none"
-                />
-              </div>
-
-              {(startDate || endDate || searchTerm) && (
-                <button
-                  onClick={() => {
-                    setStartDate('')
-                    setEndDate('')
-                    setSearchTerm('')
-                  }}
-                  className="px-2.5 py-1 text-xs font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition"
-                >
-                  Đặt lại
-                </button>
-              )}
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-gray-500">Lọc theo:</span>
+              <select
+                value={userFilterStatus}
+                onChange={(e) => setUserFilterStatus(e.target.value as any)}
+                className="px-2.5 py-1.5 rounded-md border border-gray-300 bg-white text-xs font-medium text-gray-700 focus:outline-none"
+              >
+                <option value="ALL">Tất cả tài khoản</option>
+                <option value="VIP">Chỉ tài khoản VIP</option>
+                <option value="REGULAR">Chỉ tài khoản Thường</option>
+              </select>
             </div>
           </div>
-        </div>
 
-        {/* ========================================================================= */}
-        {/* 3. TRANSACTIONS DATA TABLE (Minimal, Clean & Enterprise) */}
-        {/* ========================================================================= */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
-            <div>
-              <h2 className="text-sm font-bold text-gray-900">
-                Lịch sử giao dịch
-              </h2>
-              <p className="text-xs text-gray-500 mt-0.5">
-                Dữ liệu thanh toán từ Webhook SePAY và cổng VietQR
-              </p>
-            </div>
-            <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2.5 py-1 rounded-md">
-              {filteredTransactions.length} bản ghi
-            </span>
-          </div>
-
-          <div className="w-full overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[700px]">
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-200 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
-                  <th className="py-3 px-5">Mã Giao Dịch</th>
-                  <th className="py-3 px-5">Người Dùng</th>
-                  <th className="py-3 px-5">Số Tiền</th>
-                  <th className="py-3 px-5">Thời Gian</th>
-                  <th className="py-3 px-5 text-center">Phương Thức</th>
-                  <th className="py-3 px-5 text-center">Trạng Thái</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 text-xs">
-                {loading ? (
-                  <tr>
-                    <td colSpan={6} className="py-16 text-center text-gray-400">
-                      <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-gray-600" />
-                      <span>Đang tải danh sách giao dịch...</span>
-                    </td>
+          {/* User Management Table */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="w-full overflow-x-auto">
+              <table className="w-full text-left border-collapse min-w-[700px]">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-200 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
+                    <th className="py-3 px-5">Tài Khoản (Email & ID)</th>
+                    <th className="py-3 px-5">Ngày Đăng Ký</th>
+                    <th className="py-3 px-5 text-center">Vai Trò</th>
+                    <th className="py-3 px-5 text-center">Trạng Thái</th>
+                    <th className="py-3 px-5 text-right">Hành Động Cấp VIP</th>
                   </tr>
-                ) : paginatedTransactions.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="py-16 text-center text-gray-500">
-                      <div className="max-w-xs mx-auto space-y-1">
-                        <CreditCard className="w-6 h-6 mx-auto text-gray-400 mb-2" />
-                        <p className="font-semibold text-gray-700">Không có giao dịch nào</p>
-                        <p className="text-xs text-gray-400">
-                          Chưa có lịch sử giao dịch phát sinh hoặc bộ lọc không khớp dữ liệu.
-                        </p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  paginatedTransactions.map((tx) => {
-                    const amount = Number(tx.transferAmount ?? tx.amount ?? 0)
-                    const isSuccess = (tx.status || '').toUpperCase() === 'SUCCESS'
-                    const dateFormatted = tx.created_at
-                      ? new Date(tx.created_at).toLocaleString('vi-VN', {
-                          day: '2-digit',
-                          month: '2-digit',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })
-                      : '—'
+                </thead>
+                <tbody className="divide-y divide-gray-100 text-xs">
+                  {loading ? (
+                    <tr>
+                      <td colSpan={5} className="py-16 text-center text-gray-400">
+                        <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-gray-600" />
+                        <span>Đang tải danh sách người dùng...</span>
+                      </td>
+                    </tr>
+                  ) : paginatedProfiles.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="py-12 text-center text-gray-400">
+                        Không tìm thấy người dùng nào phù hợp với từ khóa.
+                      </td>
+                    </tr>
+                  ) : (
+                    paginatedProfiles.map((user) => {
+                      const isToggling = togglingUserId === user.id
+                      const joinDate = user.created_at
+                        ? new Date(user.created_at).toLocaleString('vi-VN', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
+                        : '—'
 
-                    return (
-                      <tr key={tx.id} className="hover:bg-gray-50 transition-colors">
-                        {/* Mã GD */}
-                        <td className="py-3.5 px-5 font-mono text-[11px] text-gray-700 font-medium select-all">
-                          {tx.id.slice(0, 13)}...
-                        </td>
+                      return (
+                        <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                          {/* Email & ID */}
+                          <td className="py-3.5 px-5">
+                            <p className="font-semibold text-gray-900">
+                              {user.email || 'Chưa cập nhật email'}
+                            </p>
+                            <p className="font-mono text-[10px] text-gray-400 select-all">
+                              ID: {user.id}
+                            </p>
+                          </td>
 
-                        {/* Người dùng */}
-                        <td className="py-3.5 px-5">
-                          <p className="font-medium text-gray-900">
-                            {tx.user_email}
-                          </p>
-                          <p className="font-mono text-[10px] text-gray-400">
-                            {tx.user_id.slice(0, 8)}...
-                          </p>
-                        </td>
+                          {/* Ngày đăng ký */}
+                          <td className="py-3.5 px-5 text-gray-500 text-[11px]">
+                            {joinDate}
+                          </td>
 
-                        {/* Số tiền */}
-                        <td className="py-3.5 px-5 font-semibold text-gray-900">
-                          {formatCurrency(amount)}
-                        </td>
+                          {/* Vai trò */}
+                          <td className="py-3.5 px-5 text-center">
+                            {user.role === 'ADMIN' ? (
+                              <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200">
+                                ADMIN
+                              </span>
+                            ) : (
+                              <span className="inline-block px-2 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-600">
+                                USER
+                              </span>
+                            )}
+                          </td>
 
-                        {/* Ngày giao dịch */}
-                        <td className="py-3.5 px-5 text-gray-500 text-[11px]">
-                          {dateFormatted}
-                        </td>
+                          {/* Trạng thái VIP */}
+                          <td className="py-3.5 px-5 text-center">
+                            {user.is_premium ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-900 border border-amber-200">
+                                <Crown className="w-3 h-3 text-amber-600" />
+                                <span>Thành viên VIP</span>
+                              </span>
+                            ) : (
+                              <span className="inline-block px-2 py-0.5 rounded-full text-[11px] font-medium bg-gray-100 text-gray-600">
+                                Tài khoản thường
+                              </span>
+                            )}
+                          </td>
 
-                        {/* Phương thức */}
-                        <td className="py-3.5 px-5 text-center">
-                          <span className="inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-700 border border-gray-200">
-                            {tx.payment_method || 'VIETQR'}
-                          </span>
-                        </td>
-
-                        {/* Trạng thái */}
-                        <td className="py-3.5 px-5 text-center">
-                          {isSuccess ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-green-100 text-green-800">
-                              <span className="w-1.5 h-1.5 rounded-full bg-green-600" />
-                              <span>Thành công</span>
-                            </span>
-                          ) : (
-                            <span className="inline-block px-2 py-0.5 rounded-full text-[11px] font-medium bg-gray-100 text-gray-600">
-                              {tx.status || 'Đang xử lý'}
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    )
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination */}
-          {!loading && filteredTransactions.length > 0 && (
-            <div className="px-5 py-3 border-t border-gray-200 bg-white flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500">
-              <div>
-                Đang xem <span className="font-semibold text-gray-900">{(currentPage - 1) * itemsPerPage + 1}</span> -{' '}
-                <span className="font-semibold text-gray-900">
-                  {Math.min(currentPage * itemsPerPage, filteredTransactions.length)}
-                </span>{' '}
-                trên <span className="font-semibold text-gray-900">{filteredTransactions.length}</span> giao dịch
-              </div>
-
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-medium transition disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>Trước</span>
-                </button>
-
-                <span className="px-2 py-1 text-gray-700 font-medium">
-                  {currentPage} / {totalPages}
-                </span>
-
-                <button
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-medium transition disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <span>Sau</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
+                          {/* Cột Hành động Cấp / Hủy VIP */}
+                          <td className="py-3.5 px-5 text-right">
+                            <button
+                              onClick={() => handleToggleVip(user)}
+                              disabled={isToggling}
+                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold shadow-xs transition active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+                                user.is_premium
+                                  ? 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200'
+                                  : 'bg-gray-900 hover:bg-gray-800 text-white'
+                              }`}
+                              title={
+                                user.is_premium
+                                  ? 'Nhấp để Hủy kích hoạt quyền VIP'
+                                  : 'Nhấp để Cấp quyền VIP thủ công'
+                              }
+                            >
+                              {isToggling ? (
+                                <>
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                  <span>Đang xử lý...</span>
+                                </>
+                              ) : user.is_premium ? (
+                                <>
+                                  <ToggleRight className="w-4 h-4 text-rose-600" />
+                                  <span>Hủy VIP</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Crown className="w-3.5 h-3.5 text-amber-400" />
+                                  <span>Kích hoạt VIP</span>
+                                </>
+                              )}
+                            </button>
+                          </td>
+                        </tr>
+                      )
+                    })
+                  )}
+                </tbody>
+              </table>
             </div>
-          )}
+
+            {/* Pagination Users */}
+            {!loading && filteredProfiles.length > 0 && (
+              <div className="px-5 py-3 border-t border-gray-200 bg-white flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500">
+                <div>
+                  Đang xem <span className="font-semibold text-gray-900">{(currentUserPage - 1) * usersPerPage + 1}</span> -{' '}
+                  <span className="font-semibold text-gray-900">
+                    {Math.min(currentUserPage * usersPerPage, filteredProfiles.length)}
+                  </span>{' '}
+                  trên <span className="font-semibold text-gray-900">{filteredProfiles.length}</span> người dùng
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setCurrentUserPage((p) => Math.max(1, p - 1))}
+                    disabled={currentUserPage === 1}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-medium transition disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <span>Trước</span>
+                  </button>
+
+                  <span className="px-2 py-1 text-gray-700 font-medium">
+                    {currentUserPage} / {totalUserPages}
+                  </span>
+
+                  <button
+                    onClick={() => setCurrentUserPage((p) => Math.min(totalUserPages, p + 1))}
+                    disabled={currentUserPage === totalUserPages}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-medium transition disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    <span>Sau</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </main>
     </div>

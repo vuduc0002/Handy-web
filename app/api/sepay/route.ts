@@ -74,10 +74,10 @@ export async function POST(req: NextRequest) {
     }
 
     if (!formattedUuid) {
-      console.log('[SePAY Webhook] Không tìm thấy mã nhận diện UUID 32 ký tự hợp lệ trong nội dung:', transferContent);
+      console.warn('[SePAY Webhook] Không tìm thấy mã nhận diện UUID 32 ký tự hợp lệ trong nội dung:', transferContent);
       return Response.json(
-        { message: 'Bỏ qua: Không tìm thấy mã nhận diện HANDY hợp lệ' },
-        { status: 200 }
+        { error: 'Không tìm thấy mã nhận diện HANDY hợp lệ trong nội dung chuyển khoản' },
+        { status: 400 }
       );
     }
 
@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
     if (isNaN(amount) || amount < REQUIRED_VIP_AMOUNT) {
       console.warn(`[SePAY Webhook] Số tiền ${amount} chưa đủ mức ${REQUIRED_VIP_AMOUNT}`);
       return Response.json(
-        { error: `Số tiền ${amount} chưa đủ ${REQUIRED_VIP_AMOUNT}` },
+        { error: `Số tiền ${amount} chưa đủ mức tối thiểu ${REQUIRED_VIP_AMOUNT}` },
         { status: 400 }
       );
     }
@@ -97,14 +97,21 @@ export async function POST(req: NextRequest) {
       .eq('id', formattedUuid)
       .select();
 
-    if (error || !data || data.length === 0) {
-      console.error('[SePAY Webhook] Không tìm thấy user hoặc lỗi cập nhật với UUID:', {
+    if (error) {
+      console.error('[SePAY Webhook] Lỗi database khi cập nhật profile:', {
         formattedUuid,
         error,
-        data,
       });
       return Response.json(
-        { error: `Không tìm thấy user hoặc lỗi cập nhật với mã ${formattedUuid}` },
+        { error: `Lỗi cơ sở dữ liệu: ${error.message}` },
+        { status: 500 }
+      );
+    }
+
+    if (!data || data.length === 0) {
+      console.error('[SePAY Webhook] Không tìm thấy user với UUID:', formattedUuid);
+      return Response.json(
+        { error: `Không tìm thấy tài khoản người dùng tương ứng với ID ${formattedUuid}` },
         { status: 404 }
       );
     }
@@ -112,7 +119,7 @@ export async function POST(req: NextRequest) {
     const updatedUser = data[0];
     const userId = updatedUser.id;
 
-    // Ghi chép lịch sử thanh toán vào bảng transactions (nếu có)
+    // Ghi chép lịch sử thanh toán vào bảng transactions
     try {
       await supabase.from('transactions').insert({
         user_id: userId,
@@ -121,12 +128,12 @@ export async function POST(req: NextRequest) {
         payment_method: 'VIETQR',
       });
     } catch (txError) {
-      console.warn('[SePAY Webhook] Không thể ghi lịch sử giao dịch vào transactions:', txError);
+      console.warn('[SePAY Webhook] Cảnh báo ghi nhận transactions:', txError);
     }
 
     console.log(`[SePAY Webhook] Đã nâng cấp VIP thành công cho User: ${userId}`);
 
-    // Trả về kết quả thành công cho SePAY
+    // CHỈ trả về status 200 SAU KHI lệnh update is_premium: true vào database Supabase thành công
     return Response.json(
       {
         success: true,
@@ -137,7 +144,7 @@ export async function POST(req: NextRequest) {
       { status: 200 }
     );
   } catch (error: unknown) {
-    console.error('[SePAY Webhook] Lỗi hệ thống:', error);
+    console.error('[SePAY Webhook] Lỗi ngoại lệ hệ thống:', error);
     return Response.json(
       { error: error instanceof Error ? error.message : 'Internal Server Error' },
       { status: 500 }
