@@ -92,6 +92,18 @@ export default function Header() {
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
+  const [isScrolled, setIsScrolled] = useState(false)
+
+  // Hiệu ứng chuyển màu nền mượt mà khi cuộn trang
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 15)
+    }
+    handleScroll()
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
   // Close mobile menu & lock scroll when open
   useEffect(() => {
     setMobileMenuOpen(false)
@@ -105,6 +117,7 @@ export default function Header() {
     }
     return () => { document.body.style.overflow = '' }
   }, [mobileMenuOpen])
+
 
   // Search with debounce
   const handleSearch = useCallback((value: string) => {
@@ -179,8 +192,15 @@ export default function Header() {
     <>
       {/* ================================================================
           STICKY NAVBAR — backdrop-blur, shadow-sm, responsive
+          Hiệu ứng chuyển màu nền mượt mà khi người dùng cuộn trang
           ================================================================ */}
-      <header className="sticky top-0 z-50 backdrop-blur-md bg-white/90 border-b border-amber-200 shadow-sm">
+      <header
+        className={`sticky top-0 z-50 transition-all duration-300 ${
+          isScrolled
+            ? 'backdrop-blur-md bg-white/95 border-b border-amber-200/80 shadow-md'
+            : 'backdrop-blur-xs bg-amber-50/40 border-b border-transparent shadow-none'
+        }`}
+      >
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
 
           {/* Logo + Desktop nav links */}

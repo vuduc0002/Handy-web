@@ -56,3 +56,20 @@ body {
 .animation-delay-400   { animation-delay: 0.4s; }
 .animation-delay-500   { animation-delay: 0.5s; }
 .animation-delay-600   { animation-delay: 0.6s; }
+
+/* Pulse Glow mềm mại cho nút CTA nổi bật */
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 10px 25px -5px rgba(249, 115, 22, 0.45);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 15px 30px -5px rgba(249, 115, 22, 0.7);
+    transform: scale(1.025);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2.8s ease-in-out infinite;
+}
+

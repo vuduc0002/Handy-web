@@ -1,4 +1,7 @@
+'use client'
+
 import { Suspense } from 'react'
+import { motion } from 'framer-motion'
 import HeroSection from '@/app/components/HeroSection'
 import StatsAndBenefitsSection from '@/app/components/StatsAndBenefitsSection'
 import TopicsGrid from '@/app/components/TopicsGrid'
@@ -16,16 +19,23 @@ function GridSkeleton() {
 
 export default function HomePage() {
   return (
-    <div className="max-w-6xl mx-auto px-4 pb-20 animate-fade-in">
-      {/* 1. HERO SECTION (Hấp dẫn, giàu thị giác, 2 cột) */}
+    <div className="max-w-6xl mx-auto px-4 pb-20">
+      {/* 1. HERO SECTION (Hấp dẫn, giàu thị giác, 2 cột + hiệu ứng fade-in-up) */}
       <HeroSection />
 
-      {/* 2. STATS & BENEFITS SECTION (4 chỉ số uy tín + 3 bước chinh phục) */}
+      {/* 2. STATS & BENEFITS SECTION (Khối thông tin nổi bật với hiệu ứng Domino Stagger) */}
       <StatsAndBenefitsSection />
 
-      {/* 3. LỘ TRÌNH HỌC TẬP (Topics Section) */}
-      <section id="topics-section" className="pt-8 md:pt-14 pb-8 scroll-mt-20">
-        <div className="text-center mb-10">
+      {/* 3. LỘ TRÌNH HỌC TẬP (Topics Section bọc trong motion.div) */}
+      <motion.section
+        id="topics-section"
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-50px' }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
+        className="pt-8 md:pt-16 pb-8 md:pb-12 scroll-mt-20"
+      >
+        <div className="text-center mb-10 md:mb-12">
           <span className="text-xs font-black text-orange-600 uppercase tracking-widest bg-orange-100 px-3.5 py-1.5 rounded-full inline-block mb-3">
             Kho Bài Giảng Phong Phú
           </span>
@@ -41,12 +51,12 @@ export default function HomePage() {
         <Suspense fallback={<GridSkeleton />}>
           <TopicsGrid />
         </Suspense>
-      </section>
+      </motion.section>
 
-      {/* 4. TESTIMONIALS (Đánh giá học viên & phụ huynh) */}
+      {/* 4. TESTIMONIALS (Đánh giá học viên & phụ huynh với hiệu ứng Domino Stagger) */}
       <TestimonialsSection />
 
-      {/* 5. FAQ SECTION (Giải đáp thắc mắc thường gặp) */}
+      {/* 5. FAQ SECTION (Giải đáp thắc mắc thường gặp với hiệu ứng Scroll Reveal) */}
       <FAQSection />
     </div>
   )
