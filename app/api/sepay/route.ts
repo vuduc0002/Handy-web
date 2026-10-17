@@ -6,8 +6,70 @@ import { createClient } from '@supabase/supabase-js';
 // Mức tiền thanh toán gói VIP HANDY (199.000 VNĐ)
 const REQUIRED_VIP_AMOUNT = 6000;
 
+// ============================================================================
+// ✅ Security Patch: In-memory Rate Limiting
+// Chặn DDoS / spam request: tối đa 10 lần / phút / IP.
+// ============================================================================
+interface RateLimitEntry {
+  count: number;
+  resetAt: number;
+}
+
+const rateLimitMap = new Map<string, RateLimitEntry>();
+const RATE_LIMIT_MAX = 10;
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 phút
+
+function checkRateLimit(ip: string): { allowed: boolean; retryAfterSec: number } {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return { allowed: true, retryAfterSec: 0 };
+  }
+
+  if (entry.count >= RATE_LIMIT_MAX) {
+    const retryAfterSec = Math.ceil((entry.resetAt - now) / 1000);
+    return { allowed: false, retryAfterSec };
+  }
+
+  entry.count += 1;
+  return { allowed: true, retryAfterSec: 0 };
+}
+
+function cleanupRateLimitMap() {
+  const now = Date.now();
+  for (const [ip, entry] of rateLimitMap.entries()) {
+    if (now > entry.resetAt) rateLimitMap.delete(ip);
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
+    // =========================================================================
+    // 0. Rate Limiting — Chặn IP spam/DDoS
+    // =========================================================================
+    // Dọn dẹp các entry cũ theo cơ hội để tránh memory leak
+    cleanupRateLimitMap();
+
+    const ip =
+      req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+      req.headers.get('x-real-ip') ||
+      'unknown';
+
+    const { allowed, retryAfterSec } = checkRateLimit(ip);
+
+    if (!allowed) {
+      console.warn(`[SePAY Webhook] Rate limit exceeded for IP: ${ip}`);
+      return Response.json(
+        { error: `Too Many Requests. Thử lại sau ${retryAfterSec} giây.` },
+        {
+          status: 429,
+          headers: { 'Retry-After': String(retryAfterSec) },
+        }
+      );
+    }
+
     // =========================================================================
     // 1. Xác thực Request từ SePAY
     // =========================================================================

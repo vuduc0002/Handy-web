@@ -3,9 +3,67 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
 export const dynamic = 'force-dynamic'
 
+// ============================================================================
+// ✅ Security Patch: Server-side Admin Authentication
+// Xác thực danh tính và quyền Admin tại server cho MỌI endpoint.
+// Không thể bypass bằng cách gọi API trực tiếp từ curl / Postman.
+// ============================================================================
+async function verifyAdminRequest(req: NextRequest): Promise<{ error: Response | null }> {
+  // Lấy JWT token từ header Authorization: Bearer <token>
+  const authHeader = req.headers.get('authorization')
+  const token = authHeader?.replace(/^Bearer\s+/i, '').trim()
+
+  if (!token) {
+    return {
+      error: Response.json(
+        { error: 'Unauthorized: Thiếu Authorization header' },
+        { status: 401 }
+      ),
+    }
+  }
+
+  // Verify JWT với Supabase (dùng supabaseAdmin để bypass RLS nhưng vẫn verify token)
+  const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token)
+
+  if (authError || !user) {
+    return {
+      error: Response.json(
+        { error: 'Unauthorized: Token không hợp lệ hoặc đã hết hạn' },
+        { status: 401 }
+      ),
+    }
+  }
+
+  // Kiểm tra role === 'ADMIN' trong bảng profiles
+  const { data: profile, error: profileError } = await supabaseAdmin
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (profileError || !profile || profile.role !== 'ADMIN') {
+    return {
+      error: Response.json(
+        { error: 'Forbidden: Bạn không có quyền Admin để thực hiện thao tác này' },
+        { status: 403 }
+      ),
+    }
+  }
+
+  return { error: null }
+}
+
+// ============================================================================
+// GET: Lấy toàn bộ dữ liệu dashboard (profiles + transactions)
+// ✅ Bảo vệ: Chỉ Admin mới được gọi endpoint này
+// ============================================================================
 export async function GET(req: NextRequest) {
+  // Xác thực Admin
+  const { error: authError } = await verifyAdminRequest(req)
+  if (authError) return authError
+
   try {
-    // 1. Fetch TOÀN BỘ profiles không bị giới hạn RLS (không phân biệt admin hay user)
+    // 1. Fetch TOÀN BỘ profiles không bị giới hạn RLS
     const { data: profiles, error: profilesError } = await supabaseAdmin
       .from('profiles')
       .select('id, email, role, is_premium, created_at')
@@ -51,8 +109,15 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// PATCH: Cấp hoặc Hủy VIP thủ công cho người dùng (Bypass RLS qua supabaseAdmin)
+// ============================================================================
+// PATCH: Cấp hoặc Hủy VIP thủ công cho người dùng
+// ✅ Bảo vệ: Chỉ Admin mới được gọi endpoint này (bypass RLS qua supabaseAdmin)
+// ============================================================================
 export async function PATCH(req: NextRequest) {
+  // Xác thực Admin — không có auth hợp lệ thì dừng ngay
+  const { error: authError } = await verifyAdminRequest(req)
+  if (authError) return authError
+
   try {
     const body = await req.json()
     const { userId, is_premium } = body

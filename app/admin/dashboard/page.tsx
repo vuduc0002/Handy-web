@@ -130,13 +130,28 @@ export default function AdminDashboardPage() {
     }
   }, [router])
 
+  // ✅ Helper: Lấy JWT token của session hiện tại để gửi kèm request đến Admin API
+  const getAuthToken = async (): Promise<string | null> => {
+    const { data: { session } } = await supabase.auth.getSession()
+    return session?.access_token ?? null
+  }
+
   // 2. Fetch data from Server-side API (bypassing RLS with supabaseAdmin)
   const fetchDashboardData = async () => {
     try {
       setLoading(true)
 
+      // ✅ Security Patch: Gửi kèm JWT token để server xác thực Admin
+      const token = await getAuthToken()
+      if (!token) {
+        alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.')
+        router.push('/')
+        return
+      }
+
       const res = await fetch('/api/admin/dashboard', {
         cache: 'no-store',
+        headers: { Authorization: `Bearer ${token}` },
       })
 
       if (res.ok) {
@@ -146,33 +161,21 @@ export default function AdminDashboardPage() {
         return
       }
 
-      // Fallback
-      const [profilesRes, transactionsRes] = await Promise.all([
-        supabase.from('profiles').select('*').order('created_at', { ascending: false }),
-        supabase.from('transactions').select('*').order('created_at', { ascending: false }),
-      ])
+      // Nếu server trả về 401/403 — session không còn hợp lệ, đừng fallback về client
+      if (res.status === 401 || res.status === 403) {
+        alert('Phiên quản trị đã hết hạn hoặc không có quyền Admin.')
+        router.push('/')
+        return
+      }
 
-      const profilesList: Profile[] = profilesRes.data ?? []
-      const transactionsListRaw: Transaction[] = transactionsRes.data ?? []
-
-      const userMap = new Map<string, string>()
-      profilesList.forEach((p) => {
-        if (p.email) userMap.set(p.id, p.email)
-      })
-
-      const transactionsWithEmail: Transaction[] = transactionsListRaw.map((tx) => ({
-        ...tx,
-        user_email: userMap.get(tx.user_id) || 'Khách vãng lai / Ẩn danh',
-      }))
-
-      setProfiles(profilesList)
-      setTransactions(transactionsWithEmail)
+      console.error('Lỗi khi tải dữ liệu admin:', res.status)
     } catch (err) {
       console.error('Lỗi khi tải dữ liệu dashboard:', err)
     } finally {
       setLoading(false)
     }
   }
+
 
   // 3. Compute 4 Overview Metrics
   const stats = useMemo(() => {
@@ -311,10 +314,19 @@ export default function AdminDashboardPage() {
     setTogglingUserId(user.id)
 
     try {
+      // ✅ Security Patch: Gửi kèm JWT token để server xác thực Admin
+      const token = await getAuthToken()
+      if (!token) {
+        showToast('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.', 'error')
+        setTogglingUserId(null)
+        return
+      }
+
       const res = await fetch('/api/admin/dashboard', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           userId: user.id,
@@ -344,6 +356,7 @@ export default function AdminDashboardPage() {
       setTogglingUserId(null)
     }
   }
+
 
   // 7. Export to CSV (Excel format)
   const handleExportCSV = () => {
