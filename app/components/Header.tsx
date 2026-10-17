@@ -15,11 +15,9 @@ import {
   Menu,
   Crown,
   User as UserIcon,
-  BookOpen,
   BrainCircuit,
   Home,
   Layers,
-  Sparkles,
   Volume2
 } from 'lucide-react'
 import type { User } from '@supabase/supabase-js'
@@ -94,10 +92,19 @@ export default function Header() {
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
-  // Close mobile menu when navigating
+  // Close mobile menu & lock scroll when open
   useEffect(() => {
     setMobileMenuOpen(false)
   }, [pathname])
+
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => { document.body.style.overflow = '' }
+  }, [mobileMenuOpen])
 
   // Search with debounce
   const handleSearch = useCallback((value: string) => {
@@ -139,14 +146,12 @@ export default function Header() {
     router.push('/login')
   }
 
-  // Click vào từ vựng: Mở Modal Popup trực tiếp xem video nhúng
   const handleResultClick = (item: WordResult) => {
     setShowDropdown(false)
     setQuery('')
     setSelectedModalVocab(item)
   }
 
-  // Phát âm thử từ vựng
   const speakWord = (text: string) => {
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel()
@@ -167,34 +172,38 @@ export default function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b-4 border-amber-300 shadow-md">
+      {/* ================================================================
+          STICKY NAVBAR — backdrop-blur, shadow-sm, responsive
+          ================================================================ */}
+      <header className="sticky top-0 z-50 backdrop-blur-md bg-white/90 border-b border-amber-200 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
-          {/* Logo & Navigation Links */}
-          <div className="flex items-center gap-6">
+
+          {/* Logo + Desktop nav links */}
+          <div className="flex items-center gap-5">
             <Link href="/" className="shrink-0 flex items-center">
               <Image
                 src="/handy-logo.png"
                 alt="HANDY"
-                width={105}
-                height={42}
-                className="object-contain hover:scale-105 transition-transform"
+                width={100}
+                height={40}
+                className="object-contain hover:scale-105 transition-transform duration-200"
                 style={{ height: 'auto' }}
                 priority
               />
             </Link>
 
-            {/* Desktop Navigation Links */}
-            <nav className="hidden md:flex items-center gap-1.5">
+            {/* Desktop Navigation */}
+            <nav className="hidden md:flex items-center gap-1">
               {navLinks.map((item) => {
                 const isActive = pathname === item.href
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-sm font-extrabold transition-all duration-150 ${
+                    className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-bold transition-all duration-200 ${
                       isActive
                         ? 'bg-amber-100 text-orange-600 shadow-sm'
-                        : 'text-gray-700 hover:text-orange-600 hover:bg-amber-50'
+                        : 'text-gray-600 hover:text-orange-600 hover:bg-amber-50'
                     }`}
                   >
                     {item.icon}
@@ -205,13 +214,13 @@ export default function Header() {
             </nav>
           </div>
 
-          {/* Search bar */}
-          <div ref={searchRef} className="relative flex-1 max-w-xs sm:max-w-sm hidden sm:block">
-            <div className="flex items-center gap-2 bg-amber-50 border-2 border-amber-300 rounded-full px-4 py-1.5 focus-within:border-orange-400 focus-within:ring-2 focus-within:ring-orange-200 transition">
+          {/* Center: Search bar (hidden on mobile, shown in hamburger menu) */}
+          <div ref={searchRef} className="relative flex-1 max-w-xs hidden sm:block">
+            <div className="flex items-center gap-2 bg-amber-50 border border-amber-300 rounded-full px-3.5 py-2 focus-within:border-orange-400 focus-within:ring-2 focus-within:ring-orange-200 transition-all duration-200">
               {searching ? (
-                <Loader2 className="w-4 h-4 text-amber-400 animate-spin shrink-0" />
+                <Loader2 className="w-3.5 h-3.5 text-amber-400 animate-spin shrink-0" />
               ) : (
-                <Search className="w-4 h-4 text-amber-400 shrink-0" />
+                <Search className="w-3.5 h-3.5 text-amber-400 shrink-0" />
               )}
               <input
                 type="text"
@@ -219,7 +228,7 @@ export default function Header() {
                 onChange={(e) => handleSearch(e.target.value)}
                 onFocus={() => results.length > 0 && setShowDropdown(true)}
                 placeholder="Tìm từ vựng..."
-                className="flex-1 bg-transparent text-sm text-gray-700 placeholder-amber-400/80 outline-none"
+                className="flex-1 bg-transparent text-sm text-gray-700 placeholder-amber-400/70 outline-none min-w-0"
               />
               {query && (
                 <button
@@ -228,15 +237,16 @@ export default function Header() {
                     setResults([])
                     setShowDropdown(false)
                   }}
+                  className="shrink-0"
                 >
-                  <X className="w-4 h-4 text-amber-400 hover:text-orange-500 transition" />
+                  <X className="w-3.5 h-3.5 text-amber-400 hover:text-orange-500 transition" />
                 </button>
               )}
             </div>
 
-            {/* Dropdown results */}
+            {/* Search dropdown results */}
             {showDropdown && (
-              <div className="absolute top-full mt-2 left-0 right-0 bg-white rounded-2xl shadow-xl border-2 border-amber-200 overflow-hidden z-50">
+              <div className="absolute top-full mt-2 left-0 right-0 bg-white rounded-2xl shadow-xl border border-amber-200 overflow-hidden z-50 animate-slide-down">
                 {results.length === 0 ? (
                   <p className="text-center text-sm text-gray-400 py-4">
                     Không tìm thấy từ nào 😕
@@ -247,10 +257,10 @@ export default function Header() {
                       <li key={item.id}>
                         <button
                           onClick={() => handleResultClick(item)}
-                          className="w-full text-left px-4 py-3 hover:bg-amber-50 transition flex items-center justify-between border-b border-amber-100 last:border-0 group cursor-pointer"
+                          className="w-full text-left px-4 py-3 hover:bg-amber-50 transition-colors flex items-center justify-between border-b border-amber-100 last:border-0 group cursor-pointer"
                         >
                           <div>
-                            <span className="font-extrabold text-gray-800 text-sm group-hover:text-orange-600 transition-colors">
+                            <span className="font-bold text-gray-800 text-sm group-hover:text-orange-600 transition-colors">
                               {item.word}
                             </span>
                             {item.meaning && (
@@ -259,7 +269,7 @@ export default function Header() {
                               </span>
                             )}
                           </div>
-                          <span className="text-[11px] font-bold text-orange-500 bg-orange-50 px-2 py-0.5 rounded-md">
+                          <span className="text-[11px] font-bold text-orange-500 bg-orange-50 px-2 py-0.5 rounded-md shrink-0 ml-2">
                             Xem video
                           </span>
                         </button>
@@ -271,42 +281,41 @@ export default function Header() {
             )}
           </div>
 
-          {/* Right Controls: Trang Quản Trị, VIP Badge, Profile, Auth */}
+          {/* Right Controls */}
           <div className="flex items-center gap-2">
-            {/* Admin button if role === ADMIN */}
+            {/* Admin button */}
             {user && profile?.role === 'ADMIN' && (
               <Link
                 href="/admin"
-                className="hidden lg:flex items-center gap-1.5 bg-amber-100 hover:bg-amber-200 text-amber-900 border-2 border-amber-300 font-extrabold text-xs px-3.5 py-2 rounded-2xl transition shadow-sm active:scale-95"
-                title="Trang quản trị"
+                className="hidden lg:flex items-center gap-1.5 bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 font-bold text-xs px-3 py-1.5 rounded-xl transition-all duration-200 shadow-sm active:scale-95"
               >
-                <ShieldCheck className="w-4 h-4 text-orange-600" />
+                <ShieldCheck className="w-3.5 h-3.5 text-orange-600" />
                 <span>Quản trị</span>
               </Link>
             )}
 
-            {/* User Profile / Status */}
+            {/* User Profile / Auth */}
             {user ? (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <Link
                   href="/profile"
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-2xl border-2 border-amber-300 bg-amber-50 hover:bg-amber-100 transition shadow-sm active:scale-95"
+                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 transition-all duration-200 active:scale-95"
                   title="Thông tin cá nhân"
                 >
-                  <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-orange-400 to-amber-300 text-white flex items-center justify-center font-bold text-xs shadow-inner">
-                    <UserIcon className="w-4 h-4" />
+                  <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-orange-400 to-amber-300 text-white flex items-center justify-center font-bold text-xs shadow-inner shrink-0">
+                    <UserIcon className="w-3.5 h-3.5" />
                   </div>
                   <div className="hidden sm:block text-left">
                     <div className="flex items-center gap-1">
-                      <span className="text-xs font-black text-gray-800 truncate max-w-[90px]">
+                      <span className="text-xs font-bold text-gray-800 max-w-[80px] truncate">
                         {profile?.email?.split('@')[0] || 'Cá nhân'}
                       </span>
                       {profile?.is_premium ? (
-                        <span className="text-[10px] font-extrabold bg-gradient-to-r from-amber-400 to-orange-400 text-white px-1.5 py-0.2 rounded-full flex items-center gap-0.5 shadow-xs">
+                        <span className="text-[10px] font-bold bg-gradient-to-r from-amber-400 to-orange-400 text-white px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shrink-0">
                           <Crown className="w-2.5 h-2.5" /> VIP
                         </span>
                       ) : (
-                        <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded-full">
+                        <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded-full shrink-0">
                           Free
                         </span>
                       )}
@@ -316,7 +325,7 @@ export default function Header() {
 
                 <button
                   onClick={handleLogout}
-                  className="hidden md:flex p-2 rounded-2xl text-red-500 hover:bg-red-50 hover:text-red-600 transition"
+                  className="hidden md:flex p-2 rounded-xl text-red-400 hover:bg-red-50 hover:text-red-600 transition-all duration-200 active:scale-95"
                   title="Đăng xuất"
                 >
                   <LogOut className="w-4 h-4" />
@@ -325,7 +334,7 @@ export default function Header() {
             ) : (
               <Link
                 href="/login"
-                className="flex items-center gap-1.5 bg-gradient-to-r from-orange-400 to-amber-400 hover:from-orange-500 hover:to-amber-500 text-white font-extrabold text-xs sm:text-sm px-4 py-2 rounded-2xl shadow-md shadow-amber-200 transition active:scale-95"
+                className="flex items-center gap-1.5 bg-gradient-to-r from-orange-400 to-amber-400 hover:from-orange-500 hover:to-amber-500 text-white font-bold text-xs sm:text-sm px-4 py-2 rounded-xl shadow-md shadow-amber-200/60 transition-all duration-200 active:scale-95"
               >
                 <LogIn className="w-4 h-4" />
                 <span>Đăng nhập</span>
@@ -335,97 +344,171 @@ export default function Header() {
             {/* Mobile Hamburger Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-2xl border-2 border-amber-300 text-gray-700 hover:bg-amber-50 transition"
-              aria-label="Mở Menu"
+              className="md:hidden p-2 rounded-xl border border-amber-300 text-gray-600 hover:bg-amber-50 transition-all duration-200 active:scale-95"
+              aria-label={mobileMenuOpen ? 'Đóng menu' : 'Mở menu'}
+              aria-expanded={mobileMenuOpen}
             >
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              {mobileMenuOpen ? (
+                <X className="w-5 h-5 transition-transform duration-200" />
+              ) : (
+                <Menu className="w-5 h-5 transition-transform duration-200" />
+              )}
             </button>
           </div>
         </div>
 
-        {/* Mobile Dropdown Menu */}
+        {/* ================================================================
+            MOBILE DROPDOWN MENU — slide-down animation, no overflow
+            ================================================================ */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-white border-t-2 border-amber-200 px-4 pt-3 pb-5 space-y-3 shadow-xl">
-            {/* Mobile search bar */}
-            <div className="relative w-full">
-              <div className="flex items-center gap-2 bg-amber-50 border-2 border-amber-300 rounded-2xl px-3 py-2">
-                <Search className="w-4 h-4 text-amber-400 shrink-0" />
-                <input
-                  type="text"
-                  value={query}
-                  onChange={(e) => handleSearch(e.target.value)}
-                  placeholder="Tìm từ vựng..."
-                  className="flex-1 bg-transparent text-sm text-gray-700 outline-none"
-                />
+          <div className="md:hidden bg-white/98 backdrop-blur-sm border-t border-amber-100 shadow-lg animate-slide-down">
+            <div className="max-w-6xl mx-auto px-4 pt-4 pb-6 space-y-1">
+              {/* Mobile search */}
+              <div className="relative mb-3">
+                <div className="flex items-center gap-2 bg-amber-50 border border-amber-300 rounded-xl px-3.5 py-2.5 focus-within:border-orange-400 focus-within:ring-2 focus-within:ring-orange-200 transition-all">
+                  {searching ? (
+                    <Loader2 className="w-4 h-4 text-amber-400 animate-spin shrink-0" />
+                  ) : (
+                    <Search className="w-4 h-4 text-amber-400 shrink-0" />
+                  )}
+                  <input
+                    type="text"
+                    value={query}
+                    onChange={(e) => handleSearch(e.target.value)}
+                    placeholder="Tìm từ vựng..."
+                    className="flex-1 bg-transparent text-sm text-gray-700 placeholder-amber-400/70 outline-none"
+                  />
+                  {query && (
+                    <button onClick={() => { setQuery(''); setResults([]); setShowDropdown(false) }}>
+                      <X className="w-4 h-4 text-amber-400" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Mobile search results */}
+                {showDropdown && results.length > 0 && (
+                  <div className="mt-1 bg-white rounded-xl border border-amber-200 shadow-lg overflow-hidden">
+                    {results.slice(0, 5).map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => { handleResultClick(item); setMobileMenuOpen(false) }}
+                        className="w-full text-left px-4 py-3 hover:bg-amber-50 transition-colors flex items-center justify-between border-b border-amber-100 last:border-0"
+                      >
+                        <div>
+                          <span className="font-bold text-gray-800 text-sm">{item.word}</span>
+                          {item.meaning && (
+                            <span className="text-xs text-gray-500 block line-clamp-1">{item.meaning}</span>
+                          )}
+                        </div>
+                        <span className="text-[10px] font-bold text-orange-500 bg-orange-50 px-2 py-0.5 rounded-md shrink-0 ml-2">
+                          Xem video
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
-            </div>
 
-            <nav className="flex flex-col gap-1.5 pt-1">
-              {navLinks.map((item) => {
-                const isActive = pathname === item.href
-                return (
+              {/* Nav links */}
+              <nav className="space-y-0.5">
+                {navLinks.map((item) => {
+                  const isActive = pathname === item.href
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200 ${
+                        isActive
+                          ? 'bg-amber-100 text-orange-600'
+                          : 'text-gray-700 hover:bg-amber-50 hover:text-orange-600'
+                      }`}
+                    >
+                      {item.icon}
+                      <span>{item.label}</span>
+                      {isActive && (
+                        <span className="ml-auto w-1.5 h-1.5 rounded-full bg-orange-500" />
+                      )}
+                    </Link>
+                  )
+                })}
+              </nav>
+
+              {/* Divider */}
+              <div className="my-2 border-t border-amber-100" />
+
+              {/* User-specific mobile links */}
+              {user && (
+                <div className="space-y-0.5">
                   <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`flex items-center gap-3 px-4 py-2.5 rounded-2xl text-sm font-extrabold transition ${
-                      isActive
-                        ? 'bg-amber-100 text-orange-600'
-                        : 'text-gray-700 hover:bg-amber-50'
-                    }`}
+                    href="/profile"
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-gray-700 hover:bg-amber-50 hover:text-orange-600 transition-all duration-200"
                   >
-                    {item.icon}
-                    <span>{item.label}</span>
+                    <UserIcon className="w-4 h-4 text-orange-500" />
+                    <span>Trang cá nhân</span>
+                    {profile?.is_premium ? (
+                      <span className="ml-auto text-[10px] font-bold bg-gradient-to-r from-amber-400 to-orange-400 text-white px-2 py-0.5 rounded-full flex items-center gap-0.5">
+                        <Crown className="w-2.5 h-2.5" /> VIP
+                      </span>
+                    ) : (
+                      <span className="ml-auto text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
+                        Free
+                      </span>
+                    )}
                   </Link>
-                )
-              })}
 
-              {user && (
+                  {profile?.role === 'ADMIN' && (
+                    <Link
+                      href="/admin"
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-amber-900 bg-amber-50 hover:bg-amber-100 transition-all duration-200"
+                    >
+                      <ShieldCheck className="w-4 h-4 text-orange-600" />
+                      <span>Trang quản trị (Admin)</span>
+                    </Link>
+                  )}
+
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 hover:text-red-600 transition-all duration-200 active:scale-95 text-left"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span>Đăng xuất</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Login button for mobile */}
+              {!user && (
                 <Link
-                  href="/profile"
-                  className="flex items-center gap-3 px-4 py-2.5 rounded-2xl text-sm font-extrabold text-gray-700 hover:bg-amber-50"
+                  href="/login"
+                  className="flex items-center justify-center gap-2 w-full mt-2 bg-gradient-to-r from-orange-400 to-amber-400 hover:from-orange-500 hover:to-amber-500 text-white font-bold text-sm px-4 py-3 rounded-xl shadow-md shadow-amber-200/60 transition-all duration-200 active:scale-95"
                 >
-                  <UserIcon className="w-4 h-4 text-orange-500" />
-                  <span>Trang cá nhân ({profile?.is_premium ? 'VIP' : 'Miễn phí'})</span>
+                  <LogIn className="w-4 h-4" />
+                  <span>Đăng nhập</span>
                 </Link>
               )}
-
-              {user && profile?.role === 'ADMIN' && (
-                <Link
-                  href="/admin"
-                  className="flex items-center gap-3 px-4 py-2.5 rounded-2xl text-sm font-extrabold text-amber-900 bg-amber-50"
-                >
-                  <ShieldCheck className="w-4 h-4 text-orange-600" />
-                  <span>Trang quản trị (Admin)</span>
-                </Link>
-              )}
-
-              {user && (
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center gap-3 px-4 py-2.5 rounded-2xl text-sm font-extrabold text-red-600 hover:bg-red-50 text-left w-full"
-                >
-                  <LogOut className="w-4 h-4" />
-                  <span>Đăng xuất</span>
-                </button>
-              )}
-            </nav>
+            </div>
           </div>
         )}
       </header>
 
-      {/* MODAL POPUP HIỆN VIDEO TỪ VỰNG KHI CLICK VÀO TỪ (FIX LỖI 404) */}
+      {/* ================================================================
+          MODAL POPUP VIDEO TỪ VỰNG — scale-in animation
+          ================================================================ */}
       {selectedModalVocab && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="bg-white w-full max-w-lg rounded-3xl border-2 border-amber-300 p-6 shadow-2xl relative">
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
+          onClick={(e) => { if (e.target === e.currentTarget) setSelectedModalVocab(null) }}
+        >
+          <div className="bg-white w-full max-w-lg rounded-3xl border-2 border-amber-300 p-6 shadow-2xl relative animate-scale-in">
             <button
               onClick={() => setSelectedModalVocab(null)}
-              className="w-9 h-9 rounded-full bg-amber-100 hover:bg-amber-200 text-amber-800 flex items-center justify-center absolute top-4 right-4 transition z-10"
+              className="w-9 h-9 rounded-full bg-amber-100 hover:bg-amber-200 text-amber-800 flex items-center justify-center absolute top-4 right-4 transition-all duration-200 active:scale-95 z-10"
               title="Đóng popup"
             >
               <X className="w-5 h-5" />
             </button>
 
-            {/* Video Iframe / Video tag */}
+            {/* Video */}
             <div className="relative w-full aspect-video rounded-2xl overflow-hidden bg-black shadow-md border-2 border-amber-200 mb-4">
               {selectedModalVocab.video_url ? (
                 isMp4 ? (
@@ -462,7 +545,7 @@ export default function Header() {
                     </h3>
                     <button
                       onClick={() => speakWord(selectedModalVocab.word)}
-                      className="w-8 h-8 rounded-full bg-orange-100 hover:bg-orange-200 text-orange-600 flex items-center justify-center transition active:scale-95"
+                      className="w-8 h-8 rounded-full bg-orange-100 hover:bg-orange-200 text-orange-600 flex items-center justify-center transition-all duration-200 active:scale-95"
                       title="Phát âm tiếng Việt"
                     >
                       <Volume2 className="w-4 h-4" />
@@ -491,9 +574,9 @@ export default function Header() {
               <div className="pt-2 flex justify-end">
                 <button
                   onClick={() => setSelectedModalVocab(null)}
-                  className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-orange-400 to-amber-400 hover:from-orange-500 text-white font-extrabold text-xs shadow-md transition active:scale-95"
+                  className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-orange-400 to-amber-400 hover:from-orange-500 text-white font-extrabold text-xs shadow-md transition-all duration-200 active:scale-95"
                 >
-                  Đã hiểu
+                  Đã hiểu ✓
                 </button>
               </div>
             </div>

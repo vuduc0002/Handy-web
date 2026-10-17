@@ -14,9 +14,9 @@ function TopicsSkeleton() {
 
 export default function TopicsPage() {
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 md:py-12">
+    <div className="max-w-6xl mx-auto px-4 py-8 md:py-12 animate-fade-in">
       {/* Header khu vực chủ đề */}
-      <div className="text-center max-w-2xl mx-auto mb-10">
+      <div className="text-center max-w-2xl mx-auto mb-10 animate-slide-up">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-100 text-amber-800 text-xs sm:text-sm font-extrabold mb-3">
           <Layers className="w-4 h-4 text-orange-500" />
           <span>Kho Bài Giảng Ngôn Ngữ Ký Hiệu</span>

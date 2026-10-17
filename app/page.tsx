@@ -16,7 +16,7 @@ function GridSkeleton() {
 
 export default function HomePage() {
   return (
-    <div className="max-w-6xl mx-auto px-4 pb-20">
+    <div className="max-w-6xl mx-auto px-4 pb-20 animate-fade-in">
       {/* 1. HERO SECTION (Hấp dẫn, giàu thị giác, 2 cột) */}
       <HeroSection />
 

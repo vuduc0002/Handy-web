@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
-import { Lock, ChevronRight, Crown, BookOpen, AlertCircle } from 'lucide-react'
+import { Lock, ChevronRight, Crown, BookOpen, AlertCircle, Sparkles } from 'lucide-react'
 
 interface Topic {
   id: string
@@ -21,51 +21,60 @@ interface Profile {
   is_premium: boolean
 }
 
-// Bảng màu rực rỡ, tươi sáng dành riêng cho trẻ em
+// Bảng màu rực rỡ, tươi sáng
 const CARD_COLORS = [
   {
-    bg: 'bg-red-50 hover:bg-red-100/80',
-    border: 'border-red-300',
+    bg: 'bg-red-50',
+    border: 'border-red-200',
     icon: 'bg-red-400 text-white',
-    badge: 'bg-red-400',
+    accent: 'text-red-600',
+    hover: 'hover:border-red-400 hover:shadow-red-100',
   },
   {
-    bg: 'bg-amber-50 hover:bg-amber-100/80',
-    border: 'border-amber-300',
+    bg: 'bg-amber-50',
+    border: 'border-amber-200',
     icon: 'bg-amber-400 text-white',
-    badge: 'bg-amber-400',
+    accent: 'text-amber-700',
+    hover: 'hover:border-amber-400 hover:shadow-amber-100',
   },
   {
-    bg: 'bg-emerald-50 hover:bg-emerald-100/80',
-    border: 'border-emerald-300',
-    icon: 'bg-emerald-400 text-white',
-    badge: 'bg-emerald-500',
+    bg: 'bg-emerald-50',
+    border: 'border-emerald-200',
+    icon: 'bg-emerald-500 text-white',
+    accent: 'text-emerald-700',
+    hover: 'hover:border-emerald-400 hover:shadow-emerald-100',
   },
   {
-    bg: 'bg-cyan-50 hover:bg-cyan-100/80',
-    border: 'border-cyan-300',
-    icon: 'bg-cyan-400 text-white',
-    badge: 'bg-cyan-500',
+    bg: 'bg-cyan-50',
+    border: 'border-cyan-200',
+    icon: 'bg-cyan-500 text-white',
+    accent: 'text-cyan-700',
+    hover: 'hover:border-cyan-400 hover:shadow-cyan-100',
   },
   {
-    bg: 'bg-blue-50 hover:bg-blue-100/80',
-    border: 'border-blue-300',
-    icon: 'bg-blue-400 text-white',
-    badge: 'bg-blue-400',
+    bg: 'bg-blue-50',
+    border: 'border-blue-200',
+    icon: 'bg-blue-500 text-white',
+    accent: 'text-blue-700',
+    hover: 'hover:border-blue-400 hover:shadow-blue-100',
   },
   {
-    bg: 'bg-purple-50 hover:bg-purple-100/80',
-    border: 'border-purple-300',
-    icon: 'bg-purple-400 text-white',
-    badge: 'bg-purple-400',
+    bg: 'bg-purple-50',
+    border: 'border-purple-200',
+    icon: 'bg-purple-500 text-white',
+    accent: 'text-purple-700',
+    hover: 'hover:border-purple-400 hover:shadow-purple-100',
   },
 ]
 
 const TOPIC_EMOJIS = ['👋', '👨‍👩‍👧', '😊', '🍎', '🐶', '⭐', '🌈', '🎈']
 
-function TopicCardSkeleton() {
+function TopicCardSkeleton({ delay = 0 }: { delay?: number }) {
   return (
-    <div className="bg-white/90 rounded-3xl border-2 border-amber-200 p-6 shadow-sm animate-pulse">
+    <div
+      className="bg-white rounded-3xl border-2 border-amber-200 p-6 shadow-sm animate-pulse"
+      style={{ animationDelay: `${delay}ms` }}
+    >
       <div className="flex items-start gap-4">
         <div className="w-14 h-14 rounded-2xl bg-amber-100 shrink-0" />
         <div className="flex-1 space-y-2.5">
@@ -93,7 +102,6 @@ export default function TopicsGrid() {
         setLoading(true)
         setError(null)
 
-        // 1. Fetch danh sách topics và auth user song song
         const [topicsRes, userRes] = await Promise.all([
           supabase.from('topics').select('*').order('created_at', { ascending: true }),
           supabase.auth.getUser(),
@@ -107,7 +115,6 @@ export default function TopicsGrid() {
           setTopics(topicsRes.data ?? [])
         }
 
-        // 2. Nếu đã đăng nhập, lấy profile với maybeSingle (an toàn không ném lỗi nếu chưa có row)
         const currentUser = userRes.data?.user
         if (currentUser) {
           const { data: profileData } = await supabase
@@ -146,8 +153,8 @@ export default function TopicsGrid() {
   if (loading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <TopicCardSkeleton key={i} />
+        {Array.from({ length: 6 }).map((_, i) => (
+          <TopicCardSkeleton key={i} delay={i * 80} />
         ))}
       </div>
     )
@@ -155,13 +162,13 @@ export default function TopicsGrid() {
 
   if (error) {
     return (
-      <div className="bg-white rounded-3xl border-2 border-red-200 p-8 text-center max-w-lg mx-auto shadow-md">
+      <div className="bg-white rounded-3xl border-2 border-red-200 p-8 text-center max-w-lg mx-auto shadow-md animate-fade-in">
         <p className="text-4xl mb-3">⚠️</p>
         <h3 className="font-extrabold text-gray-800 text-lg mb-1">Không thể tải chủ đề</h3>
         <p className="text-gray-500 text-sm mb-4">{error}</p>
         <button
           onClick={() => window.location.reload()}
-          className="px-6 py-2.5 rounded-full bg-gradient-to-r from-orange-400 to-amber-400 text-white font-bold text-sm shadow hover:from-orange-500 hover:to-amber-500 transition active:scale-95"
+          className="px-6 py-2.5 rounded-full bg-gradient-to-r from-orange-400 to-amber-400 text-white font-bold text-sm shadow hover:from-orange-500 hover:to-amber-500 transition-all duration-200 active:scale-95"
         >
           Tải lại trang
         </button>
@@ -169,10 +176,9 @@ export default function TopicsGrid() {
     )
   }
 
-  // Nếu trong database chưa có topics hoặc bị chặn bởi RLS
   if (topics.length === 0) {
     return (
-      <div className="bg-white/95 rounded-3xl border-2 border-amber-300 p-8 text-center max-w-xl mx-auto shadow-lg">
+      <div className="bg-white/95 rounded-3xl border-2 border-amber-300 p-8 text-center max-w-xl mx-auto shadow-lg animate-fade-in">
         <div className="w-16 h-16 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center mx-auto mb-4 text-3xl">
           <AlertCircle className="w-8 h-8" />
         </div>
@@ -180,7 +186,8 @@ export default function TopicsGrid() {
           Chưa có chủ đề nào hiển thị!
         </h3>
         <p className="text-gray-600 text-sm leading-relaxed mb-4">
-          Nếu bạn đã tạo bảng và chèn dữ liệu mẫu trong Supabase, nguyên nhân là do <strong>Row Level Security (RLS)</strong> mặc định đang chặn quyền đọc từ ứng dụng.
+          Nếu bạn đã tạo bảng và chèn dữ liệu mẫu trong Supabase, nguyên nhân là do{' '}
+          <strong>Row Level Security (RLS)</strong> mặc định đang chặn quyền đọc từ ứng dụng.
         </p>
         <div className="bg-amber-50 rounded-2xl border border-amber-200 p-4 text-left text-xs text-amber-900 font-mono mb-4">
           <p className="font-bold font-sans text-amber-950 mb-1">Cách khắc phục nhanh trên Supabase SQL Editor:</p>
@@ -196,7 +203,7 @@ CREATE POLICY "Cho phép đọc vocabularies" ON public.vocabularies FOR SELECT 
         </div>
         <button
           onClick={() => window.location.reload()}
-          className="px-6 py-2.5 rounded-full bg-gradient-to-r from-orange-400 to-amber-400 hover:from-orange-500 hover:to-amber-500 text-white font-extrabold text-sm shadow-md transition active:scale-95"
+          className="px-6 py-2.5 rounded-full bg-gradient-to-r from-orange-400 to-amber-400 hover:from-orange-500 hover:to-amber-500 text-white font-extrabold text-sm shadow-md transition-all duration-200 active:scale-95"
         >
           🔄 Đã chạy SQL, kiểm tra lại!
         </button>
@@ -207,91 +214,105 @@ CREATE POLICY "Cho phép đọc vocabularies" ON public.vocabularies FOR SELECT 
   const isPremium = profile?.is_premium === true
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
       {topics.map((topic, idx) => {
         const canAccess = topic.is_free || isPremium
         const color = CARD_COLORS[idx % CARD_COLORS.length]
         const emoji = TOPIC_EMOJIS[idx % TOPIC_EMOJIS.length]
+        // Stagger animation delay
+        const animDelay = Math.min(idx * 80, 480)
 
         if (canAccess) {
           return (
             <Link
               key={topic.id}
               href={`/topics/${topic.id}`}
-              className={`group relative flex flex-col justify-between p-6 rounded-3xl border-2 ${color.bg} ${color.border} shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 cursor-pointer bg-white`}
+              style={{ animationDelay: `${animDelay}ms` }}
+              className={`
+                group relative flex flex-col justify-between p-5 sm:p-6
+                rounded-3xl border-2 bg-white
+                ${color.border} ${color.hover}
+                shadow-sm hover:shadow-xl hover:-translate-y-1.5
+                transition-all duration-300 ease-in-out
+                animate-slide-up
+                cursor-pointer
+              `}
             >
               <div>
-                {/* Nhãn Miễn phí: tag nhỏ màu hồng/đỏ bo góc nằm góc trên thẻ */}
+                {/* Badge Miễn phí */}
                 {topic.is_free && (
-                  <span className="absolute top-4 right-4 text-xs font-bold text-white px-3 py-1 rounded-full shadow-sm bg-gradient-to-r from-rose-500 to-pink-500">
+                  <span className="absolute top-4 right-4 text-[11px] font-bold text-white px-2.5 py-1 rounded-full shadow-sm bg-gradient-to-r from-rose-500 to-pink-500">
                     Miễn phí
                   </span>
                 )}
 
-                <div className="flex items-center gap-4 mb-3">
+                <div className="flex items-start gap-4 mb-3">
+                  {/* Icon emoji */}
                   <div
-                    className={`w-14 h-14 rounded-2xl ${color.icon} flex items-center justify-center text-2xl shadow-md shrink-0`}
+                    className={`w-13 h-13 min-w-[52px] min-h-[52px] rounded-2xl ${color.icon} flex items-center justify-center text-2xl shadow-md shrink-0 group-hover:scale-110 transition-transform duration-300`}
                   >
                     {emoji}
                   </div>
-                  <div className="flex-1 min-w-0 pr-16">
-                    <h3 className="font-extrabold text-gray-800 text-lg leading-snug line-clamp-2">
+
+                  {/* Tiêu đề — KHÔNG cắt ngắn, cho phép xuống dòng tự nhiên */}
+                  <div className="flex-1 min-w-0 pr-14">
+                    <h3 className="font-extrabold text-gray-800 text-base sm:text-lg leading-snug break-words">
                       {topic.title}
                     </h3>
                   </div>
                 </div>
 
+                {/* Mô tả — tối đa 2 dòng */}
                 {topic.description && (
-                  <p className="text-sm text-gray-600 line-clamp-2 mb-4">
+                  <p className="text-sm text-gray-500 line-clamp-2 mb-4 leading-relaxed">
                     {topic.description}
                   </p>
                 )}
               </div>
 
-              <div className="flex items-center gap-2 text-sm font-extrabold text-orange-600 group-hover:gap-3 transition-all pt-2 border-t border-amber-100">
-                <BookOpen className="w-4 h-4" />
+              {/* Footer CTA */}
+              <div className={`flex items-center gap-2 text-sm font-bold ${color.accent} pt-3 border-t border-gray-100 group-hover:gap-3 transition-all duration-200`}>
+                <BookOpen className="w-4 h-4 shrink-0" />
                 <span>Bắt đầu học</span>
-                <ChevronRight className="w-4 h-4 ml-auto" />
+                <ChevronRight className="w-4 h-4 ml-auto group-hover:translate-x-1 transition-transform duration-200" />
               </div>
             </Link>
           )
         }
 
-        // Card bị khóa dành cho chủ đề VIP: ổ khóa vàng nhỏ tinh xảo kèm nút Nâng cấp VIP màu cam gradient rực rỡ
+        // Locked VIP card
         return (
           <div
             key={topic.id}
-            className="relative flex flex-col justify-between p-6 rounded-3xl border-2 border-amber-200 bg-white/80 overflow-hidden shadow-sm hover:-translate-y-1 hover:shadow-lg transition-all duration-200"
+            style={{ animationDelay: `${animDelay}ms` }}
+            className="relative flex flex-col justify-between p-5 sm:p-6 rounded-3xl border-2 border-amber-200 bg-white/80 overflow-hidden shadow-sm hover:-translate-y-1 hover:shadow-lg transition-all duration-300 ease-in-out animate-slide-up"
           >
-            {/* Lớp phủ mờ */}
-            <div className="absolute inset-0 bg-amber-50/70 backdrop-blur-[2px] rounded-3xl z-10" />
+            {/* Overlay mờ */}
+            <div className="absolute inset-0 bg-amber-50/60 backdrop-blur-[1.5px] rounded-3xl z-10" />
 
-            {/* Nội dung card (mờ phía sau) */}
-            <div className="opacity-40">
-              <div className="flex items-center gap-4 mb-3">
-                <div
-                  className={`w-14 h-14 rounded-2xl ${color.icon} flex items-center justify-center text-2xl shadow-md shrink-0`}
-                >
+            {/* Nội dung mờ phía sau */}
+            <div className="opacity-35 pointer-events-none">
+              <div className="flex items-start gap-4 mb-3">
+                <div className={`w-13 h-13 min-w-[52px] min-h-[52px] rounded-2xl ${color.icon} flex items-center justify-center text-2xl shadow-md shrink-0`}>
                   {emoji}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-extrabold text-gray-800 text-lg leading-snug line-clamp-2">
+                  {/* Tiêu đề locked cũng không cắt */}
+                  <h3 className="font-extrabold text-gray-800 text-base sm:text-lg leading-snug break-words">
                     {topic.title}
                   </h3>
                 </div>
               </div>
               {topic.description && (
-                <p className="text-sm text-gray-600 line-clamp-2 mb-4">
-                  {topic.description}
-                </p>
+                <p className="text-sm text-gray-600 line-clamp-2 mb-4">{topic.description}</p>
               )}
             </div>
 
             {/* Hộp thoại mở khóa VIP */}
             <div className="absolute inset-0 z-20 flex flex-col items-center justify-center p-4">
-              <div className="bg-white rounded-3xl shadow-xl border-2 border-amber-300 px-6 py-5 flex flex-col items-center gap-3 w-full max-w-[240px]">
-                <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-500 border border-amber-300 flex items-center justify-center shadow-inner">
-                  <Lock className="w-6 h-6 text-amber-500" />
+              <div className="bg-white rounded-2xl shadow-xl border-2 border-amber-300 px-5 py-4 flex flex-col items-center gap-3 w-full max-w-[220px]">
+                <div className="w-11 h-11 rounded-xl bg-amber-100 text-amber-500 border border-amber-300 flex items-center justify-center shadow-inner">
+                  <Lock className="w-5 h-5 text-amber-500" />
                 </div>
                 <div className="text-center">
                   <p className="text-xs font-bold text-amber-700 uppercase tracking-wide flex items-center justify-center gap-1">
@@ -302,9 +323,9 @@ CREATE POLICY "Cho phép đọc vocabularies" ON public.vocabularies FOR SELECT 
                 </div>
                 <button
                   onClick={() => router.push('/checkout')}
-                  className="flex items-center gap-2 bg-gradient-to-r from-orange-400 to-amber-400 hover:from-orange-500 hover:to-amber-500 text-white font-extrabold text-sm px-5 py-2.5 rounded-full shadow-md shadow-amber-200 transition active:scale-95 w-full justify-center cursor-pointer"
+                  className="flex items-center gap-2 bg-gradient-to-r from-orange-400 to-amber-400 hover:from-orange-500 hover:to-amber-500 text-white font-extrabold text-xs px-4 py-2.5 rounded-full shadow-md shadow-amber-200 transition-all duration-200 active:scale-95 w-full justify-center cursor-pointer"
                 >
-                  <Crown className="w-4 h-4" />
+                  <Sparkles className="w-3.5 h-3.5" />
                   Nâng cấp VIP
                 </button>
               </div>
