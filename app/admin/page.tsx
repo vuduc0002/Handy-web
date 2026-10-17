@@ -387,6 +387,13 @@ export default function AdminPage() {
         {/* Action Controls: Nút Quay lại Trang chủ & Tab switcher */}
         <div className="flex flex-wrap items-center gap-3 self-start md:self-auto">
           <Link
+            href="/admin/dashboard"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-orange-400 to-amber-400 hover:from-orange-500 hover:to-amber-500 text-white font-extrabold text-xs shadow-md shadow-amber-200 transition active:scale-95 shrink-0"
+          >
+            <span>Báo cáo & Giao dịch</span>
+          </Link>
+
+          <Link
             href="/"
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white border-2 border-amber-300 hover:bg-amber-50 text-amber-900 font-extrabold text-xs shadow-sm transition active:scale-95 shrink-0"
           >
