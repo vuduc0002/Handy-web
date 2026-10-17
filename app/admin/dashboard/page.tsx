@@ -111,11 +111,23 @@ export default function AdminDashboardPage() {
     }
   }, [router])
 
-  // 2. Fetch data from Supabase (profiles & transactions)
+  // 2. Fetch data from Server-side API (bypassing RLS with supabaseAdmin)
   const fetchDashboardData = async () => {
     try {
       setLoading(true)
 
+      const res = await fetch('/api/admin/dashboard', {
+        cache: 'no-store',
+      })
+
+      if (res.ok) {
+        const json = await res.json()
+        setProfiles(json.profiles || [])
+        setTransactions(json.transactions || [])
+        return
+      }
+
+      // Fallback nếu API route gặp sự cố
       const [profilesRes, transactionsRes] = await Promise.all([
         supabase.from('profiles').select('*').order('created_at', { ascending: false }),
         supabase.from('transactions').select('*').order('created_at', { ascending: false }),
@@ -124,13 +136,11 @@ export default function AdminDashboardPage() {
       const profilesList: Profile[] = profilesRes.data ?? []
       const transactionsListRaw: Transaction[] = transactionsRes.data ?? []
 
-      // Create a lookup map from user_id to email
       const userMap = new Map<string, string>()
       profilesList.forEach((p) => {
         if (p.email) userMap.set(p.id, p.email)
       })
 
-      // Attach user_email to transactions
       const transactionsWithEmail: Transaction[] = transactionsListRaw.map((tx) => ({
         ...tx,
         user_email: userMap.get(tx.user_id) || 'Khách vãng lai / Ẩn danh',
