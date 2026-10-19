@@ -2,6 +2,7 @@
 
 import { Sparkles, ArrowRight, Play, Video } from 'lucide-react'
 import { motion } from 'framer-motion'
+import Link from 'next/link'
 
 export default function HeroSection() {
   const scrollToTopics = () => {
@@ -52,19 +53,26 @@ export default function HeroSection() {
             Học ngôn ngữ ký hiệu tự nhiên & hào hứng cùng <strong className="text-orange-500 font-extrabold">HANDY</strong>! Khám phá từ vựng qua video sinh động, học thật vui và dễ dàng.
           </p>
 
-          {/* Hai nút Call-to-Action */}
-          <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2">
+          {/* Cụm nút Call-to-Action */}
+          <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center lg:justify-start gap-3.5 pt-2">
             <button
               onClick={scrollToTopics}
-              className="relative group w-full sm:w-auto flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-500 text-white font-black text-base shadow-lg shadow-orange-400/40 hover:shadow-orange-500/60 hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer animate-pulse-glow"
+              className="relative group w-full sm:w-auto flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-500 text-white font-black text-base shadow-lg shadow-orange-400/40 hover:shadow-orange-500/60 hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer animate-pulse-glow"
             >
               <span>Học thử miễn phí</span>
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </button>
 
+            <Link 
+              href="/font-demo" 
+              className="w-full sm:w-auto inline-flex justify-center items-center gap-2 px-6 py-3.5 border-2 border-purple-500 text-purple-700 font-bold rounded-xl hover:bg-purple-50 transition-colors shadow-sm active:scale-95"
+            >
+              🎨 Trải nghiệm Font Cao Cấp
+            </Link>
+
             <button
               onClick={scrollToTopics}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-7 py-4 rounded-2xl bg-white/90 hover:bg-white text-gray-700 font-extrabold text-base border-2 border-amber-300/80 hover:border-orange-400 shadow-sm transition-all duration-200 active:scale-95 cursor-pointer hover:shadow-md"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-white/90 hover:bg-white text-gray-700 font-extrabold text-base border-2 border-amber-300/80 hover:border-orange-400 shadow-sm transition-all duration-200 active:scale-95 cursor-pointer hover:shadow-md"
             >
               <Play className="w-4 h-4 text-orange-500 fill-orange-500" />
               <span>Tìm hiểu thêm</span>
