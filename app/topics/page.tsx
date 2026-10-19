@@ -22,7 +22,7 @@ export default function TopicsPage() {
           <span>Kho Bài Giảng Ngôn Ngữ Ký Hiệu</span>
         </div>
 
-        <h1 className="text-3xl sm:text-4xl font-black text-gray-800 tracking-tight mb-3">
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight mb-3">
           Danh Sách Chủ Đề Bài Học
         </h1>
 

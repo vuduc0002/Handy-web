@@ -36,10 +36,10 @@ export default function HomePage() {
         className="pt-8 md:pt-16 pb-8 md:pb-12 scroll-mt-20"
       >
         <div className="text-center mb-10 md:mb-12">
-          <span className="text-xs font-black text-orange-600 uppercase tracking-widest bg-orange-100 px-3.5 py-1.5 rounded-full inline-block mb-3">
+          <span className="text-xs font-bold text-orange-600 uppercase tracking-widest bg-orange-100 px-3.5 py-1.5 rounded-full inline-block mb-3">
             Kho Bài Giảng Phong Phú
           </span>
-          <h2 className="text-2xl sm:text-4xl font-black text-gray-800 tracking-tight mb-3">
+          <h2 className="text-2xl sm:text-4xl font-extrabold text-gray-900 tracking-tight mb-3">
             Lộ Trình Học Tập Của Bạn
           </h2>
           <p className="text-sm sm:text-base text-gray-600 max-w-xl mx-auto">

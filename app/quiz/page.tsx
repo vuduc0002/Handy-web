@@ -58,7 +58,7 @@ export default async function QuizSelectionPage() {
                 )}
               </div>
 
-              <h3 className="font-black text-gray-800 text-base sm:text-lg group-hover:text-orange-600 transition-colors break-words whitespace-normal leading-snug mb-1.5">
+              <h3 className="font-bold text-gray-900 text-base sm:text-lg group-hover:text-orange-600 transition-colors break-words whitespace-normal leading-snug mb-1.5">
                 {t.title}
               </h3>
               {t.description && (

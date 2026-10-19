@@ -252,7 +252,7 @@ CREATE POLICY "Cho phép đọc vocabularies" ON public.vocabularies FOR SELECT 
 
                     {/* Tiêu đề — tự do rớt dòng tự nhiên, không bị cắt ngắn */}
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-extrabold text-gray-800 text-base sm:text-lg leading-snug break-words whitespace-normal">
+                      <h3 className="font-bold text-gray-900 text-base sm:text-lg leading-snug break-words whitespace-normal">
                         {topic.title}
                       </h3>
                     </div>
@@ -306,7 +306,7 @@ CREATE POLICY "Cho phép đọc vocabularies" ON public.vocabularies FOR SELECT 
                     {emoji}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-extrabold text-gray-800 text-base sm:text-lg leading-snug break-words whitespace-normal">
+                    <h3 className="font-bold text-gray-900 text-base sm:text-lg leading-snug break-words whitespace-normal">
                       {topic.title}
                     </h3>
                   </div>

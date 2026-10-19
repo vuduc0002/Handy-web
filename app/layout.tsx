@@ -6,8 +6,9 @@ import Footer from "@/app/components/Footer";
 
 const beVietnamPro = Be_Vietnam_Pro({
   weight: ["400", "500", "600", "700", "800", "900"],
-  subsets: ["latin", "vietnamese"],
+  subsets: ["vietnamese", "latin"],
   variable: "--font-be-vietnam-pro",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -32,11 +33,11 @@ export default function RootLayout({
   return (
     <html
       lang="vi"
-      className={`${beVietnamPro.variable} font-sans h-full`}
+      className={`${beVietnamPro.variable} ${beVietnamPro.className} font-sans h-full`}
       style={{ backgroundColor: "#fffbeb", colorScheme: "light" }}
     >
       <body
-        className="min-h-full flex flex-col bg-amber-50 text-gray-800"
+        className={`${beVietnamPro.className} ${beVietnamPro.variable} font-sans min-h-full flex flex-col bg-amber-50 text-gray-800`}
         style={{ backgroundColor: "#fffbeb", colorScheme: "light" }}
       >
         <Header />
