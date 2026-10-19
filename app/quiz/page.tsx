@@ -48,17 +48,17 @@ export default async function QuizSelectionPage() {
                   📖
                 </span>
                 {t.is_free ? (
-                  <span className="text-[11px] font-bold text-white bg-gradient-to-r from-rose-500 to-pink-500 px-3 py-0.5 rounded-full">
+                  <span className="shrink-0 text-[11px] font-bold text-white bg-gradient-to-r from-rose-500 to-pink-500 px-3 py-0.5 rounded-full">
                     Miễn phí
                   </span>
                 ) : (
-                  <span className="text-[11px] font-bold text-amber-800 bg-amber-100 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                  <span className="shrink-0 text-[11px] font-bold text-amber-800 bg-amber-100 px-2.5 py-0.5 rounded-full flex items-center gap-1">
                     <Crown className="w-3 h-3 text-amber-600" /> VIP
                   </span>
                 )}
               </div>
 
-              <h3 className="font-black text-gray-800 text-base sm:text-lg group-hover:text-orange-600 transition-colors break-words leading-snug mb-1.5">
+              <h3 className="font-black text-gray-800 text-base sm:text-lg group-hover:text-orange-600 transition-colors break-words whitespace-normal leading-snug mb-1.5">
                 {t.title}
               </h3>
               {t.description && (

@@ -239,27 +239,35 @@ CREATE POLICY "Cho phép đọc vocabularies" ON public.vocabularies FOR SELECT 
               `}
             >
               <div>
-                {/* Badge Miễn phí */}
-                {topic.is_free && (
-                  <span className="absolute top-4 right-4 text-[11px] font-bold text-white px-2.5 py-1 rounded-full shadow-sm bg-gradient-to-r from-rose-500 to-pink-500">
-                    Miễn phí
-                  </span>
-                )}
+                {/* Khu vực Card Header: Icon + Tiêu đề + Nhãn */}
+                <div className="flex justify-between items-start gap-3 mb-3">
+                  {/* Khối chứa Icon + Text */}
+                  <div className="flex items-start gap-3.5 flex-1 min-w-0">
+                    {/* Icon emoji */}
+                    <div
+                      className={`w-13 h-13 min-w-[52px] min-h-[52px] rounded-2xl ${color.icon} flex items-center justify-center text-2xl shadow-md shrink-0 group-hover:scale-110 transition-transform duration-300`}
+                    >
+                      {emoji}
+                    </div>
 
-                <div className="flex items-start gap-4 mb-3">
-                  {/* Icon emoji */}
-                  <div
-                    className={`w-13 h-13 min-w-[52px] min-h-[52px] rounded-2xl ${color.icon} flex items-center justify-center text-2xl shadow-md shrink-0 group-hover:scale-110 transition-transform duration-300`}
-                  >
-                    {emoji}
+                    {/* Tiêu đề — tự do rớt dòng tự nhiên, không bị cắt ngắn */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-extrabold text-gray-800 text-base sm:text-lg leading-snug break-words whitespace-normal">
+                        {topic.title}
+                      </h3>
+                    </div>
                   </div>
 
-                  {/* Tiêu đề — KHÔNG cắt ngắn, cho phép xuống dòng tự nhiên */}
-                  <div className="flex-1 min-w-0 pr-14">
-                    <h3 className="font-extrabold text-gray-800 text-base sm:text-lg leading-snug break-words">
-                      {topic.title}
-                    </h3>
-                  </div>
+                  {/* Nhãn Miễn phí / VIP neo cố định góc trên bên phải, không co bóp */}
+                  {topic.is_free ? (
+                    <span className="shrink-0 text-[11px] font-bold text-white px-2.5 py-1 rounded-full shadow-sm bg-gradient-to-r from-rose-500 to-pink-500">
+                      Miễn phí
+                    </span>
+                  ) : (
+                    <span className="shrink-0 text-[11px] font-bold text-amber-800 bg-amber-100 px-2.5 py-1 rounded-full shadow-sm flex items-center gap-1">
+                      <Crown className="w-3 h-3 text-amber-600" /> VIP
+                    </span>
+                  )}
                 </div>
 
                 {/* Mô tả — tối đa 2 dòng */}
@@ -292,16 +300,20 @@ CREATE POLICY "Cho phép đọc vocabularies" ON public.vocabularies FOR SELECT 
 
             {/* Nội dung mờ phía sau */}
             <div className="opacity-35 pointer-events-none">
-              <div className="flex items-start gap-4 mb-3">
-                <div className={`w-13 h-13 min-w-[52px] min-h-[52px] rounded-2xl ${color.icon} flex items-center justify-center text-2xl shadow-md shrink-0`}>
-                  {emoji}
+              <div className="flex justify-between items-start gap-3 mb-3">
+                <div className="flex items-start gap-3.5 flex-1 min-w-0">
+                  <div className={`w-13 h-13 min-w-[52px] min-h-[52px] rounded-2xl ${color.icon} flex items-center justify-center text-2xl shadow-md shrink-0`}>
+                    {emoji}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-extrabold text-gray-800 text-base sm:text-lg leading-snug break-words whitespace-normal">
+                      {topic.title}
+                    </h3>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  {/* Tiêu đề locked cũng không cắt */}
-                  <h3 className="font-extrabold text-gray-800 text-base sm:text-lg leading-snug break-words">
-                    {topic.title}
-                  </h3>
-                </div>
+                <span className="shrink-0 text-[11px] font-bold text-amber-800 bg-amber-100 px-2.5 py-1 rounded-full shadow-sm flex items-center gap-1">
+                  <Crown className="w-3 h-3 text-amber-600" /> VIP
+                </span>
               </div>
               {topic.description && (
                 <p className="text-sm text-gray-600 line-clamp-2 mb-4">{topic.description}</p>
