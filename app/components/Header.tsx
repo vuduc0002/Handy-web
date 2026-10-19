@@ -56,20 +56,44 @@ export default function Header() {
   const searchRef = useRef<HTMLDivElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Auth state & Profile fetching
+  // Auth state & Profile fetching (Non-blocking, Asynchronous)
   useEffect(() => {
-    const fetchUserAndProfile = async (currentUser: User | null) => {
+    let isMounted = true
+    const profileCache = new Map<string, Profile>()
+
+    const fetchUserAndProfile = (currentUser: User | null) => {
+      if (!isMounted) return
       setUser(currentUser)
-      if (currentUser) {
-        const { data: profileData } = await supabase
+
+      if (!currentUser) {
+        setProfile(null)
+        return
+      }
+
+      // Sử dụng cache trong RAM để tránh query lặp lại nhiều lần
+      const cached = profileCache.get(currentUser.id)
+      if (cached) {
+        setProfile(cached)
+        return
+      }
+
+      // Query bảng profiles bất đồng bộ trong nền (không chặn luồng điều hướng giao diện)
+      Promise.resolve(
+        supabase
           .from('profiles')
           .select('id, role, is_premium, email')
           .eq('id', currentUser.id)
           .maybeSingle()
-        setProfile(profileData ?? null)
-      } else {
-        setProfile(null)
-      }
+      )
+        .then(({ data: profileData }) => {
+          if (isMounted && profileData) {
+            profileCache.set(currentUser.id, profileData)
+            setProfile(profileData)
+          }
+        })
+        .catch(() => {
+          // Silent fail to prevent blocking UI
+        })
     }
 
     supabase.auth.getUser().then(({ data }) => fetchUserAndProfile(data.user))
@@ -80,7 +104,10 @@ export default function Header() {
       fetchUserAndProfile(session?.user ?? null)
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      isMounted = false
+      subscription.unsubscribe()
+    }
   }, [])
 
   // Close dropdown on outside click

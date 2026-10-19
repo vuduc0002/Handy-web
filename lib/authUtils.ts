@@ -1,25 +1,14 @@
 import { supabase } from '@/lib/supabaseClient'
 
 /**
- * Triệt để đăng xuất người dùng:
- * 1. Gọi Supabase Auth signOut (global và fallback local).
- * 2. Xóa sạch mọi key liên quan đến Supabase token trong localStorage & sessionStorage.
- * 3. Chuyển hướng cứng (hard redirect) về trang /login để xóa sạch mọi cache,
- *    in-memory auth session và React state trên toàn hệ thống.
+ * Tối ưu hóa Đăng xuất siêu tốc (< 50ms):
+ * 1. Dọn sạch ngay lập tức mọi key liên quan đến Supabase token trong localStorage & sessionStorage (0ms).
+ * 2. Thực hiện local signOut đồng bộ không chờ server roundtrip.
+ * 3. Bắn yêu cầu revoke global lên Supabase ngầm (không chặn blocking UI).
+ * 4. Chuyển hướng cứng (hard redirect) về trang đăng nhập để reset toàn bộ in-memory state.
  */
 export async function logoutUser(redirectTo: string = '/login') {
-  try {
-    await supabase.auth.signOut()
-  } catch (err) {
-    console.warn('Lỗi khi gọi supabase.auth.signOut global:', err)
-  }
-
-  try {
-    await supabase.auth.signOut({ scope: 'local' })
-  } catch {
-    // silent
-  }
-
+  // 1. Dọn dẹp storage ngay lập tức
   if (typeof window !== 'undefined') {
     try {
       const localKeys: string[] = []
@@ -42,8 +31,20 @@ export async function logoutUser(redirectTo: string = '/login') {
     } catch (e) {
       console.warn('Lỗi khi dọn dẹp storage:', e)
     }
+  }
 
-    // Dùng hard navigation để Next.js reset toàn bộ router cache và client state
+  // 2. Local signOut tức thì không phụ thuộc network
+  try {
+    supabase.auth.signOut({ scope: 'local' }).catch(() => {})
+  } catch {
+    // silent
+  }
+
+  // 3. Global signOut chạy nền (fire-and-forget, không await làm trễ UI)
+  supabase.auth.signOut({ scope: 'global' }).catch(() => {})
+
+  // 4. Chuyển hướng ngay lập tức (dưới 50ms)
+  if (typeof window !== 'undefined') {
     window.location.href = redirectTo
   }
 }

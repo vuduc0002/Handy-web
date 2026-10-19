@@ -21,6 +21,11 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
 
+  // Prefetch trang chủ ngay khi mở trang login để điều hướng trong 0s
+  useEffect(() => {
+    router.prefetch('/')
+  }, [router])
+
   // Kiểm tra nếu user đã đăng nhập thì tự động chuyển về trang chủ (chống lỗi ấn Back)
   useEffect(() => {
     let isMounted = true
@@ -46,19 +51,28 @@ export default function LoginPage() {
 
     try {
       if (mode === 'login') {
-        const { error } = await supabase.auth.signInWithPassword({ email, password })
+        const { error } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        })
         if (error) throw error
-        // Dùng replace để thay thế trang login trong lịch sử, tránh ấn Back lại bị rơi vào login
+
+        // Làm mới Server Components và chuyển hướng ngay lập tức (không blocking UI)
+        router.refresh()
         router.replace('/')
+        return
       } else {
-        const { error } = await supabase.auth.signUp({ email, password })
+        const { error } = await supabase.auth.signUp({
+          email: email.trim(),
+          password,
+        })
         if (error) throw error
         setMessage('🎉 Đăng ký thành công! Hãy kiểm tra email để xác nhận tài khoản nhé!')
+        setLoading(false)
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Đã có lỗi xảy ra. Vui lòng thử lại!'
       setError(msg)
-    } finally {
       setLoading(false)
     }
   }
