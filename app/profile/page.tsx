@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
+import { logoutUser } from '@/lib/authUtils'
 import {
   User,
   Crown,
@@ -32,6 +33,7 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [authUser, setAuthUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
 
   useEffect(() => {
     let isMounted = true
@@ -80,8 +82,9 @@ export default function ProfilePage() {
   }, [router])
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
-    router.push('/login')
+    if (isLoggingOut) return
+    setIsLoggingOut(true)
+    await logoutUser('/login')
   }
 
   if (loading) {
@@ -158,11 +161,17 @@ export default function ProfilePage() {
 
           <div className="w-full pt-4 border-t border-amber-100 space-y-2">
             <button
+              type="button"
               onClick={handleLogout}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-red-50 hover:bg-red-100 text-red-600 font-extrabold text-xs transition active:scale-95 cursor-pointer"
+              disabled={isLoggingOut}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-red-50 hover:bg-red-100 text-red-600 font-extrabold text-xs transition active:scale-95 cursor-pointer disabled:opacity-50"
             >
-              <LogOut className="w-4 h-4" />
-              <span>Đăng xuất tài khoản</span>
+              {isLoggingOut ? (
+                <Loader2 className="w-4 h-4 animate-spin text-red-500" />
+              ) : (
+                <LogOut className="w-4 h-4" />
+              )}
+              <span>{isLoggingOut ? 'Đang đăng xuất...' : 'Đăng xuất tài khoản'}</span>
             </button>
           </div>
         </div>

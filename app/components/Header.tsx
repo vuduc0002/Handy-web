@@ -22,6 +22,7 @@ import {
 } from 'lucide-react'
 import type { User } from '@supabase/supabase-js'
 import { getEmbedYoutubeUrl } from '@/lib/utils'
+import { logoutUser } from '@/lib/authUtils'
 
 interface WordResult {
   id: string | number
@@ -50,6 +51,7 @@ export default function Header() {
   const [showDropdown, setShowDropdown] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [selectedModalVocab, setSelectedModalVocab] = useState<WordResult | null>(null)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
 
   const searchRef = useRef<HTMLDivElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -153,10 +155,12 @@ export default function Header() {
   }, [])
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
+    if (isLoggingOut) return
+    setIsLoggingOut(true)
+    setMobileMenuOpen(false)
     setUser(null)
     setProfile(null)
-    router.push('/login')
+    await logoutUser('/login')
   }
 
   const handleResultClick = (item: WordResult) => {
@@ -351,11 +355,17 @@ export default function Header() {
                 </Link>
 
                 <button
+                  type="button"
                   onClick={handleLogout}
-                  className="hidden md:flex p-2 rounded-xl text-red-400 hover:bg-red-50 hover:text-red-600 transition-all duration-200 active:scale-95"
+                  disabled={isLoggingOut}
+                  className="hidden sm:flex items-center justify-center p-2 rounded-xl text-red-500 hover:bg-red-50 hover:text-red-600 transition-all duration-200 active:scale-95 disabled:opacity-50 cursor-pointer"
                   title="Đăng xuất"
                 >
-                  <LogOut className="w-4 h-4" />
+                  {isLoggingOut ? (
+                    <Loader2 className="w-4 h-4 animate-spin text-red-500" />
+                  ) : (
+                    <LogOut className="w-4 h-4" />
+                  )}
                 </button>
               </div>
             ) : (
@@ -494,11 +504,17 @@ export default function Header() {
                   )}
 
                   <button
+                    type="button"
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 hover:text-red-600 transition-all duration-200 active:scale-95 text-left"
+                    disabled={isLoggingOut}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 hover:text-red-600 transition-all duration-200 active:scale-95 text-left disabled:opacity-50 cursor-pointer"
                   >
-                    <LogOut className="w-4 h-4" />
-                    <span>Đăng xuất</span>
+                    {isLoggingOut ? (
+                      <Loader2 className="w-4 h-4 animate-spin text-red-500" />
+                    ) : (
+                      <LogOut className="w-4 h-4" />
+                    )}
+                    <span>{isLoggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}</span>
                   </button>
                 </div>
               )}

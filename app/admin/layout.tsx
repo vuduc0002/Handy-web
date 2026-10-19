@@ -10,7 +10,9 @@ import {
   ShieldCheck,
   User,
   Sparkles,
+  LogOut,
 } from 'lucide-react'
+import { logoutUser } from '@/lib/authUtils'
 
 export default function AdminLayout({
   children,
@@ -107,6 +109,15 @@ export default function AdminLayout({
                 </span>
               </div>
             </div>
+
+            <button
+              type="button"
+              onClick={() => logoutUser('/login')}
+              className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition active:scale-95 cursor-pointer"
+              title="Đăng xuất quản trị"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </header>
