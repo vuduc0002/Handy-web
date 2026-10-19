@@ -205,14 +205,16 @@ export default function Header() {
 
           {/* Logo + Desktop nav links */}
           <div className="flex items-center gap-5">
-            <Link href="/" className="shrink-0 flex items-center">
+            <Link
+              href="/"
+              className="relative overflow-hidden w-[120px] h-[50px] flex items-center justify-center shrink-0"
+            >
               <Image
                 src="/handy-logo.png"
                 alt="HANDY"
-                width={100}
-                height={40}
+                fill
+                sizes="120px"
                 className="object-contain hover:scale-105 transition-transform duration-200"
-                style={{ height: 'auto' }}
                 priority
               />
             </Link>

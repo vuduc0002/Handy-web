@@ -1,18 +1,16 @@
-import { Suspense } from 'react'
-import TopicsGrid from '@/app/components/TopicsGrid'
-import { Loader2, Layers, BookOpen, Sparkles } from 'lucide-react'
+export const revalidate = 60
 
-export const dynamic = 'force-dynamic'
+import { supabase } from '@/lib/supabaseClient'
+import TopicsGrid, { Topic } from '@/app/components/TopicsGrid'
+import { Layers } from 'lucide-react'
 
-function TopicsSkeleton() {
-  return (
-    <div className="flex justify-center items-center py-20">
-      <Loader2 className="w-8 h-8 text-amber-400 animate-spin" />
-    </div>
-  )
-}
+export default async function TopicsPage() {
+  // Server-side fetching với cache 60s và chọn lọc các trường cần thiết
+  const { data: topics } = await supabase
+    .from('topics')
+    .select('id, title, description, is_free')
+    .order('created_at', { ascending: true })
 
-export default function TopicsPage() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 md:py-12 animate-fade-in">
       {/* Header khu vực chủ đề */}
@@ -31,10 +29,8 @@ export default function TopicsPage() {
         </p>
       </div>
 
-      {/* Lưới danh sách các chủ đề từ Supabase */}
-      <Suspense fallback={<TopicsSkeleton />}>
-        <TopicsGrid />
-      </Suspense>
+      {/* Lưới danh sách các chủ đề từ Supabase được pre-render từ Server */}
+      <TopicsGrid initialTopics={(topics as Topic[]) ?? []} />
     </div>
   )
 }

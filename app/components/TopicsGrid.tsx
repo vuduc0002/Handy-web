@@ -6,12 +6,16 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { Lock, ChevronRight, Crown, BookOpen, AlertCircle, Sparkles } from 'lucide-react'
 
-interface Topic {
+export interface Topic {
   id: string
   title: string
   description: string | null
   is_free: boolean
-  created_at: string
+  created_at?: string
+}
+
+export interface TopicsGridProps {
+  initialTopics?: Topic[]
 }
 
 interface Profile {
@@ -20,6 +24,11 @@ interface Profile {
   role: string
   is_premium: boolean
 }
+
+// Module-level in-memory cache để load tức thì trên Client (< 100ms)
+let cachedTopics: Topic[] | null = null
+let cachedAt = 0
+const CACHE_TTL_MS = 60 * 1000 // Cache 60s
 
 // Bảng màu rực rỡ, tươi sáng
 const CARD_COLORS = [
@@ -87,11 +96,27 @@ function TopicCardSkeleton({ delay = 0 }: { delay?: number }) {
   )
 }
 
-export default function TopicsGrid() {
+export default function TopicsGrid({ initialTopics }: TopicsGridProps = {}) {
   const router = useRouter()
-  const [topics, setTopics] = useState<Topic[]>([])
+  // Sử dụng initialTopics từ Server Component ngay lập tức để render trong 0s
+  const [topics, setTopics] = useState<Topic[]>(() => {
+    if (initialTopics && initialTopics.length > 0) {
+      cachedTopics = initialTopics
+      cachedAt = Date.now()
+      return initialTopics
+    }
+    if (cachedTopics && Date.now() - cachedAt < CACHE_TTL_MS) {
+      return cachedTopics
+    }
+    return []
+  })
+
   const [profile, setProfile] = useState<Profile | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState<boolean>(() => {
+    if (initialTopics && initialTopics.length > 0) return false
+    if (cachedTopics && Date.now() - cachedAt < CACHE_TTL_MS) return false
+    return true
+  })
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -99,11 +124,22 @@ export default function TopicsGrid() {
 
     const loadData = async () => {
       try {
-        setLoading(true)
+        if (!topics || topics.length === 0) {
+          setLoading(true)
+        }
         setError(null)
 
+        // Tối ưu hóa: Chỉ select các trường cần thiết (không select('*'))
+        const topicsPromise =
+          initialTopics && initialTopics.length > 0
+            ? Promise.resolve({ data: initialTopics, error: null })
+            : supabase
+                .from('topics')
+                .select('id, title, description, is_free')
+                .order('created_at', { ascending: true })
+
         const [topicsRes, userRes] = await Promise.all([
-          supabase.from('topics').select('*').order('created_at', { ascending: true }),
+          topicsPromise,
           supabase.auth.getUser(),
         ])
 
@@ -111,10 +147,13 @@ export default function TopicsGrid() {
           throw new Error(topicsRes.error.message)
         }
 
-        if (isMounted) {
-          setTopics(topicsRes.data ?? [])
+        if (isMounted && topicsRes.data) {
+          cachedTopics = topicsRes.data
+          cachedAt = Date.now()
+          setTopics(topicsRes.data)
         }
 
+        // Tải profile người dùng ở chế độ nền không chặn hiển thị danh sách chủ đề
         const currentUser = userRes.data?.user
         if (currentUser) {
           const { data: profileData } = await supabase

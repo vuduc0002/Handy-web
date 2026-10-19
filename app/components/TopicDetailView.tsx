@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
@@ -56,6 +56,33 @@ export default function TopicDetailView({
   const [isLocked, setIsLocked] = useState(false)
   const [checkingAccess, setCheckingAccess] = useState(false)
   const [isQuizModalOpen, setIsQuizModalOpen] = useState(false)
+
+  // Ref điều khiển video nền tự dừng khi mở Modal Quiz
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const iframeRef = useRef<HTMLIFrameElement>(null)
+
+  // Tự động pause video nền khi mở chế độ kiểm tra Quiz
+  useEffect(() => {
+    if (isQuizModalOpen) {
+      if (videoRef.current) {
+        videoRef.current.pause()
+      }
+      if (iframeRef.current?.contentWindow) {
+        try {
+          iframeRef.current.contentWindow.postMessage(
+            JSON.stringify({ event: 'command', func: 'pauseVideo', args: [] }),
+            '*'
+          )
+          iframeRef.current.contentWindow.postMessage(
+            JSON.stringify({ event: 'command', func: 'mute', args: [] }),
+            '*'
+          )
+        } catch {
+          // Ignore cross-origin error
+        }
+      }
+    }
+  }, [isQuizModalOpen])
 
   // Kiểm tra quyền VIP nếu chủ đề yêu cầu trả phí
   useEffect(() => {
@@ -243,6 +270,7 @@ export default function TopicDetailView({
               {selectedVocab ? (
                 isMp4 ? (
                   <video
+                    ref={videoRef}
                     key={selectedVocab.id}
                     src={selectedVocab.video_url}
                     controls
@@ -252,6 +280,7 @@ export default function TopicDetailView({
                   />
                 ) : (
                   <iframe
+                    ref={iframeRef}
                     key={selectedVocab.id}
                     src={getEmbedYoutubeUrl(selectedVocab.video_url)}
                     title={selectedVocab.word}

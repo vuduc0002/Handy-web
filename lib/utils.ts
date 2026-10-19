@@ -6,9 +6,10 @@
 export function getEmbedYoutubeUrl(url: string): string {
   if (!url) return ''
   try {
-    // Đã là embed → giữ nguyên, thêm autoplay nếu chưa có
+    // Đã là embed → giữ nguyên, thêm autoplay và enablejsapi nếu chưa có
     if (url.includes('youtube.com/embed/')) {
-      return url.includes('?') ? `${url}&autoplay=1` : `${url}?autoplay=1`
+      const sep = url.includes('?') ? '&' : '?'
+      return `${url}${sep}autoplay=1&enablejsapi=1`
     }
 
     // Lấy video ID từ các định dạng khác nhau
@@ -33,7 +34,7 @@ export function getEmbedYoutubeUrl(url: string): string {
     }
 
     if (videoId) {
-      return `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`
+      return `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&enablejsapi=1`
     }
 
     // Không phải YouTube → trả về nguyên gốc
