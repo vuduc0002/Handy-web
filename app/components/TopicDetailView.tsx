@@ -40,7 +40,7 @@ interface TopicDetailViewProps {
 }
 
 import { getEmbedYoutubeUrl } from '@/lib/utils'
-
+import VideoQuizModal from '@/app/components/VideoQuizModal'
 
 export default function TopicDetailView({
   topicId,
@@ -55,6 +55,7 @@ export default function TopicDetailView({
   )
   const [isLocked, setIsLocked] = useState(false)
   const [checkingAccess, setCheckingAccess] = useState(false)
+  const [isQuizModalOpen, setIsQuizModalOpen] = useState(false)
 
   // Kiểm tra quyền VIP nếu chủ đề yêu cầu trả phí
   useEffect(() => {
@@ -196,16 +197,24 @@ export default function TopicDetailView({
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5 self-start md:self-auto shrink-0">
+          {/* Nút Kiểm tra từ vựng (Video-to-Text Quiz) nằm ngay bên trái của Luyện tập quiz */}
+          <button
+            onClick={() => setIsQuizModalOpen(true)}
+            className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold px-5 py-2.5 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer active:scale-95 text-xs sm:text-sm"
+          >
+            🧪 Kiểm tra
+          </button>
+
           <Link
             href={`/practice/${topic.id}`}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-gradient-to-r from-orange-400 to-amber-400 hover:from-orange-500 hover:to-amber-500 text-white font-extrabold text-xs shadow-md shadow-amber-200 transition active:scale-95"
+            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-orange-400 to-amber-400 hover:from-orange-500 hover:to-amber-500 text-white font-extrabold text-xs sm:text-sm shadow-md shadow-amber-200 transition active:scale-95"
             title="Luyện tập Flashcard Quizlet"
           >
             <span>Luyện tập Quiz</span>
             <Sparkles className="w-3.5 h-3.5" />
           </Link>
 
-          <div className="text-sm font-bold text-amber-700 bg-amber-50 px-4 py-2 rounded-2xl border border-amber-200 flex items-center gap-2">
+          <div className="text-sm font-bold text-amber-700 bg-amber-50 px-4 py-2.5 rounded-xl border border-amber-200 flex items-center gap-2">
             <BookOpen className="w-4 h-4 text-orange-500" />
             <span>{vocabularies.length} từ vựng</span>
           </div>
@@ -367,6 +376,14 @@ export default function TopicDetailView({
           </div>
         </div>
       )}
+
+      {/* Màn hình Kiểm tra từ vựng (Video-to-Text Quiz) */}
+      <VideoQuizModal
+        isOpen={isQuizModalOpen}
+        onClose={() => setIsQuizModalOpen(false)}
+        topicTitle={topic.title}
+        vocabularies={vocabularies}
+      />
     </div>
   )
 }
