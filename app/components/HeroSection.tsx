@@ -2,7 +2,6 @@
 
 import { Sparkles, ArrowRight, Play, Video } from 'lucide-react'
 import { motion } from 'framer-motion'
-import Link from 'next/link'
 
 export default function HeroSection() {
   const scrollToTopics = () => {
@@ -63,12 +62,6 @@ export default function HeroSection() {
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </button>
 
-            <Link 
-              href="/font-demo" 
-              className="w-full sm:w-auto inline-flex justify-center items-center gap-2 px-6 py-3.5 border-2 border-purple-500 text-purple-700 font-bold rounded-xl hover:bg-purple-50 transition-colors shadow-sm active:scale-95"
-            >
-              🎨 Trải nghiệm Font Cao Cấp
-            </Link>
 
             <button
               onClick={scrollToTopics}

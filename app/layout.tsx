@@ -5,9 +5,9 @@ import Header from "@/app/components/Header";
 import Footer from "@/app/components/Footer";
 
 const beVietnamPro = Be_Vietnam_Pro({
-  weight: ["400", "500", "600", "700", "800", "900"],
-  subsets: ["vietnamese", "latin"],
-  variable: "--font-be-vietnam-pro",
+  weight: ["400", "500", "600", "700"],
+  subsets: ["vietnamese"],
+  variable: "--font-be-vietnam",
   display: "swap",
 });
 
@@ -33,15 +33,15 @@ export default function RootLayout({
   return (
     <html
       lang="vi"
-      className={`${beVietnamPro.variable} ${beVietnamPro.className} font-sans h-full`}
+      className={`${beVietnamPro.variable} font-sans h-full`}
       style={{ backgroundColor: "#fffbeb", colorScheme: "light" }}
     >
       <body
-        className={`${beVietnamPro.className} ${beVietnamPro.variable} font-sans min-h-full flex flex-col bg-amber-50 text-gray-800`}
+        className="font-sans min-h-full flex flex-col bg-amber-50 text-gray-800"
         style={{ backgroundColor: "#fffbeb", colorScheme: "light" }}
       >
         <Header />
-        <main className="flex-1 bg-amber-50" style={{ backgroundColor: "#fffbeb" }}>
+        <main className="flex-1 bg-amber-50 font-be-vietnam" style={{ backgroundColor: "#fffbeb" }}>
           {children}
         </main>
         <Footer />

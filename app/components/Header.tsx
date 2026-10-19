@@ -238,13 +238,6 @@ export default function Header() {
                   </Link>
                 )
               })}
-
-              <Link 
-                href="/font-demo" 
-                className="bg-purple-100 text-purple-700 hover:bg-purple-200 px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 transition-all border border-purple-200 ml-1 shrink-0"
-              >
-                ✨ Chọn Font Chữ
-              </Link>
             </nav>
           </div>
 
@@ -466,15 +459,6 @@ export default function Header() {
                   )
                 })}
               </nav>
-
-              {/* Nút Chọn Font Chữ nổi bật trên Mobile */}
-              <Link
-                href="/font-demo"
-                onClick={() => setMobileMenuOpen(false)}
-                className="bg-purple-100 text-purple-700 hover:bg-purple-200 px-4 py-2.5 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 transition-all border border-purple-200 mt-2 shadow-xs"
-              >
-                ✨ Chọn Font Chữ
-              </Link>
 
               {/* Divider */}
               <div className="my-2 border-t border-amber-100" />
