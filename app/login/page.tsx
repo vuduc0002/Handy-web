@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import Image from 'next/image'
 import { supabase } from '@/lib/supabaseClient'
 import { Mail, Lock, Eye, EyeOff, Loader2, Star } from 'lucide-react'
@@ -196,6 +197,16 @@ export default function LoginPage() {
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
+                {mode === 'login' && (
+                  <div className="flex justify-end mt-1.5">
+                    <Link
+                      href="/forgot-password"
+                      className="text-xs text-orange-600 hover:underline font-medium"
+                    >
+                      Quên mật khẩu?
+                    </Link>
+                  </div>
+                )}
                 {mode === 'register' && (
                   <p className="text-xs text-gray-500 mt-1.5 ml-1">Tối thiểu 6 ký tự nhé bạn!</p>
                 )}
