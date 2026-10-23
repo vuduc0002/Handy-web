@@ -70,12 +70,15 @@ export default function PracticeView({
 
         const { data: profile } = await supabase
           .from('profiles')
-          .select('is_premium, role')
+          .select('is_premium, vip_until, role')
           .eq('id', user.id)
           .maybeSingle()
 
         if (isMounted) {
-          const hasAccess = profile?.role === 'ADMIN' || profile?.is_premium === true
+          const isVipValid =
+            profile?.is_premium === true &&
+            (!profile?.vip_until || new Date(profile.vip_until) > new Date())
+          const hasAccess = profile?.role === 'ADMIN' || isVipValid
           if (!hasAccess) {
             setIsLocked(true)
           }

@@ -23,6 +23,8 @@ interface Profile {
   email: string
   role: string
   is_premium: boolean
+  vip_until?: string | null
+  plan_type?: string | null
 }
 
 // Module-level in-memory cache để load tức thì trên Client (< 100ms)
@@ -158,7 +160,7 @@ export default function TopicsGrid({ initialTopics }: TopicsGridProps = {}) {
         if (currentUser) {
           const { data: profileData } = await supabase
             .from('profiles')
-            .select('id, email, role, is_premium')
+            .select('id, email, role, is_premium, vip_until, plan_type')
             .eq('id', currentUser.id)
             .maybeSingle()
 
@@ -250,7 +252,10 @@ CREATE POLICY "Cho phép đọc vocabularies" ON public.vocabularies FOR SELECT 
     )
   }
 
-  const isPremium = profile?.is_premium === true
+  const isPremium = (() => {
+    if (profile?.role === 'ADMIN') return true
+    return Boolean(profile?.is_premium && (!profile?.vip_until || new Date(profile.vip_until) > new Date()))
+  })()
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">

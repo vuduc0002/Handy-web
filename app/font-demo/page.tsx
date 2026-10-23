@@ -1,19 +1,12 @@
 import Link from 'next/link'
 import { ArrowLeft, Sparkles, Palette } from 'lucide-react'
-import {
-  Quicksand,
-  Nunito,
-  Plus_Jakarta_Sans,
-  Montserrat,
-  Be_Vietnam_Pro
-} from 'next/font/google'
 
-// Khởi tạo 5 loại font với bộ gõ tiếng Việt và các độ dày khác nhau
-const quicksand = Quicksand({ subsets: ['vietnamese'], weight: ['400', '700'] })
-const nunito = Nunito({ subsets: ['vietnamese'], weight: ['400', '700', '900'] })
-const jakarta = Plus_Jakarta_Sans({ subsets: ['vietnamese'], weight: ['400', '700', '800'] })
-const montserrat = Montserrat({ subsets: ['vietnamese'], weight: ['400', '700', '900'] })
-const beVietnam = Be_Vietnam_Pro({ subsets: ['vietnamese'], weight: ['400', '700', '900'] })
+// Các biến thể font demo sử dụng CSS classes
+const quicksand = { className: 'font-sans' }
+const nunito = { className: 'font-sans' }
+const jakarta = { className: 'font-sans' }
+const montserrat = { className: 'font-sans' }
+const beVietnam = { className: 'font-be-vietnam' }
 
 export default function FontDemoPage() {
   const sampleText = {

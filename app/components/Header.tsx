@@ -37,6 +37,8 @@ interface Profile {
   id: string
   role?: string
   is_premium?: boolean
+  vip_until?: string | null
+  plan_type?: string | null
   email?: string
 }
 
@@ -52,6 +54,10 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [selectedModalVocab, setSelectedModalVocab] = useState<WordResult | null>(null)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
+
+  const isVip = Boolean(
+    profile?.is_premium && (!profile?.vip_until || new Date(profile.vip_until) > new Date())
+  )
 
   const searchRef = useRef<HTMLDivElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -81,7 +87,7 @@ export default function Header() {
       Promise.resolve(
         supabase
           .from('profiles')
-          .select('id, role, is_premium, email')
+          .select('id, role, is_premium, vip_until, plan_type, email')
           .eq('id', currentUser.id)
           .maybeSingle()
       )
@@ -368,7 +374,7 @@ export default function Header() {
                       <span className="text-xs font-bold text-gray-800 max-w-[80px] truncate">
                         {profile?.email?.split('@')[0] || 'Cá nhân'}
                       </span>
-                      {profile?.is_premium ? (
+                      {isVip ? (
                         <span className="text-[10px] font-bold bg-gradient-to-r from-amber-400 to-orange-400 text-white px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shrink-0">
                           <Crown className="w-2.5 h-2.5" /> VIP
                         </span>
@@ -509,7 +515,7 @@ export default function Header() {
                   >
                     <UserIcon className="w-4 h-4 text-orange-500" />
                     <span>Trang cá nhân</span>
-                    {profile?.is_premium ? (
+                    {isVip ? (
                       <span className="ml-auto text-[10px] font-bold bg-gradient-to-r from-amber-400 to-orange-400 text-white px-2 py-0.5 rounded-full flex items-center gap-0.5">
                         <Crown className="w-2.5 h-2.5" /> VIP
                       </span>

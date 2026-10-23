@@ -36,6 +36,8 @@ interface Profile {
   email: string | null
   role: string | null
   is_premium: boolean
+  vip_until?: string | null
+  plan_type?: string | null
   created_at: string
 }
 
@@ -177,10 +179,14 @@ export default function AdminDashboardPage() {
   }
 
 
+  // Helper kiểm tra VIP còn hạn
+  const isVipUser = (p: Profile) =>
+    Boolean(p.is_premium && (!p.vip_until || new Date(p.vip_until) > new Date()))
+
   // 3. Compute 4 Overview Metrics
   const stats = useMemo(() => {
     const totalUsers = profiles.length
-    const vipUsers = profiles.filter((p) => p.is_premium).length
+    const vipUsers = profiles.filter(isVipUser).length
     const conversionRate = totalUsers > 0 ? ((vipUsers / totalUsers) * 100).toFixed(1) : '0'
 
     // VIP users created in current month
@@ -189,7 +195,7 @@ export default function AdminDashboardPage() {
     const currentMonth = now.getMonth()
 
     const newVipThisMonth = profiles.filter((p) => {
-      if (!p.is_premium || !p.created_at) return false
+      if (!isVipUser(p) || !p.created_at) return false
       const d = new Date(p.created_at)
       return d.getFullYear() === currentYear && d.getMonth() === currentMonth
     }).length
@@ -291,8 +297,8 @@ export default function AdminDashboardPage() {
         (p.email && p.email.toLowerCase().includes(query))
 
       let matchStatus = true
-      if (userFilterStatus === 'VIP') matchStatus = p.is_premium
-      if (userFilterStatus === 'REGULAR') matchStatus = !p.is_premium
+      if (userFilterStatus === 'VIP') matchStatus = isVipUser(p)
+      if (userFilterStatus === 'REGULAR') matchStatus = !isVipUser(p)
 
       return matchSearch && matchStatus
     })
@@ -310,7 +316,8 @@ export default function AdminDashboardPage() {
 
   // 6. Action: Cấp / Hủy VIP thủ công
   const handleToggleVip = async (user: Profile) => {
-    const nextVipState = !user.is_premium
+    const isCurrentlyVip = isVipUser(user)
+    const nextVipState = !isCurrentlyVip
     setTogglingUserId(user.id)
 
     try {
@@ -331,6 +338,8 @@ export default function AdminDashboardPage() {
         body: JSON.stringify({
           userId: user.id,
           is_premium: nextVipState,
+          vip_until: nextVipState ? null : null,
+          plan_type: nextVipState ? 'lifetime' : null,
         }),
       })
 
@@ -342,7 +351,16 @@ export default function AdminDashboardPage() {
 
       // Cập nhật state trực tiếp
       setProfiles((prev) =>
-        prev.map((p) => (p.id === user.id ? { ...p, is_premium: nextVipState } : p))
+        prev.map((p) =>
+          p.id === user.id
+            ? {
+                ...p,
+                is_premium: nextVipState,
+                vip_until: nextVipState ? null : null,
+                plan_type: nextVipState ? 'lifetime' : null,
+              }
+            : p
+        )
       )
 
       showToast(
@@ -901,14 +919,21 @@ export default function AdminDashboardPage() {
 
                           {/* Trạng thái VIP */}
                           <td className="py-3.5 px-5 text-center">
-                            {user.is_premium ? (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-900 border border-amber-200">
-                                <Crown className="w-3 h-3 text-amber-600" />
-                                <span>Thành viên VIP</span>
-                              </span>
+                            {isVipUser(user) ? (
+                              <div className="inline-flex flex-col items-center">
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-900 border border-amber-200">
+                                  <Crown className="w-3 h-3 text-amber-600" />
+                                  <span>VIP {user.plan_type ? `(${user.plan_type})` : ''}</span>
+                                </span>
+                                {user.vip_until && (
+                                  <span className="text-[10px] text-gray-500 mt-0.5">
+                                    hạn {new Date(user.vip_until).toLocaleDateString('vi-VN')}
+                                  </span>
+                                )}
+                              </div>
                             ) : (
                               <span className="inline-block px-2 py-0.5 rounded-full text-[11px] font-medium bg-gray-100 text-gray-600">
-                                Tài khoản thường
+                                {user.is_premium ? 'VIP hết hạn' : 'Tài khoản thường'}
                               </span>
                             )}
                           </td>
@@ -919,12 +944,12 @@ export default function AdminDashboardPage() {
                               onClick={() => handleToggleVip(user)}
                               disabled={isToggling}
                               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold shadow-xs transition active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
-                                user.is_premium
+                                isVipUser(user)
                                   ? 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200'
                                   : 'bg-gray-900 hover:bg-gray-800 text-white'
                               }`}
                               title={
-                                user.is_premium
+                                isVipUser(user)
                                   ? 'Nhấp để Hủy kích hoạt quyền VIP'
                                   : 'Nhấp để Cấp quyền VIP thủ công'
                               }
@@ -934,7 +959,7 @@ export default function AdminDashboardPage() {
                                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
                                   <span>Đang xử lý...</span>
                                 </>
-                              ) : user.is_premium ? (
+                              ) : isVipUser(user) ? (
                                 <>
                                   <ToggleRight className="w-4 h-4 text-rose-600" />
                                   <span>Hủy VIP</span>

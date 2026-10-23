@@ -25,6 +25,8 @@ interface UserProfile {
   email: string
   role: string
   is_premium: boolean
+  vip_until?: string | null
+  plan_type?: string | null
   created_at?: string
 }
 
@@ -54,7 +56,7 @@ export default function ProfilePage() {
 
         const { data: profileData } = await supabase
           .from('profiles')
-          .select('id, email, role, is_premium, created_at')
+          .select('id, email, role, is_premium, vip_until, plan_type, created_at')
           .eq('id', user.id)
           .maybeSingle()
 
@@ -104,7 +106,24 @@ export default function ProfilePage() {
       })
     : 'Chưa cập nhật'
 
-  const isVip = profile?.is_premium === true
+  const isVip = (() => {
+    if (profile?.role === 'ADMIN') return true
+    return Boolean(profile?.is_premium && (!profile?.vip_until || new Date(profile.vip_until) > new Date()))
+  })()
+
+  const vipExpiryStr = profile?.vip_until
+    ? new Date(profile.vip_until).toLocaleDateString('vi-VN', {
+        day: '2-digit', month: '2-digit', year: 'numeric'
+      })
+    : null
+
+  const PLAN_LABELS: Record<string, string> = {
+    '3m': '3 Tháng',
+    '6m': '6 Tháng',
+    '1y': '1 Năm',
+    'lifetime': 'Trọn Đời',
+  }
+  const planLabel = profile?.plan_type ? PLAN_LABELS[profile.plan_type] ?? profile.plan_type : null
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 md:py-12">
@@ -147,9 +166,19 @@ export default function ProfilePage() {
           {/* Badge trạng thái */}
           <div className="mb-6">
             {isVip ? (
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-400 to-orange-400 text-white text-xs font-black shadow-md shadow-amber-200">
-                <Crown className="w-4 h-4" />
-                <span>Tài Khoản VIP Trọn Đời</span>
+              <div className="flex flex-col items-center gap-1.5">
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-400 to-orange-400 text-white text-xs font-black shadow-md shadow-amber-200">
+                  <Crown className="w-4 h-4" />
+                  <span>Tài Khoản VIP{planLabel ? ` — ${planLabel}` : ' Trọn Đời'}</span>
+                </div>
+                {vipExpiryStr && (
+                  <span className="text-xs font-bold text-gray-500">
+                    Hết hạn: <span className="text-orange-600">{vipExpiryStr}</span>
+                  </span>
+                )}
+                {!vipExpiryStr && profile?.is_premium && (
+                  <span className="text-xs font-bold text-gray-500">Hiệu lực vĩnh viễn</span>
+                )}
               </div>
             ) : (
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold border border-emerald-300">
@@ -252,10 +281,15 @@ export default function ProfilePage() {
                 <Sparkles className="w-6 h-6" />
               </div>
               <div>
-                <h4 className="font-black text-base">Bạn đã kích hoạt gói VIP!</h4>
+                <h4 className="font-black text-base">Bạn đã kích hoạt gói VIP{planLabel ? ` ${planLabel}` : ''}!</h4>
                 <p className="text-xs text-emerald-700 mt-0.5">
                   Bạn có toàn quyền truy cập tất cả các chủ đề và tính năng luyện tập Quizlet trên Handy.
                 </p>
+                {vipExpiryStr && (
+                  <p className="text-xs text-emerald-600 font-bold mt-1">
+                    Hết hạn: <span className="text-orange-600">{vipExpiryStr}</span>
+                  </p>
+                )}
               </div>
             </div>
           )}

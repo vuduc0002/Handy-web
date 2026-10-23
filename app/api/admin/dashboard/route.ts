@@ -66,7 +66,7 @@ export async function GET(req: NextRequest) {
     // 1. Fetch TOÀN BỘ profiles không bị giới hạn RLS
     const { data: profiles, error: profilesError } = await supabaseAdmin
       .from('profiles')
-      .select('id, email, role, is_premium, created_at')
+      .select('id, email, role, is_premium, vip_until, plan_type, created_at')
       .order('created_at', { ascending: false })
 
     if (profilesError) {
@@ -120,7 +120,7 @@ export async function PATCH(req: NextRequest) {
 
   try {
     const body = await req.json()
-    const { userId, is_premium } = body
+    const { userId, is_premium, vip_until, plan_type } = body
 
     if (!userId || typeof is_premium !== 'boolean') {
       return Response.json(
@@ -129,12 +129,21 @@ export async function PATCH(req: NextRequest) {
       )
     }
 
+    const updatePayload: Record<string, any> = { is_premium }
+    if (!is_premium) {
+      updatePayload.vip_until = null
+      updatePayload.plan_type = null
+    } else {
+      if (vip_until !== undefined) updatePayload.vip_until = vip_until
+      if (plan_type !== undefined) updatePayload.plan_type = plan_type
+    }
+
     // Cập nhật trực tiếp vào bảng profiles bằng Service Role Key
     const { data, error } = await supabaseAdmin
       .from('profiles')
-      .update({ is_premium })
+      .update(updatePayload)
       .eq('id', userId)
-      .select('id, email, role, is_premium, created_at')
+      .select('id, email, role, is_premium, vip_until, plan_type, created_at')
       .single()
 
     if (error) {
