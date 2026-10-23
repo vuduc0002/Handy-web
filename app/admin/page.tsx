@@ -25,10 +25,12 @@ import {
   QrCode,
   Download,
   Copy,
+  FileSpreadsheet,
 } from 'lucide-react'
 import { QRCodeCanvas } from 'qrcode.react'
 import { getEmbedYoutubeUrl } from '@/lib/utils'
 import ImageDropzone from '@/app/components/ImageDropzone'
+import ImportExcelModal from '@/app/components/ImportExcelModal'
 
 interface Topic {
   id: string
@@ -88,6 +90,9 @@ export default function AdminPage() {
   // QR Code Modal state
   const [selectedQrTopic, setSelectedQrTopic] = useState<Topic | null>(null)
   const [copiedLink, setCopiedLink] = useState(false)
+
+  // Import Excel Modal state
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false)
 
   // Notification feedback
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null)
@@ -453,11 +458,20 @@ export default function AdminPage() {
           <button
             onClick={fetchData}
             disabled={loading}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-300 rounded-lg shadow-2xs transition active:scale-95 disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-300 rounded-lg shadow-2xs transition active:scale-95 disabled:opacity-50 cursor-pointer"
             title="Làm mới dữ liệu"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-gray-500' : 'text-gray-600'}`} />
             <span>Làm mới</span>
+          </button>
+
+          <button
+            onClick={() => setIsImportModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-xs transition active:scale-95 cursor-pointer"
+            title="Import hàng loạt từ vựng từ file Excel"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5" />
+            <span>Import Excel</span>
           </button>
 
           {/* Tab Selector */}
@@ -1076,6 +1090,15 @@ export default function AdminPage() {
                       </button>
 
                       <Link
+                        href={`/admin/topics/${t.id}`}
+                        className="px-2.5 py-1.5 rounded-lg bg-gray-900 hover:bg-black text-white text-xs font-semibold transition inline-flex items-center gap-1.5 shadow-xs"
+                        title="Quản lý từ vựng & Import Excel của chủ đề này"
+                      >
+                        <BookOpen className="w-3.5 h-3.5" />
+                        <span>Quản lý ({count})</span>
+                      </Link>
+
+                      <Link
                         href={`/topics/${t.id}`}
                         target="_blank"
                         className="px-2.5 py-1.5 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-medium transition inline-flex items-center gap-1.5"
@@ -1397,6 +1420,19 @@ export default function AdminPage() {
           </div>
         </div>
       )}
+
+      {/* MODAL IMPORT EXCEL */}
+      <ImportExcelModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        topicId={selectedTopicFilter !== 'ALL' ? selectedTopicFilter : undefined}
+        topics={topics}
+        onSuccess={(count) => {
+          fetchData()
+          showToast(`Đã import thành công ${count} từ vựng!`, 'success')
+        }}
+        showToast={showToast}
+      />
     </div>
   )
 }
