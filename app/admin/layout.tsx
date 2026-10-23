@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard,
   BookOpen,
+  Users,
   ArrowLeft,
   ShieldCheck,
   User,
@@ -23,16 +24,22 @@ export default function AdminLayout({
 
   const navItems = [
     {
-      label: 'Dashboard & Doanh thu',
+      label: 'Thống kê',
       href: '/admin/dashboard',
       icon: <LayoutDashboard className="w-4 h-4" />,
-      active: pathname === '/admin/dashboard',
+      active: pathname.startsWith('/admin/dashboard'),
     },
     {
-      label: 'Quản lý Nội dung',
+      label: 'Nội dung',
       href: '/admin',
       icon: <BookOpen className="w-4 h-4" />,
       active: pathname === '/admin',
+    },
+    {
+      label: 'Người dùng',
+      href: '/admin/users',
+      icon: <Users className="w-4 h-4" />,
+      active: pathname.startsWith('/admin/users'),
     },
   ]
 
