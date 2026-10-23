@@ -1,30 +1,50 @@
-# Handy Design System Guidelines (Planhat / Modern Luxury SaaS Style)
+# Handy Dual-Design System Specification
 
-Quy chuẩn thiết kế giao diện cao cấp dành cho hệ thống Handy EdTech & Admin Console:
+Hệ thống giao diện của dự án Handy được phân tách nghiêm ngặt thành 2 phân khu thiết kế riêng biệt để cân bằng giữa trải nghiệm học tập cao cấp (Learner Experience) và hiệu suất vận hành tốc độ cao của Quản trị viên (Admin Operational Velocity).
 
-## 1. Triết Lý Thiết Kế (Design Philosophy)
-- **Tối giản & Sang trọng**: Phong cách Modern SaaS (Planhat / Linear / Vercel), ưu tiên khoảng trắng (Whitespace), cấu trúc lưới phân cấp mạch lạc.
-- **Hiệu ứng Kính (Glassmorphism)**: Kết hợp `backdrop-blur-md` với nền bán trong suốt `bg-white/80` (hoặc `bg-slate-900/90`), viền siêu mỏng tinh tế `border-slate-200/80` hoặc `border-slate-800/80`.
-- **Bo góc mềm mại**: Thống nhất dùng `rounded-2xl` cho Cards / Modals và `rounded-xl` cho Buttons / Badges / Input fields.
+---
 
-## 2. Micro-interactions & Hiệu Ứng Chuyển Động
-- **Card Hover Elevation**: Mọi Card thống kê, danh mục khi rê chuột vào phải có hiệu ứng nhấc nhẹ và sáng viền:
-  ```css
-  transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-indigo-300/70
-  ```
-- **Primary CTA Buttons**: Tuyệt đối không dùng nút đơn sắc thô cứng; sử dụng dải màu Gradient tinh tế:
-  ```css
-  bg-gradient-to-r from-indigo-600 via-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-md shadow-indigo-500/20 hover:shadow-lg hover:shadow-indigo-500/30 transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0
-  ```
-- **Stagger Entrance Animations**: Các khối nội dung khi tải trang sử dụng animation fade-in và slide-up có độ trễ:
-  - Khối 1: `animate-slide-up`
-  - Khối 2: `animate-slide-up animation-delay-100`
-  - Khối 3: `animate-slide-up animation-delay-200`
-  - Khối 4: `animate-slide-up animation-delay-300`
+## PHÂN KHU 1: GIAO DIỆN HỌC VIÊN & NGƯỜI DÙNG (User & Learner Area)
+**Phạm vi áp dụng:**
+- Trang chủ (`/`)
+- Màn hình Học từ vựng, Luyện tập thủ ngữ (`/topics/*`, `/practice/*`)
+- Trang Bảng giá, Thanh toán QR SePAY (`/pricing`, `/checkout`)
+- Trang Hồ sơ cá nhân (`/profile`)
+- Trang Đăng nhập, Đăng ký (`/login`, `/register`)
 
-## 3. Màu Sắc & Nhận Diện 4 Gói VIP
-- **VIP 3 Tháng (`3m`)**: Xanh dương `#3B82F6` (Sky Blue)
-- **VIP 6 Tháng (`6m`)**: Xanh lục `#10B981` (Emerald)
-- **VIP 1 Năm (`1y`)**: Hổ phách `#F59E0B` (Amber)
-- **VIP Trọn Đời (`lifetime`)**: Tím `#8B5CF6` (Violet / Purple)
-- **Số liệu tài chính / Doanh thu**: Điểm nhấn Xanh lá `#10B981` hoặc Indigo `#6366F1` kết hợp font chữ monospace (`font-mono`).
+**Triết lý thiết kế: High-End EdTech SaaS (Phong cách Planhat / Linear)**
+1. **Thẻ & Khung hình khối:**
+   - Bo góc lớn, hiện đại: `rounded-2xl` hoặc `rounded-3xl`.
+   - Hiệu ứng kính và viền tinh tế: `bg-white/80 backdrop-blur-md border border-slate-200/80 shadow-sm`.
+2. **Micro-interactions & Đổ bóng:**
+   - Khi hover lên thẻ/card: Nhấc nhẹ êm ái `-translate-y-1 hover:shadow-xl` cùng `transition-all duration-300`.
+   - Nút bấm chính (Primary CTA): Sử dụng dải Gradient tinh tế (ví dụ: `bg-gradient-to-r from-amber-500 to-orange-500` hoặc `from-indigo-600 to-violet-600`), đổ bóng tương ứng (`shadow-lg shadow-indigo-500/20`).
+3. **Khoảng cách & Cảm quan:**
+   - Không gian rộng rãi (generous whitespace), độ tương phản êm dịu, tạo cảm giác thân thiện, kích thích động lực học tập.
+
+---
+
+## PHÂN KHU 2: BÀN LÀM VIỆC QUẢN TRỊ VIÊN (Admin High-Performance Console)
+**Phạm vi áp dụng:**
+- Trang Điều hướng Quản trị (`/admin`)
+- Quản trị Nội dung & Bài học (`/admin`)
+- Báo cáo Thống kê Doanh thu & Người dùng (`/admin/dashboard`)
+- Quản lý Tài khoản & Phân quyền VIP (`/admin/users`)
+
+**Triết lý thiết kế: High-Performance Operational Utility (Phong cách Stripe / Vercel Dashboard)**
+1. **Loại bỏ hoàn toàn các hiệu ứng nặng nề:**
+   - **TUYỆT ĐỐI KHÔNG** sử dụng `backdrop-blur-*`, `blur-2xl`, hiệu ứng đốm mờ trang trí (ambient blur glows).
+   - **TUYỆT ĐỐI KHÔNG** sử dụng animation kéo dài, giật lắc hoặc trễ: loại bỏ `animate-slide-up`, `animation-delay-*`, `animate-fade-in`. Mọi thao tác tải trang, lọc danh sách, mở modal phải có phản hồi tức thì (0ms latency feel).
+   - **TUYỆT ĐỐI KHÔNG** dùng hover nhấc khối `-translate-y-*` trên bảng và thẻ quản trị vì gây mỏi mắt khi thao tác liên tục.
+2. **Khung hình & Độ đậm đặc dữ liệu (High Data Density):**
+   - Nền trang: `bg-gray-50 text-gray-900`.
+   - Khung thẻ và bảng: Nền đặc `bg-white`, bo góc tiêu chuẩn `rounded-xl`, viền mảnh `border border-gray-200 shadow-xs`.
+   - Header cố định: `bg-white border-b border-gray-200` (không dùng trong suốt kính mờ).
+3. **Màu sắc & Tương phản:**
+   - Độ tương phản cao, rõ ràng: Tiêu đề đen đậm `text-gray-900`, nhãn phụ `text-gray-500`, viền bảng `border-gray-200`.
+   - Nút thao tác chính: Đơn sắc dứt khoát `bg-gray-900 hover:bg-black text-white rounded-lg shadow-xs`.
+   - Nút thứ cấp: `bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 rounded-lg`.
+   - Huy hiệu trạng thái (Badges): Màu nền nhạt, viền tinh tế, chữ đậm rõ ràng (`bg-emerald-50 text-emerald-700 border-emerald-200`, `bg-amber-50 text-amber-900 border-amber-200`, `bg-rose-50 text-rose-700 border-rose-200`).
+4. **Modal Quản trị:**
+   - Lớp nền overlay: `bg-black/50` phẳng, không blur.
+   - Thao tác đóng/mở tức thì, gọn gàng, focus chuẩn vào dữ liệu cần cập nhật.

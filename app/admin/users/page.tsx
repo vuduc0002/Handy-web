@@ -387,11 +387,9 @@ export default function AdminUsersPage() {
 
   if (checkingAuth) {
     return (
-      <div className="fixed inset-0 z-50 bg-slate-50/80 backdrop-blur-md flex flex-col items-center justify-center">
-        <div className="w-12 h-12 rounded-2xl bg-white border border-slate-200/80 shadow-xl flex items-center justify-center mb-3">
-          <Loader2 className="w-6 h-6 text-indigo-600 animate-spin" />
-        </div>
-        <p className="text-slate-600 font-semibold text-xs tracking-wide uppercase">
+      <div className="fixed inset-0 z-50 bg-gray-50 flex flex-col items-center justify-center">
+        <Loader2 className="w-8 h-8 text-gray-800 animate-spin mb-3" />
+        <p className="text-gray-500 font-semibold text-xs tracking-wide uppercase">
           Đang xác thực quyền quản trị...
         </p>
       </div>
@@ -401,13 +399,13 @@ export default function AdminUsersPage() {
   if (!authorized) return null
 
   return (
-    <div className="min-h-screen bg-slate-50/70 text-slate-900 font-sans antialiased selection:bg-indigo-500 selection:text-white">
+    <div className="min-h-screen bg-gray-50 text-gray-900 font-sans antialiased">
       {/* Toast thông báo nổi */}
       {toastMessage && (
         <div
-          className={`fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-xl border text-xs font-semibold animate-scale-in ${
+          className={`fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-lg shadow-lg border text-xs font-semibold ${
             toastMessage.type === 'success'
-              ? 'bg-slate-900 text-white border-slate-800'
+              ? 'bg-gray-900 text-white border-gray-800'
               : 'bg-rose-600 text-white border-rose-700'
           }`}
         >
@@ -420,18 +418,15 @@ export default function AdminUsersPage() {
         </div>
       )}
 
-      {/* Main SaaS Container */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 space-y-8 animate-fade-in">
+      {/* Main Admin Utility Container */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         {/* Page Heading */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/80">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-gray-200">
           <div>
-            <div className="flex items-center gap-2.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-indigo-600 inline-block animate-pulse" />
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-                Quản Lý Người Dùng & Cấp VIP
-              </h1>
-            </div>
-            <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">
+              Quản Lý Người Dùng & Cấp VIP
+            </h1>
+            <p className="text-xs sm:text-sm text-gray-500 mt-1 font-medium">
               Tra cứu thông tin tài khoản, cấp quyền VIP nhanh chóng và quản lý thời hạn truy cập.
             </p>
           </div>
@@ -440,10 +435,10 @@ export default function AdminUsersPage() {
             <button
               onClick={fetchUsers}
               disabled={loading}
-              className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white/80 hover:bg-white text-slate-700 hover:text-slate-900 border border-slate-200/90 shadow-2xs hover:border-slate-300 transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white hover:bg-gray-50 text-gray-700 hover:text-gray-900 border border-gray-300 shadow-xs transition-colors cursor-pointer disabled:opacity-50"
               title="Làm mới danh sách"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-indigo-600' : 'text-slate-600'}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-gray-700' : 'text-gray-500'}`} />
               <span className="text-xs font-semibold">Làm mới</span>
             </button>
           </div>
@@ -451,64 +446,64 @@ export default function AdminUsersPage() {
 
         {/* Quick Stat Badges */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="rounded-2xl border border-slate-200/80 bg-white/80 backdrop-blur-md p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-indigo-200 flex items-center justify-between group">
+          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-xs hover:border-gray-300 transition-colors flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
                 Tổng Người Dùng
               </p>
-              <p className="text-3xl font-black text-slate-900 mt-2 font-mono">
+              <p className="text-2xl sm:text-3xl font-bold text-gray-900 mt-2 font-mono">
                 {loading ? '...' : profiles.length.toLocaleString('vi-VN')}
               </p>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 group-hover:scale-110 transition-transform duration-300 shadow-2xs">
+            <div className="w-10 h-10 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-700">
               <Users className="w-5 h-5" />
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200/80 bg-white/80 backdrop-blur-md p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-amber-200 flex items-center justify-between group">
+          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-xs hover:border-gray-300 transition-colors flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
                 Tài Khoản VIP
               </p>
-              <p className="text-3xl font-black text-amber-600 mt-2 font-mono">
+              <p className="text-2xl sm:text-3xl font-bold text-amber-600 mt-2 font-mono">
                 {loading ? '...' : vipCount.toLocaleString('vi-VN')}
               </p>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 group-hover:scale-110 transition-transform duration-300 shadow-2xs">
+            <div className="w-10 h-10 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600">
               <Crown className="w-5 h-5" />
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200/80 bg-white/80 backdrop-blur-md p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-slate-300 flex items-center justify-between group">
+          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-xs hover:border-gray-300 transition-colors flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
                 Tài Khoản Thường
               </p>
-              <p className="text-3xl font-black text-slate-700 mt-2 font-mono">
+              <p className="text-2xl sm:text-3xl font-bold text-gray-700 mt-2 font-mono">
                 {loading ? '...' : regularCount.toLocaleString('vi-VN')}
               </p>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 group-hover:scale-110 transition-transform duration-300 shadow-2xs">
+            <div className="w-10 h-10 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-600">
               <ShieldCheck className="w-5 h-5" />
             </div>
           </div>
         </div>
 
         {/* Filter Toolbar */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white/80 backdrop-blur-md p-4 shadow-sm flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-xs flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
           <div className="relative flex-1 max-w-md">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
               value={userSearchTerm}
               onChange={(e) => setUserSearchTerm(e.target.value)}
               placeholder="Tìm user theo Email hoặc User ID..."
-              className="w-full pl-10 pr-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 placeholder-slate-400 font-medium"
+              className="w-full pl-10 pr-4 py-2 rounded-lg bg-white border border-gray-300 text-gray-900 text-xs focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900 placeholder-gray-400 font-medium"
             />
             {userSearchTerm && (
               <button
                 onClick={() => setUserSearchTerm('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -516,11 +511,11 @@ export default function AdminUsersPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-slate-500">Lọc theo:</span>
+            <span className="text-xs font-semibold text-gray-500">Lọc theo:</span>
             <select
               value={userFilterStatus}
               onChange={(e) => setUserFilterStatus(e.target.value as any)}
-              className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 cursor-pointer shadow-2xs"
+              className="px-3 py-2 rounded-lg border border-gray-300 bg-white text-xs font-semibold text-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900 cursor-pointer shadow-xs"
             >
               <option value="ALL">Tất cả tài khoản</option>
               <option value="VIP">Chỉ tài khoản VIP</option>
@@ -530,31 +525,31 @@ export default function AdminUsersPage() {
         </div>
 
         {/* Users Data Table */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white/80 backdrop-blur-md shadow-sm overflow-hidden transition-all duration-300 hover:shadow-xl animate-slide-up">
+        <div className="rounded-xl border border-gray-200 bg-white shadow-xs overflow-hidden">
           <div className="w-full overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[850px]">
               <thead>
-                <tr className="bg-slate-50/90 border-b border-slate-200/80 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                  <th className="py-3.5 px-5">Tài Khoản (Email & ID)</th>
-                  <th className="py-3.5 px-4">Ngày Đăng Ký</th>
-                  <th className="py-3.5 px-4 text-center">Vai Trò</th>
-                  <th className="py-3.5 px-4 text-center">Trạng Thái VIP</th>
-                  <th className="py-3.5 px-4 text-center">Gói Cước</th>
-                  <th className="py-3.5 px-4 text-center">Ngày Hết Hạn</th>
-                  <th className="py-3.5 px-5 text-right">Quản Lý VIP</th>
+                <tr className="bg-gray-50/80 border-b border-gray-200 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                  <th className="py-3 px-4">Tài Khoản (Email & ID)</th>
+                  <th className="py-3 px-4">Ngày Đăng Ký</th>
+                  <th className="py-3 px-4 text-center">Vai Trò</th>
+                  <th className="py-3 px-4 text-center">Trạng Thái VIP</th>
+                  <th className="py-3 px-4 text-center">Gói Cước</th>
+                  <th className="py-3 px-4 text-center">Ngày Hết Hạn</th>
+                  <th className="py-3 px-4 text-right">Quản Lý VIP</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-xs">
+              <tbody className="divide-y divide-gray-100 text-xs">
                 {loading ? (
                   <tr>
-                    <td colSpan={7} className="py-16 text-center text-slate-400">
-                      <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-600" />
+                    <td colSpan={7} className="py-16 text-center text-gray-400">
+                      <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-gray-700" />
                       <span className="font-medium">Đang tải danh sách người dùng...</span>
                     </td>
                   </tr>
                 ) : paginatedProfiles.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-12 text-center text-slate-400">
+                    <td colSpan={7} className="py-12 text-center text-gray-400">
                       Không tìm thấy người dùng nào phù hợp với từ khóa.
                     </td>
                   </tr>
@@ -572,66 +567,66 @@ export default function AdminUsersPage() {
                       : '—'
 
                     return (
-                      <tr key={user.id} className="hover:bg-slate-50/70 transition-colors duration-150">
+                      <tr key={user.id} className="hover:bg-gray-50/80 transition-colors">
                         {/* Email & ID */}
-                        <td className="py-3.5 px-5">
-                          <p className="font-bold text-slate-900">
+                        <td className="py-3 px-4">
+                          <p className="font-semibold text-gray-900">
                             {user.email || 'Chưa cập nhật email'}
                           </p>
-                          <p className="font-mono text-[10px] text-slate-400 select-all">
+                          <p className="font-mono text-[10px] text-gray-400 select-all">
                             ID: {user.id}
                           </p>
                         </td>
 
                         {/* Ngày đăng ký */}
-                        <td className="py-3.5 px-4 text-slate-500 text-[11px] whitespace-nowrap font-medium">
+                        <td className="py-3 px-4 text-gray-500 text-[11px] whitespace-nowrap font-medium">
                           {joinDate}
                         </td>
 
                         {/* Vai trò */}
-                        <td className="py-3.5 px-4 text-center">
+                        <td className="py-3 px-4 text-center">
                           {user.role === 'ADMIN' ? (
                             <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
                               ADMIN
                             </span>
                           ) : (
-                            <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                            <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-600 border border-gray-200">
                               USER
                             </span>
                           )}
                         </td>
 
                         {/* Trạng thái VIP */}
-                        <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                        <td className="py-3 px-4 text-center whitespace-nowrap">
                           {isVip ? (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                               <span>Đang hoạt động</span>
                             </span>
                           ) : (
-                            <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600">
+                            <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-gray-100 text-gray-600">
                               {user.is_premium ? 'Đã hết hạn' : 'Chưa kích hoạt'}
                             </span>
                           )}
                         </td>
 
                         {/* Gói Cước */}
-                        <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                        <td className="py-3 px-4 text-center whitespace-nowrap">
                           {isVip ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-bold bg-amber-50 text-amber-900 border border-amber-200">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-amber-50 text-amber-900 border border-amber-200">
                               <Crown className="w-3 h-3 text-amber-600" />
                               <span>{PLAN_LABELS[user.plan_type || ''] || user.plan_type || (user.vip_until ? 'Tùy chỉnh' : 'Vĩnh viễn')}</span>
                             </span>
                           ) : (
-                            <span className="text-slate-400 font-mono">—</span>
+                            <span className="text-gray-400 font-mono">—</span>
                           )}
                         </td>
 
                         {/* Ngày Hết Hạn */}
-                        <td className="py-3.5 px-4 text-center whitespace-nowrap text-[11px]">
+                        <td className="py-3 px-4 text-center whitespace-nowrap text-[11px]">
                           {isVip ? (
                             user.vip_until ? (
-                              <span className="font-semibold text-slate-800 font-mono">
+                              <span className="font-semibold text-gray-800 font-mono">
                                 {new Date(user.vip_until).toLocaleDateString('vi-VN')}
                               </span>
                             ) : (
@@ -644,22 +639,22 @@ export default function AdminUsersPage() {
                               {new Date(user.vip_until).toLocaleDateString('vi-VN')}
                             </span>
                           ) : (
-                            <span className="text-slate-400 font-mono">—</span>
+                            <span className="text-gray-400 font-mono">—</span>
                           )}
                         </td>
 
                         {/* Hành Động Quản Lý VIP */}
-                        <td className="py-3.5 px-5 text-right whitespace-nowrap">
+                        <td className="py-3 px-4 text-right whitespace-nowrap">
                           <button
                             onClick={() => openVipModal(user)}
-                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold shadow-2xs transition-all duration-200 hover:-translate-y-0.5 cursor-pointer border ${
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-xs transition-colors cursor-pointer border ${
                               isVip
-                                ? 'bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100 hover:border-amber-400'
-                                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-400'
+                                ? 'bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100'
+                                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:text-gray-900'
                             }`}
                             title="Nhấp để tùy chỉnh trạng thái gói và thời hạn VIP"
                           >
-                            <Crown className={`w-3.5 h-3.5 ${isVip ? 'text-amber-600' : 'text-slate-400'}`} />
+                            <Crown className={`w-3.5 h-3.5 ${isVip ? 'text-amber-600' : 'text-gray-400'}`} />
                             <span>{isVip ? 'Chỉnh sửa VIP' : 'Cấp quyền VIP'}</span>
                           </button>
                         </td>
@@ -673,33 +668,33 @@ export default function AdminUsersPage() {
 
           {/* Pagination Users */}
           {!loading && filteredProfiles.length > 0 && (
-            <div className="px-5 py-3.5 border-t border-slate-200/80 bg-white/90 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 font-medium">
+            <div className="px-4 py-3 border-t border-gray-200 bg-white flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500 font-medium">
               <div>
-                Đang xem <span className="font-bold text-slate-900">{(currentUserPage - 1) * usersPerPage + 1}</span> -{' '}
-                <span className="font-bold text-slate-900">
+                Đang xem <span className="font-semibold text-gray-900">{(currentUserPage - 1) * usersPerPage + 1}</span> -{' '}
+                <span className="font-semibold text-gray-900">
                   {Math.min(currentUserPage * usersPerPage, filteredProfiles.length)}
                 </span>{' '}
-                trên <span className="font-bold text-slate-900">{filteredProfiles.length}</span> người dùng
+                trên <span className="font-semibold text-gray-900">{filteredProfiles.length}</span> người dùng
               </div>
 
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => setCurrentUserPage((p) => Math.max(1, p - 1))}
                   disabled={currentUserPage === 1}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
                   <span>Trước</span>
                 </button>
 
-                <span className="px-2.5 py-1 text-slate-700 font-semibold font-mono">
+                <span className="px-2.5 py-1 text-gray-700 font-semibold font-mono">
                   {currentUserPage} / {totalUserPages}
                 </span>
 
                 <button
                   onClick={() => setCurrentUserPage((p) => Math.min(totalUserPages, p + 1))}
                   disabled={currentUserPage === totalUserPages}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                 >
                   <span>Sau</span>
                   <ChevronRight className="w-3.5 h-3.5" />
@@ -712,24 +707,24 @@ export default function AdminUsersPage() {
         {/* Modal Cấp & Quản lý Quyền VIP */}
         {isModalOpen && selectedUser && (
           <div
-            className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in"
+            className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
             onClick={closeVipModal}
           >
             <div
-              className="bg-white rounded-2xl shadow-2xl border border-slate-200/90 w-full max-w-lg overflow-hidden animate-scale-in"
+              className="bg-white rounded-xl shadow-xl border border-gray-200 w-full max-w-lg overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Modal Header */}
-              <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-amber-50/70 via-white to-orange-50/40">
+              <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-gray-50/60">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-amber-100 border border-amber-200 flex items-center justify-center text-amber-700 shadow-2xs">
-                    <Crown className="w-5 h-5 text-amber-600" />
+                  <div className="w-9 h-9 rounded-lg bg-amber-100 border border-amber-200 flex items-center justify-center text-amber-700">
+                    <Crown className="w-4 h-4 text-amber-600" />
                   </div>
                   <div>
-                    <h3 className="text-base font-bold text-slate-900">
+                    <h3 className="text-sm sm:text-base font-bold text-gray-900">
                       Cấp & Quản lý Quyền VIP
                     </h3>
-                    <p className="text-xs text-slate-500 mt-0.5 font-medium">
+                    <p className="text-xs text-gray-500 mt-0.5">
                       Tùy chỉnh trạng thái gói cước và thời hạn truy cập
                     </p>
                   </div>
@@ -739,47 +734,47 @@ export default function AdminUsersPage() {
                   type="button"
                   onClick={closeVipModal}
                   disabled={isSavingVip}
-                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition disabled:opacity-40 cursor-pointer"
+                  className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-40 cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
               {/* Modal Body */}
-              <div className="p-6 space-y-5 text-xs">
+              <div className="p-6 space-y-4 text-xs">
                 {/* 1. User Info Card */}
-                <div className="bg-slate-50/80 rounded-2xl p-4 border border-slate-200/80 space-y-2">
+                <div className="bg-gray-50 rounded-lg p-3.5 border border-gray-200 space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">
                       Tài khoản đang thao tác
                     </span>
                     {selectedUser.role === 'ADMIN' ? (
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200">
                         ADMIN
                       </span>
                     ) : (
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-slate-200 text-slate-700">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-gray-200 text-gray-700">
                         USER
                       </span>
                     )}
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-slate-900">
+                    <p className="text-sm font-semibold text-gray-900">
                       {selectedUser.email || 'Chưa cập nhật email'}
                     </p>
-                    <p className="font-mono text-[11px] text-slate-500 mt-0.5 select-all">
+                    <p className="font-mono text-[11px] text-gray-500 mt-0.5 select-all">
                       User ID: {selectedUser.id}
                     </p>
                   </div>
                 </div>
 
                 {/* 2. Toggle Status VIP */}
-                <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                <div className="flex items-center justify-between py-2 border-b border-gray-100">
                   <div>
-                    <label className="text-xs font-bold text-slate-900 block">
+                    <label className="text-xs font-semibold text-gray-900 block">
                       Trạng thái VIP
                     </label>
-                    <p className="text-[11px] text-slate-500 mt-0.5">
+                    <p className="text-[11px] text-gray-500 mt-0.5">
                       {modalIsPremium
                         ? 'Đang hoạt động (Kích hoạt quyền VIP)'
                         : 'Khóa / Hủy quyền VIP của tài khoản này'}
@@ -789,12 +784,12 @@ export default function AdminUsersPage() {
                   <button
                     type="button"
                     onClick={handleToggleModalStatus}
-                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                      modalIsPremium ? 'bg-amber-500' : 'bg-slate-300'
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-150 ease-in-out focus:outline-none ${
+                      modalIsPremium ? 'bg-amber-500' : 'bg-gray-300'
                     }`}
                   >
                     <span
-                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-150 ease-in-out ${
                         modalIsPremium ? 'translate-x-5' : 'translate-x-0'
                       }`}
                     />
@@ -803,16 +798,16 @@ export default function AdminUsersPage() {
 
                 {/* If VIP is enabled, show Plan & Date inputs. If disabled, disable/hide them. */}
                 {modalIsPremium ? (
-                  <div className="space-y-4 pt-1 animate-fade-in">
+                  <div className="space-y-3.5 pt-1">
                     {/* Dropdown Chọn Gói */}
                     <div>
-                      <label className="text-xs font-bold text-slate-900 block mb-1.5">
+                      <label className="text-xs font-semibold text-gray-900 block mb-1">
                         Chọn Gói Cước (plan_type)
                       </label>
                       <select
                         value={modalPlanType}
                         onChange={(e) => handlePlanChange(e.target.value)}
-                        className="w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 cursor-pointer shadow-2xs"
+                        className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white text-xs font-semibold text-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900 cursor-pointer shadow-xs"
                       >
                         <option value="3m">3 Tháng (3m)</option>
                         <option value="6m">6 Tháng (6m)</option>
@@ -824,35 +819,35 @@ export default function AdminUsersPage() {
 
                     {/* Ngày Bắt Đầu (Readonly) */}
                     <div>
-                      <label className="text-xs font-bold text-slate-900 block mb-1.5">
+                      <label className="text-xs font-semibold text-gray-900 block mb-1">
                         Ngày Bắt Đầu
                       </label>
-                      <div className="px-3.5 py-2.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-600 font-semibold text-xs flex items-center justify-between">
+                      <div className="px-3 py-2 rounded-lg bg-gray-100 border border-gray-200 text-gray-600 font-semibold text-xs flex items-center justify-between">
                         <span>Hôm nay ({getTodayDisplay()})</span>
-                        <span className="text-[10px] text-slate-400 font-normal">Tự động kích hoạt</span>
+                        <span className="text-[10px] text-gray-400 font-normal">Tự động kích hoạt</span>
                       </div>
                     </div>
 
                     {/* Ngày Hết Hạn (vip_until) */}
                     <div>
-                      <label className="text-xs font-bold text-slate-900 block mb-1.5">
+                      <label className="text-xs font-semibold text-gray-900 block mb-1">
                         Ngày Hết Hạn (vip_until)
                       </label>
                       {modalPlanType === 'lifetime' ? (
-                        <div className="px-3.5 py-3 rounded-xl bg-amber-50/70 border border-amber-200/80 text-amber-800 text-xs flex items-center gap-2">
+                        <div className="px-3 py-2.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-850 text-xs flex items-center gap-2">
                           <Crown className="w-4 h-4 text-amber-600 shrink-0" />
                           <span>Gói <strong>Vĩnh viễn</strong> không có thời hạn kết thúc (vô thời hạn).</span>
                         </div>
                       ) : (
-                        <div className="space-y-1.5">
+                        <div className="space-y-1">
                           <input
                             type="date"
                             value={modalVipUntil}
                             min={new Date().toISOString().slice(0, 10)}
                             onChange={(e) => handleDateChange(e.target.value)}
-                            className="w-full px-3.5 py-2 rounded-xl border border-slate-300 bg-white text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-2xs font-mono"
+                            className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white text-xs font-semibold text-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900 shadow-xs font-mono"
                           />
-                          <p className="text-[11px] text-slate-400 font-medium">
+                          <p className="text-[11px] text-gray-400">
                             * Khi tự chỉnh sửa ngày trực tiếp, gói cước sẽ tự động chuyển sang <strong>Tùy chỉnh</strong>.
                           </p>
                         </div>
@@ -860,19 +855,19 @@ export default function AdminUsersPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl text-slate-500 text-xs font-medium">
+                  <div className="p-3.5 bg-gray-50 border border-gray-200 rounded-lg text-gray-500 text-xs">
                     Trạng thái VIP đang tắt (Khóa). Khi bấm Lưu, tài khoản sẽ được chuyển thành tài khoản thường và xóa toàn bộ thời hạn VIP.
                   </div>
                 )}
               </div>
 
-              {/* Modal Footer với Luxury Primary CTA Button */}
-              <div className="px-6 py-4 bg-slate-50/80 border-t border-slate-100 flex items-center justify-end gap-2.5">
+              {/* Modal Footer with High-Performance Clean Action Buttons */}
+              <div className="px-6 py-3.5 bg-gray-50 border-t border-gray-200 flex items-center justify-end gap-2.5">
                 <button
                   type="button"
                   onClick={closeVipModal}
                   disabled={isSavingVip}
-                  className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 bg-white hover:bg-slate-100 text-xs font-semibold transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-50 cursor-pointer"
+                  className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 bg-white hover:bg-gray-100 text-xs font-semibold transition-colors disabled:opacity-50 cursor-pointer"
                 >
                   Hủy
                 </button>
@@ -881,7 +876,7 @@ export default function AdminUsersPage() {
                   type="button"
                   onClick={handleSaveVip}
                   disabled={isSavingVip}
-                  className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-xs font-semibold shadow-md shadow-indigo-500/20 hover:shadow-lg hover:shadow-indigo-500/30 transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gray-900 hover:bg-black text-white text-xs font-semibold shadow-xs transition-colors disabled:opacity-50 cursor-pointer"
                 >
                   {isSavingVip ? (
                     <>
