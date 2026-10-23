@@ -44,40 +44,40 @@ export default function AdminLayout({
   ]
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 font-sans antialiased">
+    <div className="min-h-screen bg-slate-50/70 text-slate-900 font-sans antialiased selection:bg-indigo-500 selection:text-white">
       {/* ========================================================================= */}
-      {/* UNIFIED SAAS ADMIN HEADER (Vercel / Stripe Clean Architecture)            */}
+      {/* UNIFIED PLANHAT SAAS ADMIN HEADER (Modern Luxury Glassmorphism)           */}
       {/* ========================================================================= */}
-      <header className="sticky top-0 z-40 bg-white border-b border-gray-200">
+      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200/80 transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
           {/* Left: Brand + Navigation Pills */}
           <div className="flex items-center gap-6">
             <Link href="/admin/dashboard" className="flex items-center gap-2.5 group">
-              <div className="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-sm group-hover:bg-gray-800 transition-colors">
+              <div className="w-8 h-8 bg-gradient-to-br from-slate-900 to-indigo-950 rounded-xl flex items-center justify-center text-white font-extrabold text-sm shadow-sm ring-1 ring-white/10 group-hover:scale-105 transition-transform duration-200">
                 H
               </div>
               <div>
-                <span className="font-bold text-sm tracking-tight text-gray-900 block leading-none">
+                <span className="font-extrabold text-sm tracking-tight text-slate-900 block leading-none">
                   HANDY
                 </span>
-                <span className="text-[10px] uppercase font-semibold text-gray-400 tracking-wider">
+                <span className="text-[10px] uppercase font-bold text-indigo-600/80 tracking-wider">
                   Admin Console
                 </span>
               </div>
             </Link>
 
-            <div className="h-5 w-px bg-gray-200 hidden sm:block" />
+            <div className="h-5 w-px bg-slate-200 hidden sm:block" />
 
-            {/* Navigation Tabs */}
+            {/* Navigation Tabs with Luxury Indigo-to-Violet Gradients */}
             <nav className="flex items-center gap-1.5">
               {navItems.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 ${
+                  className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-200 hover:-translate-y-0.5 ${
                     item.active
-                      ? 'bg-gray-900 text-white shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                      ? 'bg-gradient-to-r from-indigo-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
                   }`}
                 >
                   {item.icon}
@@ -91,27 +91,27 @@ export default function AdminLayout({
           <div className="flex items-center gap-3">
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 rounded-xl transition-all duration-200 hover:-translate-y-0.5"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Xem trang người dùng</span>
             </Link>
 
-            <div className="h-4 w-px bg-gray-200" />
+            <div className="h-4 w-px bg-slate-200" />
 
             {/* Admin Badge */}
             <div className="flex items-center gap-2 pl-1">
               <div className="relative">
-                <div className="w-7 h-7 rounded-full bg-gray-900 text-white flex items-center justify-center text-xs font-bold shadow-xs">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-slate-900 to-indigo-950 text-white flex items-center justify-center text-xs font-bold shadow-xs ring-1 ring-slate-900/10">
                   A
                 </div>
-                <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white" />
+                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
               </div>
               <div className="hidden md:block text-left leading-tight">
-                <span className="text-xs font-semibold text-gray-900 block">
+                <span className="text-xs font-bold text-slate-900 block">
                   Administrator
                 </span>
-                <span className="text-[10px] text-gray-400 block font-mono">
+                <span className="text-[10px] text-slate-400 block font-mono">
                   Super Admin
                 </span>
               </div>
@@ -120,7 +120,7 @@ export default function AdminLayout({
             <button
               type="button"
               onClick={() => logoutUser('/login')}
-              className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition active:scale-95 cursor-pointer"
+              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all duration-200 active:scale-95 cursor-pointer"
               title="Đăng xuất quản trị"
             >
               <LogOut className="w-4 h-4" />
