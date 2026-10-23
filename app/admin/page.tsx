@@ -28,6 +28,7 @@ import {
 } from 'lucide-react'
 import { QRCodeCanvas } from 'qrcode.react'
 import { getEmbedYoutubeUrl } from '@/lib/utils'
+import ImageDropzone from '@/app/components/ImageDropzone'
 
 interface Topic {
   id: string
@@ -44,6 +45,8 @@ interface Vocabulary {
   meaning: string
   description: string | null
   video_url: string
+  illustration_url?: string | null
+  gesture_image_url?: string | null
   is_deleted: boolean
   created_at: string
 }
@@ -139,6 +142,21 @@ export default function AdminPage() {
     } catch {
       showToast('Không thể sao chép liên kết', 'error')
     }
+  }
+
+  // Cập nhật URL ảnh trực tiếp trong state sau khi upload / xóa bằng AJAX
+  const handleImageUpdate = (
+    vocabId: string,
+    imageType: 'illustration' | 'gesture',
+    url: string | null
+  ) => {
+    const key = imageType === 'illustration' ? 'illustration_url' : 'gesture_image_url'
+    setVocabularies((prev) =>
+      prev.map((v) => (v.id === vocabId ? { ...v, [key]: url } : v))
+    )
+    setEditingVocab((prev) =>
+      prev && prev.id === vocabId ? { ...prev, [key]: url } : prev
+    )
   }
 
   // Load tất cả topics và vocabularies
@@ -740,28 +758,30 @@ export default function AdminPage() {
 
             {/* Table */}
             <div className="w-full overflow-x-auto">
-              <table className="w-full text-left border-collapse min-w-[700px]">
+              <table className="w-full text-left border-collapse min-w-[900px]">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
-                    <th className="py-3 px-5">Từ vựng</th>
-                    <th className="py-3 px-5">Ý nghĩa</th>
-                    <th className="py-3 px-5">Chủ đề</th>
-                    <th className="py-3 px-5">Video</th>
-                    <th className="py-3 px-5 text-center">Trạng thái</th>
-                    <th className="py-3 px-5 text-right">Thao tác</th>
+                    <th className="py-3 px-4">Từ vựng</th>
+                    <th className="py-3 px-4">Ý nghĩa</th>
+                    <th className="py-3 px-4">Chủ đề</th>
+                    <th className="py-3 px-3 text-center">Ảnh Minh Họa</th>
+                    <th className="py-3 px-3 text-center">Ảnh Cử Chỉ</th>
+                    <th className="py-3 px-4">Video</th>
+                    <th className="py-3 px-4 text-center">Trạng thái</th>
+                    <th className="py-3 px-4 text-right">Thao tác</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 text-xs">
                   {loading ? (
                     <tr>
-                      <td colSpan={6} className="py-16 text-center text-gray-400">
+                      <td colSpan={8} className="py-16 text-center text-gray-400">
                         <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-gray-600" />
                         <span>Đang tải danh sách từ vựng...</span>
                       </td>
                     </tr>
                   ) : filteredVocabularies.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="py-16 text-center text-gray-500">
+                      <td colSpan={8} className="py-16 text-center text-gray-500">
                         <div className="max-w-xs mx-auto space-y-1">
                           <BookOpen className="w-6 h-6 mx-auto text-gray-400 mb-2" />
                           <p className="font-semibold text-gray-700">Không tìm thấy từ vựng nào</p>
@@ -783,7 +803,7 @@ export default function AdminPage() {
                           }`}
                         >
                           {/* Từ vựng */}
-                          <td className="py-3.5 px-5">
+                          <td className="py-3.5 px-4">
                             <span className="font-semibold text-gray-900 text-sm">
                               {vocab.word}
                             </span>
@@ -795,24 +815,64 @@ export default function AdminPage() {
                           </td>
 
                           {/* Nghĩa */}
-                          <td className="py-3.5 px-5 text-gray-600">
+                          <td className="py-3.5 px-4 text-gray-600">
                             {vocab.meaning}
                           </td>
 
                           {/* Chủ đề */}
-                          <td className="py-3.5 px-5">
-                            <span className="inline-block px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 text-gray-700 border border-gray-200 line-clamp-1 max-w-[200px]">
+                          <td className="py-3.5 px-4">
+                            <span className="inline-block px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 text-gray-700 border border-gray-200 line-clamp-1 max-w-[160px]">
                               {topicTitle}
                             </span>
                           </td>
 
+                          {/* Cột Kéo Thả: Ảnh Minh Họa */}
+                          <td className="py-3 px-3 text-center align-middle">
+                            <div className="flex justify-center">
+                              <ImageDropzone
+                                wordId={vocab.id}
+                                imageType="illustration"
+                                currentUrl={vocab.illustration_url}
+                                onUploadSuccess={(url) => {
+                                  handleImageUpdate(vocab.id, 'illustration', url)
+                                  showToast(
+                                    url
+                                      ? `Đã ghép ảnh minh họa cho "${vocab.word}"`
+                                      : `Đã xóa ảnh minh họa của "${vocab.word}"`,
+                                    'success'
+                                  )
+                                }}
+                              />
+                            </div>
+                          </td>
+
+                          {/* Cột Kéo Thả: Ảnh Cử Chỉ */}
+                          <td className="py-3 px-3 text-center align-middle">
+                            <div className="flex justify-center">
+                              <ImageDropzone
+                                wordId={vocab.id}
+                                imageType="gesture"
+                                currentUrl={vocab.gesture_image_url}
+                                onUploadSuccess={(url) => {
+                                  handleImageUpdate(vocab.id, 'gesture', url)
+                                  showToast(
+                                    url
+                                      ? `Đã ghép ảnh cử chỉ cho "${vocab.word}"`
+                                      : `Đã xóa ảnh cử chỉ của "${vocab.word}"`,
+                                    'success'
+                                  )
+                                }}
+                              />
+                            </div>
+                          </td>
+
                           {/* Video */}
-                          <td className="py-3.5 px-5">
+                          <td className="py-3.5 px-4">
                             <a
                               href={vocab.video_url}
                               target="_blank"
                               rel="noreferrer"
-                              className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-700 hover:text-gray-900 hover:underline max-w-[160px] truncate"
+                              className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-700 hover:text-gray-900 hover:underline max-w-[140px] truncate"
                               title={vocab.video_url}
                             >
                               <ExternalLink className="w-3.5 h-3.5 shrink-0 text-gray-400" />
@@ -821,7 +881,7 @@ export default function AdminPage() {
                           </td>
 
                           {/* Trạng thái */}
-                          <td className="py-3.5 px-5 text-center">
+                          <td className="py-3.5 px-4 text-center">
                             {vocab.is_deleted ? (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-rose-100 text-rose-800">
                                 <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />
@@ -836,7 +896,7 @@ export default function AdminPage() {
                           </td>
 
                           {/* Thao tác */}
-                          <td className="py-3.5 px-5 text-right">
+                          <td className="py-3.5 px-4 text-right">
                             <div className="flex items-center justify-end gap-1.5">
                               <button
                                 onClick={() => setEditingVocab(vocab)}
@@ -1141,6 +1201,46 @@ export default function AdminPage() {
                   placeholder="Hướng dẫn cách làm ký hiệu tay..."
                   className="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-gray-900 text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-gray-900"
                 />
+              </div>
+
+              {/* Kéo thả ảnh trực quan trong modal */}
+              <div className="pt-2 border-t border-gray-100">
+                <span className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2">
+                  Hình ảnh trực quan (Kéo thả hoặc nhấp để chọn)
+                </span>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-3 bg-gray-50 rounded-lg border border-gray-200 text-center">
+                    <span className="block text-[11px] font-semibold text-gray-700 mb-2">
+                      Ảnh Minh Họa
+                    </span>
+                    <div className="flex justify-center">
+                      <ImageDropzone
+                        wordId={editingVocab.id}
+                        imageType="illustration"
+                        currentUrl={editingVocab.illustration_url}
+                        onUploadSuccess={(url) => {
+                          handleImageUpdate(editingVocab.id, 'illustration', url)
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-gray-50 rounded-lg border border-gray-200 text-center">
+                    <span className="block text-[11px] font-semibold text-gray-700 mb-2">
+                      Ảnh Cử Chỉ
+                    </span>
+                    <div className="flex justify-center">
+                      <ImageDropzone
+                        wordId={editingVocab.id}
+                        imageType="gesture"
+                        currentUrl={editingVocab.gesture_image_url}
+                        onUploadSuccess={(url) => {
+                          handleImageUpdate(editingVocab.id, 'gesture', url)
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Action buttons */}

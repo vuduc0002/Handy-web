@@ -22,6 +22,8 @@ export interface Vocabulary {
   meaning: string
   description: string | null
   video_url: string
+  illustration_url?: string | null
+  gesture_image_url?: string | null
   is_deleted: boolean
   created_at: string
 }
@@ -337,6 +339,41 @@ export default function TopicDetailView({
                         {selectedVocab.description}
                       </p>
                     </div>
+                  </div>
+                )}
+
+                {/* Hình ảnh trực quan (Ảnh Minh Họa & Ảnh Cử Chỉ) */}
+                {(selectedVocab.illustration_url || selectedVocab.gesture_image_url) && (
+                  <div className="mt-4 pt-4 border-t border-amber-100 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {selectedVocab.illustration_url && (
+                      <div className="bg-amber-50/50 rounded-2xl p-3 border border-amber-200/80">
+                        <span className="block text-[11px] font-bold text-amber-900 uppercase tracking-wider mb-2">
+                          🖼️ Ảnh minh họa:
+                        </span>
+                        <div className="aspect-square rounded-xl overflow-hidden bg-white border border-amber-200 shadow-2xs">
+                          <img
+                            src={selectedVocab.illustration_url}
+                            alt={`Minh họa ${selectedVocab.word}`}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedVocab.gesture_image_url && (
+                      <div className="bg-amber-50/50 rounded-2xl p-3 border border-amber-200/80">
+                        <span className="block text-[11px] font-bold text-amber-900 uppercase tracking-wider mb-2">
+                          🤟 Cử chỉ tay:
+                        </span>
+                        <div className="aspect-square rounded-xl overflow-hidden bg-white border border-amber-200 shadow-2xs">
+                          <img
+                            src={selectedVocab.gesture_image_url}
+                            alt={`Cử chỉ ${selectedVocab.word}`}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
