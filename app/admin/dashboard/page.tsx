@@ -10,16 +10,32 @@ import {
   DollarSign,
   ArrowUpRight,
   ArrowDownRight,
-  Search,
   Calendar,
   Download,
-  ChevronLeft,
-  ChevronRight,
   Loader2,
   RefreshCw,
   CreditCard,
-  X,
+  AlertTriangle,
+  TrendingUp,
+  PieChart as PieChartIcon,
+  Crown,
+  CheckCircle2,
+  Clock,
+  Sparkles,
 } from 'lucide-react'
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+} from 'recharts'
 
 interface Profile {
   id: string
@@ -47,19 +63,15 @@ export default function AdminDashboardPage() {
   const [checkingAuth, setCheckingAuth] = useState(true)
   const [authorized, setAuthorized] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [mounted, setMounted] = useState(false)
 
   // Raw data from Supabase
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [transactions, setTransactions] = useState<Transaction[]>([])
 
-  // Filters state (Transactions)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
-
-  // Pagination state (Transactions)
-  const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 10
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // 1. Verify ADMIN role
   useEffect(() => {
@@ -157,7 +169,12 @@ export default function AdminDashboardPage() {
   const isVipUser = (p: Profile) =>
     Boolean(p.is_premium && (!p.vip_until || new Date(p.vip_until) > new Date()))
 
-  // 3. Compute 4 Overview Metrics
+  // Helper định dạng tiền tệ VND
+  const formatCurrency = (val: number) => {
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val)
+  }
+
+  // 3. Tính toán 4 Overview Metrics
   const stats = useMemo(() => {
     const totalUsers = profiles.length
     const vipUsers = profiles.filter(isVipUser).length
@@ -223,47 +240,106 @@ export default function AdminDashboardPage() {
     }
   }, [profiles, transactions])
 
-  // 4. Filter & Search transactions
-  const filteredTransactions = useMemo(() => {
-    return transactions.filter((tx) => {
-      const query = searchTerm.trim().toLowerCase()
-      const matchSearch =
-        !query ||
-        tx.id.toLowerCase().includes(query) ||
-        (tx.user_email && tx.user_email.toLowerCase().includes(query)) ||
-        tx.user_id.toLowerCase().includes(query)
+  // 4. Đếm số lượng tài khoản "VIP sắp hết hạn" (trong vòng 30 ngày tới)
+  const vipExpiringSoonCount = useMemo(() => {
+    const now = new Date()
+    const thirtyDaysLater = new Date()
+    thirtyDaysLater.setDate(thirtyDaysLater.getDate() + 30)
 
-      let matchDate = true
-      if (startDate) {
-        const start = new Date(startDate)
-        start.setHours(0, 0, 0, 0)
-        const txDate = new Date(tx.created_at)
-        if (txDate < start) matchDate = false
-      }
-      if (endDate) {
-        const end = new Date(endDate)
-        end.setHours(23, 59, 59, 999)
-        const txDate = new Date(tx.created_at)
-        if (txDate > end) matchDate = false
-      }
+    return profiles.filter((p) => {
+      if (!isVipUser(p) || !p.vip_until) return false
+      const expiry = new Date(p.vip_until)
+      return expiry >= now && expiry <= thirtyDaysLater
+    }).length
+  }, [profiles])
 
-      return matchSearch && matchDate
+  // 5. Tính toán Doanh thu 30 ngày qua cho biểu đồ AreaChart
+  const revenue30DaysData = useMemo(() => {
+    const days: { dateKey: string; displayDate: string; revenue: number }[] = []
+    const now = new Date()
+
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(now)
+      d.setDate(d.getDate() - i)
+      const year = d.getFullYear()
+      const month = String(d.getMonth() + 1).padStart(2, '0')
+      const day = String(d.getDate()).padStart(2, '0')
+      const dateKey = `${year}-${month}-${day}`
+      const displayDate = `${day}/${month}`
+      days.push({ dateKey, displayDate, revenue: 0 })
+    }
+
+    const dayMap = new Map<string, number>()
+    days.forEach((item, index) => {
+      dayMap.set(item.dateKey, index)
     })
-  }, [transactions, searchTerm, startDate, endDate])
 
-  useEffect(() => {
-    setCurrentPage(1)
-  }, [searchTerm, startDate, endDate])
+    const successfulTx = transactions.filter(
+      (tx) => (tx.status || '').toUpperCase() === 'SUCCESS'
+    )
 
-  const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage) || 1
-  const paginatedTransactions = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage
-    return filteredTransactions.slice(start, start + itemsPerPage)
-  }, [filteredTransactions, currentPage])
+    successfulTx.forEach((tx) => {
+      if (!tx.created_at) return
+      const d = new Date(tx.created_at)
+      const year = d.getFullYear()
+      const month = String(d.getMonth() + 1).padStart(2, '0')
+      const day = String(d.getDate()).padStart(2, '0')
+      const dateKey = `${year}-${month}-${day}`
 
-  // 5. Export to CSV (Excel format)
+      const index = dayMap.get(dateKey)
+      if (index !== undefined) {
+        const val = Number(tx.transferAmount ?? tx.amount ?? 0)
+        if (!isNaN(val)) {
+          days[index].revenue += val
+        }
+      }
+    })
+
+    return days
+  }, [transactions])
+
+  // 6. Tính toán Tỷ trọng 4 gói VIP cho biểu đồ PieChart
+  const planDistributionData = useMemo(() => {
+    const counts: Record<string, number> = {
+      '3m': 0,
+      '6m': 0,
+      '1y': 0,
+      'lifetime': 0,
+    }
+
+    profiles.forEach((p) => {
+      if (!isVipUser(p)) return
+      const plan = p.plan_type
+      if (plan && counts[plan] !== undefined) {
+        counts[plan]++
+      } else if (!p.vip_until || plan === 'lifetime') {
+        counts['lifetime']++
+      } else {
+        counts['1y']++
+      }
+    })
+
+    return [
+      { name: 'VIP 3 Tháng', key: '3m', value: counts['3m'], color: '#3B82F6' },
+      { name: 'VIP 6 Tháng', key: '6m', value: counts['6m'], color: '#10B981' },
+      { name: 'VIP 1 Năm', key: '1y', value: counts['1y'], color: '#F59E0B' },
+      { name: 'VIP Trọn Đời', key: 'lifetime', value: counts['lifetime'], color: '#8B5CF6' },
+    ]
+  }, [profiles])
+
+  // 7. Lấy 10 Giao dịch gần nhất
+  const recentTransactions = useMemo(() => {
+    const sorted = [...transactions].sort((a, b) => {
+      const timeA = new Date(a.created_at).getTime()
+      const timeB = new Date(b.created_at).getTime()
+      return timeB - timeA
+    })
+    return sorted.slice(0, 10)
+  }, [transactions])
+
+  // 8. Xuất CSV
   const handleExportCSV = () => {
-    if (filteredTransactions.length === 0) {
+    if (transactions.length === 0) {
       alert('Không có dữ liệu giao dịch nào để xuất báo cáo.')
       return
     }
@@ -278,7 +354,7 @@ export default function AdminDashboardPage() {
       'Thời Gian Giao Dịch',
     ]
 
-    const rows = filteredTransactions.map((tx) => {
+    const rows = transactions.map((tx) => {
       const amountVal = Number(tx.transferAmount ?? tx.amount ?? 0)
       const dateStr = tx.created_at ? new Date(tx.created_at).toLocaleString('vi-VN') : ''
       return [
@@ -303,8 +379,50 @@ export default function AdminDashboardPage() {
     document.body.removeChild(link)
   }
 
-  const formatCurrency = (val: number) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val)
+  // Custom Area Chart Tooltip
+  const CustomAreaTooltip = ({
+    active,
+    payload,
+    label,
+  }: {
+    active?: boolean
+    payload?: any[]
+    label?: string
+  }) => {
+    if (active && payload && payload.length) {
+      const val = Number(payload[0].value ?? 0)
+      return (
+        <div className="bg-gray-900 text-white px-3.5 py-2.5 rounded-xl shadow-xl border border-gray-800 text-xs">
+          <p className="font-semibold text-gray-400">Ngày {label}</p>
+          <p className="text-emerald-400 font-bold text-sm mt-0.5">
+            {formatCurrency(val)}
+          </p>
+        </div>
+      )
+    }
+    return null
+  }
+
+  // Custom Pie Chart Tooltip
+  const CustomPieTooltip = ({
+    active,
+    payload,
+  }: {
+    active?: boolean
+    payload?: any[]
+  }) => {
+    if (active && payload && payload.length) {
+      const item = payload[0]
+      return (
+        <div className="bg-gray-900 text-white px-3.5 py-2.5 rounded-xl shadow-xl border border-gray-800 text-xs">
+          <p className="font-semibold text-gray-200">{item.name}</p>
+          <p className="text-amber-400 font-bold text-sm mt-0.5">
+            {item.value} người dùng ({stats.vipUsers > 0 ? ((item.value / stats.vipUsers) * 100).toFixed(1) : 0}%)
+          </p>
+        </div>
+      )
+    }
+    return null
   }
 
   if (checkingAuth) {
@@ -331,7 +449,7 @@ export default function AdminDashboardPage() {
               Bảng điều khiển & Doanh thu
             </h1>
             <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
-              Tổng quan tài chính, phân tích chỉ số kinh doanh và đối soát giao dịch trực tuyến
+              Thống kê tài chính, biểu đồ tăng trưởng và phân bổ các gói cước VIP
             </p>
           </div>
 
@@ -357,70 +475,10 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* ========================================================================= */}
-        {/* 1. OVERVIEW CARDS                                                         */}
+        {/* HÀNG 1: THẺ TÓM TẮT (4 CỘT)                                               */}
         {/* ========================================================================= */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Card 1: Tổng người dùng */}
-          <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:border-gray-300 transition-colors">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                Tổng Người Dùng
-              </span>
-              <div className="w-8 h-8 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-500">
-                <Users className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="mt-3">
-              <p className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
-                {loading ? '...' : stats.totalUsers.toLocaleString('vi-VN')}
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                Tài khoản trên toàn hệ thống
-              </p>
-            </div>
-          </div>
-
-          {/* Card 2: Tỷ lệ chuyển đổi VIP */}
-          <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:border-gray-300 transition-colors">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                Tỷ Lệ Chuyển Đổi VIP
-              </span>
-              <div className="w-8 h-8 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-500">
-                <Percent className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="mt-3">
-              <p className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
-                {loading ? '...' : `${stats.conversionRate}%`}
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                {stats.vipUsers} trên {stats.totalUsers} người dùng
-              </p>
-            </div>
-          </div>
-
-          {/* Card 3: VIP mới tháng này */}
-          <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:border-gray-300 transition-colors">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                VIP Mới Tháng Này
-              </span>
-              <div className="w-8 h-8 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-500">
-                <UserCheck className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="mt-3">
-              <p className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
-                {loading ? '...' : `+${stats.newVipThisMonth}`}
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                Kích hoạt trong tháng hiện tại
-              </p>
-            </div>
-          </div>
-
-          {/* Card 4: Tổng doanh thu */}
+          {/* Card 1: Tổng doanh thu (Emerald theme) */}
           <div className="bg-emerald-600 rounded-xl p-5 text-white shadow-sm border border-emerald-700">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-emerald-100 uppercase tracking-wider">
@@ -440,92 +498,234 @@ export default function AdminDashboardPage() {
                 ) : (
                   <ArrowDownRight className="w-3.5 h-3.5 text-rose-300" />
                 )}
-                <span>{stats.revenueGrowth} so với kỳ trước</span>
+                <span>{stats.revenueGrowth} so với tháng trước</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2: Tổng người dùng */}
+          <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:border-gray-300 transition-colors">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Tổng Người Dùng
+              </span>
+              <div className="w-8 h-8 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-500">
+                <Users className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-3">
+              <p className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
+                {loading ? '...' : stats.totalUsers.toLocaleString('vi-VN')}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                +{stats.newVipThisMonth} VIP mới kích hoạt tháng này
+              </p>
+            </div>
+          </div>
+
+          {/* Card 3: Tỷ lệ chuyển đổi VIP */}
+          <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:border-gray-300 transition-colors">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Tỷ Lệ Chuyển Đổi VIP
+              </span>
+              <div className="w-8 h-8 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-500">
+                <Percent className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-3">
+              <p className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
+                {loading ? '...' : `${stats.conversionRate}%`}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                {stats.vipUsers} trên {stats.totalUsers} người dùng
+              </p>
+            </div>
+          </div>
+
+          {/* Card 4: VIP sắp hết hạn (Màu cam cảnh báo) */}
+          <div className="bg-gradient-to-br from-amber-50 to-orange-50/70 rounded-xl border border-amber-300 p-5 shadow-sm hover:border-amber-400 transition-colors">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-amber-900 uppercase tracking-wider">
+                VIP Sắp Hết Hạn
+              </span>
+              <div className="w-8 h-8 rounded-lg bg-amber-100 border border-amber-300 flex items-center justify-center text-amber-700">
+                <AlertTriangle className="w-4 h-4 text-amber-600" />
+              </div>
+            </div>
+            <div className="mt-3">
+              <p className="text-2xl sm:text-3xl font-bold text-amber-900 tracking-tight">
+                {loading ? '...' : `${vipExpiringSoonCount} tài khoản`}
+              </p>
+              <div className="flex items-center gap-1.5 text-xs text-amber-700 font-medium mt-1">
+                <Clock className="w-3.5 h-3.5 text-amber-600" />
+                <span>Hết hạn trong 30 ngày tới</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* ========================================================================= */}
-        {/* 2. TRANSACTIONS SECTION (FILTER TOOLBAR & DATA TABLE)                     */}
+        {/* HÀNG 2: BIỂU ĐỒ DOANH THU & TỶ TRỌNG GÓI VIP (RECHARTS)                    */}
+        {/* ========================================================================= */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Cột trái (chiếm 2/3): Doanh thu 30 ngày qua */}
+          <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
+              <div>
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-emerald-600" />
+                  <h2 className="text-base font-bold text-gray-900">
+                    Doanh thu 30 ngày qua
+                  </h2>
+                </div>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Biểu đồ dòng tiền thực nhận hàng ngày từ cổng thanh toán SePAY / VietQR
+                </p>
+              </div>
+              <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full self-start sm:self-auto">
+                30 Ngày gần nhất
+              </span>
+            </div>
+
+            <div className="h-72 w-full">
+              {!mounted || loading ? (
+                <div className="h-full flex flex-col items-center justify-center text-gray-400">
+                  <Loader2 className="w-6 h-6 animate-spin mb-2 text-emerald-600" />
+                  <span className="text-xs font-medium">Đang tải biểu đồ doanh thu...</span>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={revenue30DaysData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#10B981" stopOpacity={0.35} />
+                        <stop offset="95%" stopColor="#10B981" stopOpacity={0.0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
+                    <XAxis
+                      dataKey="displayDate"
+                      tickLine={false}
+                      axisLine={false}
+                      tick={{ fill: '#6B7280', fontSize: 11 }}
+                      interval={3}
+                    />
+                    <YAxis
+                      tickLine={false}
+                      axisLine={false}
+                      tick={{ fill: '#6B7280', fontSize: 11 }}
+                      tickFormatter={(v) =>
+                        v >= 1000000
+                          ? `${(v / 1000000).toFixed(1)}M`
+                          : v >= 1000
+                          ? `${(v / 1000).toFixed(0)}k`
+                          : `${v}`
+                      }
+                    />
+                    <Tooltip content={<CustomAreaTooltip />} />
+                    <Area
+                      type="monotone"
+                      dataKey="revenue"
+                      stroke="#10B981"
+                      strokeWidth={2.5}
+                      fillOpacity={1}
+                      fill="url(#revenueGradient)"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </div>
+
+          {/* Cột phải (chiếm 1/3): Tỷ trọng gói cước VIP */}
+          <div className="lg:col-span-1 bg-white rounded-2xl border border-gray-200 p-6 shadow-sm flex flex-col">
+            <div className="mb-4">
+              <div className="flex items-center gap-2">
+                <PieChartIcon className="w-5 h-5 text-indigo-600" />
+                <h2 className="text-base font-bold text-gray-900">
+                  Tỷ trọng gói cước VIP
+                </h2>
+              </div>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Cơ cấu học viên theo 4 gói cước mới
+              </p>
+            </div>
+
+            <div className="h-72 w-full flex-1">
+              {!mounted || loading ? (
+                <div className="h-full flex flex-col items-center justify-center text-gray-400">
+                  <Loader2 className="w-6 h-6 animate-spin mb-2 text-indigo-600" />
+                  <span className="text-xs font-medium">Đang tải phân bổ gói cước...</span>
+                </div>
+              ) : stats.vipUsers === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center text-gray-400 text-center px-4">
+                  <Crown className="w-8 h-8 text-gray-300 mb-2" />
+                  <p className="text-xs font-semibold text-gray-600">Chưa có người dùng VIP</p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">
+                    Dữ liệu sẽ xuất hiện khi có học viên đăng ký các gói VIP
+                  </p>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={planDistributionData}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="45%"
+                      innerRadius={50}
+                      outerRadius={80}
+                      paddingAngle={3}
+                    >
+                      {planDistributionData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip content={<CustomPieTooltip />} />
+                    <Legend
+                      verticalAlign="bottom"
+                      height={40}
+                      iconType="circle"
+                      iconSize={8}
+                      formatter={(val, entry: any) => (
+                        <span className="text-[11px] font-semibold text-gray-700 ml-1">
+                          {val} ({entry.payload.value})
+                        </span>
+                      )}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* ========================================================================= */}
+        {/* HÀNG 3: BẢNG 10 GIAO DỊCH GẦN NHẤT                                        */}
         {/* ========================================================================= */}
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
-              <h2 className="text-base font-bold text-gray-900">
-                Quản lý Giao dịch Thanh toán
-              </h2>
-              <p className="text-xs text-gray-500">
-                Lịch sử giao dịch trực tuyến ghi nhận từ SePAY và cổng VietQR
+              <div className="flex items-center gap-2">
+                <CreditCard className="w-5 h-5 text-gray-800" />
+                <h2 className="text-base font-bold text-gray-900">
+                  10 Giao dịch gần nhất
+                </h2>
+              </div>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Nhật ký các lượt thanh toán nâng cấp tài khoản vừa ghi nhận trên hệ thống
               </p>
             </div>
+
+            <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded-md self-start sm:self-auto">
+              Tổng {transactions.length} giao dịch
+            </span>
           </div>
 
-          {/* Filter Bar */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-            <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
-              {/* Search Input */}
-              <div className="relative flex-1 max-w-md">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Tìm theo Mã GD, Email hoặc User ID..."
-                  className="w-full pl-9 pr-3 py-1.5 rounded-md bg-white border border-gray-300 text-gray-900 text-xs focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900 placeholder-gray-400"
-                />
-                {searchTerm && (
-                  <button
-                    onClick={() => setSearchTerm('')}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-
-              {/* Date Pickers */}
-              <div className="flex flex-wrap items-center gap-2 text-xs">
-                <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-md px-2.5 py-1 text-gray-600">
-                  <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                  <span className="text-[11px] font-medium text-gray-500">Từ:</span>
-                  <input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="bg-transparent text-gray-800 text-xs focus:outline-none"
-                  />
-                </div>
-
-                <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-md px-2.5 py-1 text-gray-600">
-                  <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                  <span className="text-[11px] font-medium text-gray-500">Đến:</span>
-                  <input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="bg-transparent text-gray-800 text-xs focus:outline-none"
-                  />
-                </div>
-
-                {(startDate || endDate || searchTerm) && (
-                  <button
-                    onClick={() => {
-                      setStartDate('')
-                      setEndDate('')
-                      setSearchTerm('')
-                    }}
-                    className="px-2.5 py-1 text-xs font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition cursor-pointer"
-                  >
-                    Đặt lại
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Table */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          {/* Table Container */}
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
             <div className="w-full overflow-x-auto">
               <table className="w-full text-left border-collapse min-w-[700px]">
                 <thead>
@@ -546,20 +746,20 @@ export default function AdminDashboardPage() {
                         <span>Đang tải danh sách giao dịch...</span>
                       </td>
                     </tr>
-                  ) : paginatedTransactions.length === 0 ? (
+                  ) : recentTransactions.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="py-16 text-center text-gray-500">
+                      <td colSpan={6} className="py-14 text-center text-gray-500">
                         <div className="max-w-xs mx-auto space-y-1">
                           <CreditCard className="w-6 h-6 mx-auto text-gray-400 mb-2" />
-                          <p className="font-semibold text-gray-700">Không có giao dịch nào</p>
+                          <p className="font-semibold text-gray-700">Chưa có giao dịch nào</p>
                           <p className="text-xs text-gray-400">
-                            Chưa có lịch sử giao dịch phát sinh hoặc bộ lọc không khớp dữ liệu.
+                            Chưa phát sinh lịch sử chuyển khoản từ khách hàng.
                           </p>
                         </div>
                       </td>
                     </tr>
                   ) : (
-                    paginatedTransactions.map((tx) => {
+                    recentTransactions.map((tx) => {
                       const amount = Number(tx.transferAmount ?? tx.amount ?? 0)
                       const isSuccess = (tx.status || '').toUpperCase() === 'SUCCESS'
                       const dateFormatted = tx.created_at
@@ -576,15 +776,15 @@ export default function AdminDashboardPage() {
                         <tr key={tx.id} className="hover:bg-gray-50 transition-colors">
                           {/* Mã GD */}
                           <td className="py-3.5 px-5 font-mono text-[11px] text-gray-700 font-medium select-all">
-                            {tx.id.slice(0, 13)}...
+                            {tx.id.slice(0, 14)}...
                           </td>
 
                           {/* Người dùng */}
                           <td className="py-3.5 px-5">
-                            <p className="font-medium text-gray-900">
-                              {tx.user_email}
+                            <p className="font-semibold text-gray-900">
+                              {tx.user_email || 'Khách vãng lai'}
                             </p>
-                            <p className="font-mono text-[10px] text-gray-400">
+                            <p className="font-mono text-[10px] text-gray-400 select-all">
                               {tx.user_id.slice(0, 8)}...
                             </p>
                           </td>
@@ -594,7 +794,7 @@ export default function AdminDashboardPage() {
                             {formatCurrency(amount)}
                           </td>
 
-                          {/* Ngày giao dịch */}
+                          {/* Thời gian */}
                           <td className="py-3.5 px-5 text-gray-500 text-[11px]">
                             {dateFormatted}
                           </td>
@@ -609,12 +809,12 @@ export default function AdminDashboardPage() {
                           {/* Trạng thái */}
                           <td className="py-3.5 px-5 text-center">
                             {isSuccess ? (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-green-100 text-green-800">
-                                <span className="w-1.5 h-1.5 rounded-full bg-green-600" />
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
                                 <span>Thành công</span>
                               </span>
                             ) : (
-                              <span className="inline-block px-2 py-0.5 rounded-full text-[11px] font-medium bg-gray-100 text-gray-600">
+                              <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-gray-100 text-gray-600">
                                 {tx.status || 'Đang xử lý'}
                               </span>
                             )}
@@ -626,43 +826,6 @@ export default function AdminDashboardPage() {
                 </tbody>
               </table>
             </div>
-
-            {/* Pagination */}
-            {!loading && filteredTransactions.length > 0 && (
-              <div className="px-5 py-3 border-t border-gray-200 bg-white flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500">
-                <div>
-                  Đang xem <span className="font-semibold text-gray-900">{(currentPage - 1) * itemsPerPage + 1}</span> -{' '}
-                  <span className="font-semibold text-gray-900">
-                    {Math.min(currentPage * itemsPerPage, filteredTransactions.length)}
-                  </span>{' '}
-                  trên <span className="font-semibold text-gray-900">{filteredTransactions.length}</span> giao dịch
-                </div>
-
-                <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-medium transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-                  >
-                    <ChevronLeft className="w-3.5 h-3.5" />
-                    <span>Trước</span>
-                  </button>
-
-                  <span className="px-2 py-1 text-gray-700 font-medium">
-                    {currentPage} / {totalPages}
-                  </span>
-
-                  <button
-                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-medium transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-                  >
-                    <span>Sau</span>
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </main>
