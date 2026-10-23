@@ -22,7 +22,11 @@ import {
   Video,
   Check,
   RefreshCw,
+  QrCode,
+  Download,
+  Copy,
 } from 'lucide-react'
+import { QRCodeCanvas } from 'qrcode.react'
 import { getEmbedYoutubeUrl } from '@/lib/utils'
 
 interface Topic {
@@ -78,12 +82,63 @@ export default function AdminPage() {
   // Edit Modal state
   const [editingVocab, setEditingVocab] = useState<Vocabulary | null>(null)
 
+  // QR Code Modal state
+  const [selectedQrTopic, setSelectedQrTopic] = useState<Topic | null>(null)
+  const [copiedLink, setCopiedLink] = useState(false)
+
   // Notification feedback
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null)
 
   const showToast = (text: string, type: 'success' | 'error' = 'success') => {
     setToastMessage({ text, type })
     setTimeout(() => setToastMessage(null), 3500)
+  }
+
+  // Helper tính link chi tiết của chủ đề
+  const getTopicUrl = (topicId: string) => {
+    if (typeof window !== 'undefined') {
+      return `${window.location.origin}/topics/${topicId}`
+    }
+    return `https://handy.edu.vn/topics/${topicId}`
+  }
+
+  // Tải xuống mã QR dưới dạng ảnh PNG để in sách
+  const handleDownloadQr = () => {
+    if (!selectedQrTopic) return
+    const canvas = document.getElementById(`qr-code-canvas-${selectedQrTopic.id}`) as HTMLCanvasElement
+    if (!canvas) {
+      showToast('Không tìm thấy khung mã QR để tải xuống', 'error')
+      return
+    }
+
+    try {
+      const pngUrl = canvas.toDataURL('image/png')
+      const downloadLink = document.createElement('a')
+      downloadLink.href = pngUrl
+      const safeTitle = selectedQrTopic.title
+        .replace(/[^a-zA-Z0-9_\u00C0-\u1EF9]/g, '_')
+        .slice(0, 30)
+      downloadLink.download = `QR_${safeTitle}_${selectedQrTopic.id.slice(0, 8)}.png`
+      document.body.appendChild(downloadLink)
+      downloadLink.click()
+      document.body.removeChild(downloadLink)
+      showToast(`Đã tải xuống mã QR cho "${selectedQrTopic.title}"!`, 'success')
+    } catch (err) {
+      console.error('Lỗi khi tải mã QR:', err)
+      showToast('Không thể tạo file ảnh mã QR', 'error')
+    }
+  }
+
+  // Sao chép liên kết vào clipboard
+  const handleCopyTopicUrl = async (url: string) => {
+    try {
+      await navigator.clipboard.writeText(url)
+      setCopiedLink(true)
+      showToast('Đã sao chép liên kết vào bộ nhớ tạm!', 'success')
+      setTimeout(() => setCopiedLink(false), 2500)
+    } catch {
+      showToast('Không thể sao chép liên kết', 'error')
+    }
   }
 
   // Load tất cả topics và vocabularies
@@ -949,14 +1004,26 @@ export default function AdminPage() {
                       </p>
                     </div>
 
-                    <Link
-                      href={`/topics/${t.id}`}
-                      target="_blank"
-                      className="px-2.5 py-1.5 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-medium transition inline-flex items-center gap-1.5 shrink-0"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5 text-gray-400" />
-                      <span>Xem bài</span>
-                    </Link>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedQrTopic(t)}
+                        className="px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-semibold transition inline-flex items-center gap-1.5 cursor-pointer shadow-xs border border-gray-200"
+                        title="Tạo và tải mã QR để in vào sách"
+                      >
+                        <QrCode className="w-3.5 h-3.5 text-gray-700" />
+                        <span>Mã QR</span>
+                      </button>
+
+                      <Link
+                        href={`/topics/${t.id}`}
+                        target="_blank"
+                        className="px-2.5 py-1.5 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-medium transition inline-flex items-center gap-1.5"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5 text-gray-400" />
+                        <span>Xem bài</span>
+                      </Link>
+                    </div>
                   </div>
                 )
               })}
@@ -1101,6 +1168,132 @@ export default function AdminPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* ========================================================================= */}
+      {/* POPUP / MODAL MÃ QR SÁCH & CHỦ ĐỀ                                         */}
+      {/* ========================================================================= */}
+      {selectedQrTopic && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+          onClick={() => setSelectedQrTopic(null)}
+        >
+          <div
+            className="bg-white w-full max-w-md rounded-xl border border-gray-200 p-6 shadow-xl relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Nút đóng Modal */}
+            <button
+              type="button"
+              onClick={() => setSelectedQrTopic(null)}
+              className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center absolute top-5 right-5 transition cursor-pointer"
+              title="Đóng cửa sổ"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            {/* Modal Header */}
+            <div className="flex items-center gap-3 mb-5 pb-3 border-b border-gray-100 pr-10">
+              <div className="w-9 h-9 rounded-lg bg-gray-900 text-white flex items-center justify-center font-bold shrink-0">
+                <QrCode className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-gray-900">
+                  Mã QR Sách / Chủ Đề
+                </h3>
+                <p className="text-xs text-gray-500 line-clamp-1">
+                  {selectedQrTopic.title}
+                </p>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="space-y-4 text-center">
+              {/* QR Code Canvas Box */}
+              <div className="inline-block p-4 bg-white rounded-xl border border-gray-200 shadow-xs mx-auto">
+                <QRCodeCanvas
+                  id={`qr-code-canvas-${selectedQrTopic.id}`}
+                  value={getTopicUrl(selectedQrTopic.id)}
+                  size={220}
+                  level="H"
+                  marginSize={2}
+                />
+              </div>
+
+              {/* Thông tin chủ đề & Trạng thái */}
+              <div>
+                <div className="flex items-center justify-center gap-2 mb-1">
+                  <h4 className="font-bold text-gray-900 text-sm">
+                    {selectedQrTopic.title}
+                  </h4>
+                  {selectedQrTopic.is_free ? (
+                    <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                      Miễn phí
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-800 border border-amber-200">
+                      Khóa VIP
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500">
+                  Học viên quét mã này bằng điện thoại để vào thẳng bài học trên ứng dụng Handy.
+                </p>
+              </div>
+
+              {/* Ô liên kết kèm nút sao chép */}
+              <div className="text-left">
+                <label className="block text-[11px] font-bold text-gray-600 uppercase tracking-wider mb-1.5">
+                  Đường dẫn liên kết (Topic URL)
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={getTopicUrl(selectedQrTopic.id)}
+                    className="flex-1 px-3 py-2 rounded-lg bg-gray-50 border border-gray-300 text-gray-800 text-xs font-mono select-all focus:outline-none focus:ring-1 focus:ring-gray-900"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleCopyTopicUrl(getTopicUrl(selectedQrTopic.id))}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-semibold shadow-xs transition cursor-pointer shrink-0"
+                    title="Sao chép đường link"
+                  >
+                    {copiedLink ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-600" />
+                        <span className="text-emerald-700">Đã chép</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5 text-gray-500" />
+                        <span>Sao chép</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => setSelectedQrTopic(null)}
+                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 bg-white hover:bg-gray-100 text-xs font-semibold transition cursor-pointer"
+              >
+                Đóng
+              </button>
+              <button
+                type="button"
+                onClick={handleDownloadQr}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-900 hover:bg-black text-white text-xs font-semibold shadow-xs transition cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Tải xuống mã QR (.PNG)</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

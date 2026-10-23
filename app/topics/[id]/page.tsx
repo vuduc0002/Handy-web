@@ -11,22 +11,32 @@ export default async function TopicDetailPage({
   const { id } = await params;
 
   // Lấy thông tin chủ đề theo id
-  const { data: topicData } = await supabase
-    .from('topics')
-    .select('*')
-    .eq('id', id)
-    .single();
+  let topic: Topic | null = null;
+  let vocabularies: Vocabulary[] = [];
 
-  // Lấy danh sách vocabularies từ Supabase theo topic_id (chỉ lấy is_deleted = false)
-  const { data: vocabulariesData } = await supabase
-    .from('vocabularies')
-    .select('*')
-    .eq('topic_id', id)
-    .eq('is_deleted', false)
-    .order('created_at', { ascending: true });
+  try {
+    const { data: topicData, error } = await supabase
+      .from('topics')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
 
-  const topic: Topic | null = topicData ?? null;
-  const vocabularies: Vocabulary[] = vocabulariesData ?? [];
+    if (!error && topicData) {
+      topic = topicData;
+
+      // Lấy danh sách vocabularies từ Supabase theo topic_id (chỉ lấy is_deleted = false)
+      const { data: vocabulariesData } = await supabase
+        .from('vocabularies')
+        .select('*')
+        .eq('topic_id', id)
+        .eq('is_deleted', false)
+        .order('created_at', { ascending: true });
+
+      vocabularies = vocabulariesData ?? [];
+    }
+  } catch (err) {
+    console.error('Lỗi khi tải thông tin chủ đề:', err);
+  }
 
   return (
     <TopicDetailView
