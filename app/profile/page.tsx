@@ -17,7 +17,9 @@ import {
   Loader2,
   BookOpen,
   QrCode,
-  CheckCircle2
+  CheckCircle2,
+  CreditCard,
+  Clock,
 } from 'lucide-react'
 
 interface UserProfile {
@@ -61,13 +63,15 @@ export default function ProfilePage() {
           .maybeSingle()
 
         if (isMounted) {
-          setProfile(profileData ?? {
-            id: user.id,
-            email: user.email || '',
-            role: 'USER',
-            is_premium: false,
-            created_at: user.created_at,
-          })
+          setProfile(
+            profileData ?? {
+              id: user.id,
+              email: user.email || '',
+              role: 'USER',
+              is_premium: false,
+              created_at: user.created_at,
+            }
+          )
         }
       } catch (err) {
         console.error('Error fetching profile:', err)
@@ -89,6 +93,17 @@ export default function ProfilePage() {
     await logoutUser('/login')
   }
 
+  const formatDateVN = (dateStr?: string | null): string => {
+    if (!dateStr) return ''
+    const d = new Date(dateStr)
+    if (isNaN(d.getTime())) return ''
+    return d.toLocaleDateString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    })
+  }
+
   if (loading) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center">
@@ -99,34 +114,40 @@ export default function ProfilePage() {
   }
 
   const joinDate = authUser?.created_at
-    ? new Date(authUser.created_at).toLocaleDateString('vi-VN', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-      })
+    ? formatDateVN(authUser.created_at)
     : 'Chưa cập nhật'
 
+  // Kiểm tra trạng thái VIP còn hiệu lực
   const isVip = (() => {
     if (profile?.role === 'ADMIN') return true
-    return Boolean(profile?.is_premium && (!profile?.vip_until || new Date(profile.vip_until) > new Date()))
+    return Boolean(
+      profile?.is_premium &&
+        (!profile?.vip_until || new Date(profile.vip_until) > new Date())
+    )
   })()
 
-  const vipExpiryStr = profile?.vip_until
-    ? new Date(profile.vip_until).toLocaleDateString('vi-VN', {
-        day: '2-digit', month: '2-digit', year: 'numeric'
-      })
-    : null
-
+  // Map tên gói tiếng Việt động theo plan_type
   const PLAN_LABELS: Record<string, string> = {
-    '3m': '3 Tháng',
-    '6m': '6 Tháng',
-    '1y': '1 Năm',
-    'lifetime': 'Trọn Đời',
+    '3m': 'VIP 3 Tháng',
+    '6m': 'VIP 6 Tháng',
+    '1y': 'VIP 1 Năm',
+    'lifetime': 'VIP Trọn Đời',
   }
-  const planLabel = profile?.plan_type ? PLAN_LABELS[profile.plan_type] ?? profile.plan_type : null
+
+  const planName = (() => {
+    if (!isVip) return 'Tài Khoản Miễn Phí'
+    if (profile?.plan_type && PLAN_LABELS[profile.plan_type]) {
+      return PLAN_LABELS[profile.plan_type]
+    }
+    if (profile?.plan_type === 'custom') return 'VIP Tùy Chỉnh'
+    return 'VIP Trọn Đời'
+  })()
+
+  const isLifetime = profile?.plan_type === 'lifetime' || (!profile?.vip_until && isVip)
+  const expiryDateFormatted = profile?.vip_until ? formatDateVN(profile.vip_until) : null
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 md:py-12">
+    <div className="max-w-4xl mx-auto px-4 py-8 md:py-12 font-sans">
       {/* Title */}
       <div className="text-center max-w-xl mx-auto mb-10">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-100 text-amber-800 text-xs sm:text-sm font-extrabold mb-3">
@@ -151,7 +172,7 @@ export default function ProfilePage() {
             {isVip && (
               <div
                 className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-amber-400 text-white flex items-center justify-center shadow border-2 border-white"
-                title="Thành viên VIP"
+                title={planName}
               >
                 <Crown className="w-4 h-4" />
               </div>
@@ -161,29 +182,40 @@ export default function ProfilePage() {
           <h2 className="text-xl font-black text-gray-800 mb-1 max-w-full truncate px-2">
             {profile?.email?.split('@')[0] || 'Học viên'}
           </h2>
-          <p className="text-xs text-gray-500 mb-4 break-all max-w-full px-2 text-center">{profile?.email}</p>
+          <p className="text-xs text-gray-500 mb-4 break-all max-w-full px-2 text-center">
+            {profile?.email}
+          </p>
 
-          {/* Badge trạng thái */}
+          {/* Badge trạng thái & Tiêu đề Gói Động */}
           <div className="mb-6">
             {isVip ? (
               <div className="flex flex-col items-center gap-1.5">
                 <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-400 to-orange-400 text-white text-xs font-black shadow-md shadow-amber-200">
                   <Crown className="w-4 h-4" />
-                  <span>Tài Khoản VIP{planLabel ? ` — ${planLabel}` : ' Trọn Đời'}</span>
+                  <span>{planName}</span>
                 </div>
-                {vipExpiryStr && (
-                  <span className="text-xs font-bold text-gray-500">
-                    Hết hạn: <span className="text-orange-600">{vipExpiryStr}</span>
+                {!isLifetime && expiryDateFormatted && (
+                  <span className="text-xs font-bold text-gray-500 mt-1">
+                    Hết hạn: <span className="text-orange-600">{expiryDateFormatted}</span>
                   </span>
                 )}
-                {!vipExpiryStr && profile?.is_premium && (
-                  <span className="text-xs font-bold text-gray-500">Hiệu lực vĩnh viễn</span>
+                {isLifetime && (
+                  <span className="text-xs font-bold text-gray-500 mt-1">
+                    Hiệu lực: <span className="text-amber-700">Không thời hạn</span>
+                  </span>
                 )}
               </div>
             ) : (
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold border border-emerald-300">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                <span>Tài Khoản Thường (Miễn phí)</span>
+              <div className="flex flex-col items-center gap-1.5">
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gray-100 text-gray-700 text-xs font-bold border border-gray-300">
+                  <User className="w-4 h-4 text-gray-500" />
+                  <span>{planName}</span>
+                </div>
+                {profile?.vip_until && (
+                  <span className="text-xs font-bold text-rose-500 mt-1">
+                    Gói cũ đã hết hạn ({formatDateVN(profile.vip_until)})
+                  </span>
+                )}
               </div>
             )}
           </div>
@@ -205,7 +237,7 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* CỘT PHẢI: Chi tiết tài khoản & Banner Nâng cấp VIP */}
+        {/* CỘT PHẢI: Chi tiết tài khoản & Banner Quyền lợi VIP */}
         <div className="md:col-span-7 space-y-6">
           {/* Box chi tiết */}
           <div className="bg-white rounded-3xl border-2 border-amber-200 p-6 sm:p-7 shadow-sm space-y-4">
@@ -214,6 +246,7 @@ export default function ProfilePage() {
             </h3>
 
             <div className="space-y-3.5 text-sm">
+              {/* 1. Email đăng ký */}
               <div className="flex items-center justify-between p-3.5 bg-amber-50/60 rounded-2xl border border-amber-200">
                 <div className="flex items-center gap-3 min-w-0">
                   <Mail className="w-5 h-5 text-orange-500 shrink-0" />
@@ -224,9 +257,10 @@ export default function ProfilePage() {
                 </div>
               </div>
 
+              {/* 2. Ngày tham gia hệ thống */}
               <div className="flex items-center justify-between p-3.5 bg-amber-50/60 rounded-2xl border border-amber-200">
                 <div className="flex items-center gap-3">
-                  <Calendar className="w-5 h-5 text-amber-500" />
+                  <Calendar className="w-5 h-5 text-amber-500 shrink-0" />
                   <div>
                     <span className="text-xs text-gray-500 font-bold block">Ngày tham gia hệ thống</span>
                     <span className="text-sm font-black text-gray-800">{joinDate}</span>
@@ -234,9 +268,10 @@ export default function ProfilePage() {
                 </div>
               </div>
 
+              {/* 3. Vai trò người dùng */}
               <div className="flex items-center justify-between p-3.5 bg-amber-50/60 rounded-2xl border border-amber-200">
                 <div className="flex items-center gap-3">
-                  <ShieldCheck className="w-5 h-5 text-emerald-500" />
+                  <ShieldCheck className="w-5 h-5 text-emerald-500 shrink-0" />
                   <div>
                     <span className="text-xs text-gray-500 font-bold block">Vai trò người dùng</span>
                     <span className="text-sm font-black text-gray-800">
@@ -245,51 +280,144 @@ export default function ProfilePage() {
                   </div>
                 </div>
               </div>
+
+              {/* 4. Trạng thái gói */}
+              <div className="flex items-center justify-between p-3.5 bg-amber-50/60 rounded-2xl border border-amber-200">
+                <div className="flex items-center gap-3">
+                  <Clock className="w-5 h-5 text-indigo-500 shrink-0" />
+                  <div>
+                    <span className="text-xs text-gray-500 font-bold block">Trạng thái gói</span>
+                    <div className="mt-0.5">
+                      {isVip ? (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>Đang hoạt động</span>
+                        </span>
+                      ) : (
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-700 border border-gray-300">
+                            {profile?.vip_until || profile?.plan_type ? 'Đã hết hạn' : 'Chưa kích hoạt'}
+                          </span>
+                          <Link
+                            href="/checkout"
+                            className="inline-flex items-center gap-1 px-3 py-1 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-black text-xs shadow-xs transition active:scale-95"
+                          >
+                            <span>Nâng cấp ngay</span>
+                            <ArrowRight className="w-3 h-3" />
+                          </Link>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 5. Ngày hết hạn */}
+              <div className="flex items-center justify-between p-3.5 bg-amber-50/60 rounded-2xl border border-amber-200">
+                <div className="flex items-center gap-3">
+                  <Calendar className="w-5 h-5 text-purple-500 shrink-0" />
+                  <div>
+                    <span className="text-xs text-gray-500 font-bold block">Ngày hết hạn</span>
+                    <div className="mt-0.5">
+                      {isVip ? (
+                        isLifetime ? (
+                          <span className="text-sm font-black text-amber-700">Không thời hạn</span>
+                        ) : (
+                          <span className="text-sm font-black text-gray-800">{expiryDateFormatted}</span>
+                        )
+                      ) : profile?.vip_until ? (
+                        <span className="text-xs font-bold text-rose-600 line-through">
+                          {formatDateVN(profile.vip_until)} (Đã hết hạn)
+                        </span>
+                      ) : (
+                        <span className="text-sm font-bold text-gray-400">—</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Banner Nâng cấp VIP nếu chưa nâng cấp */}
-          {!isVip ? (
-            <div className="bg-gradient-to-br from-amber-400 via-orange-400 to-amber-500 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
-              <div className="relative z-10 space-y-3">
-                <div className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-black">
-                  <Sparkles className="w-4 h-4 text-yellow-200" />
-                  GÓI NÂNG CẤP VIP
-                </div>
-
-                <h3 className="text-2xl font-black">Mở Khóa Toàn Bộ Bài Học VIP</h3>
-
-                <p className="text-xs sm:text-sm text-amber-100 max-w-md leading-relaxed">
-                  Xem không giới hạn kho video từ vựng chất lượng cao, các chủ đề nâng cao và tài liệu luyện tập thủ ngữ trọn đời!
+          {/* DÒNG THÔNG BÁO QUYỀN LỢI */}
+          {isVip ? (
+            <div className="bg-emerald-50 rounded-3xl p-6 sm:p-7 border-2 border-emerald-200 text-emerald-900 flex flex-col sm:flex-row items-start sm:items-center gap-4 shadow-sm">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-100 border border-emerald-200 flex items-center justify-center shrink-0 text-emerald-600">
+                <Sparkles className="w-6 h-6" />
+              </div>
+              <div className="space-y-1">
+                <h4 className="font-black text-base text-emerald-900">
+                  Bạn đã kích hoạt gói {planName}!
+                </h4>
+                <p className="text-xs sm:text-sm text-emerald-700 leading-relaxed">
+                  Bạn có toàn quyền truy cập tất cả các chủ đề và tính năng luyện tập Quizlet trên Handy.
                 </p>
+                {!isLifetime && expiryDateFormatted && (
+                  <p className="text-xs text-emerald-800 font-bold pt-1">
+                    Thời hạn sử dụng đến ngày: <span className="text-orange-600">{expiryDateFormatted}</span>
+                  </p>
+                )}
+                {isLifetime && (
+                  <p className="text-xs text-emerald-800 font-bold pt-1">
+                    Thời hạn sử dụng: <span className="text-amber-700">Không thời hạn</span>
+                  </p>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Thông báo quyền lợi bản miễn phí + Nút Xem Bảng Giá */}
+              <div className="bg-white rounded-3xl border-2 border-amber-300 p-6 sm:p-7 shadow-md">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="space-y-1.5">
+                    <div className="inline-flex items-center gap-1.5 bg-amber-100 text-amber-900 px-3 py-1 rounded-full text-xs font-black">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                      <span>QUYỀN LỢI HỌC VIÊN</span>
+                    </div>
+                    <h4 className="text-lg font-black text-gray-800">
+                      Bản Miễn Phí
+                    </h4>
+                    <p className="text-xs sm:text-sm text-gray-600 max-w-md leading-relaxed">
+                      Bạn đang sử dụng bản Miễn phí. Hãy nâng cấp VIP để mở khóa toàn bộ bài học.
+                    </p>
+                  </div>
 
-                <div className="pt-2">
                   <Link
                     href="/checkout"
-                    className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-white text-orange-600 font-black text-sm shadow-md hover:bg-amber-50 transition active:scale-95"
+                    className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-black text-xs sm:text-sm shadow-md transition active:scale-95 whitespace-nowrap self-start sm:self-auto"
                   >
-                    <QrCode className="w-4 h-4" />
-                    <span>Nâng cấp VIP ngay (Quét VietQR)</span>
+                    <CreditCard className="w-4 h-4" />
+                    <span>Xem Bảng Giá</span>
                     <ArrowRight className="w-4 h-4" />
                   </Link>
                 </div>
               </div>
-            </div>
-          ) : (
-            <div className="bg-emerald-50 rounded-3xl p-6 border-2 border-emerald-200 text-emerald-900 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center shrink-0 text-emerald-600">
-                <Sparkles className="w-6 h-6" />
-              </div>
-              <div>
-                <h4 className="font-black text-base">Bạn đã kích hoạt gói VIP{planLabel ? ` ${planLabel}` : ''}!</h4>
-                <p className="text-xs text-emerald-700 mt-0.5">
-                  Bạn có toàn quyền truy cập tất cả các chủ đề và tính năng luyện tập Quizlet trên Handy.
-                </p>
-                {vipExpiryStr && (
-                  <p className="text-xs text-emerald-600 font-bold mt-1">
-                    Hết hạn: <span className="text-orange-600">{vipExpiryStr}</span>
+
+              {/* Banner Nâng Cấp 4 Gói Cước */}
+              <div className="bg-gradient-to-br from-amber-400 via-orange-400 to-amber-500 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+                <div className="relative z-10 space-y-3">
+                  <div className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-black">
+                    <Crown className="w-4 h-4 text-yellow-200" />
+                    4 GÓI CƯỚC VIP LINH HOẠT
+                  </div>
+
+                  <h3 className="text-2xl font-black">Mở Khóa Toàn Bộ Bài Học VIP</h3>
+
+                  <p className="text-xs sm:text-sm text-amber-100 max-w-md leading-relaxed">
+                    Xem không giới hạn kho video từ vựng chất lượng cao, các chủ đề nâng cao và luyện tập Quizlet với các gói 3 Tháng, 6 Tháng, 1 Năm hoặc Trọn Đời!
                   </p>
-                )}
+
+                  <div className="pt-2">
+                    <Link
+                      href="/checkout"
+                      className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-white text-orange-600 font-black text-sm shadow-md hover:bg-amber-50 transition active:scale-95"
+                    >
+                      <QrCode className="w-4 h-4" />
+                      <span>Nâng cấp VIP ngay (Quét VietQR)</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </Link>
+                  </div>
+                </div>
               </div>
             </div>
           )}
