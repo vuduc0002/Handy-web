@@ -19,6 +19,8 @@ import {
 } from 'lucide-react'
 import { getEmbedYoutubeUrl } from '@/lib/utils'
 import VideoQuizModal from '@/app/components/VideoQuizModal'
+import { isVipProfile } from '@/lib/types'
+import { toast } from '@/lib/toast'
 
 export interface Vocabulary {
   id: string
@@ -102,23 +104,26 @@ export default function TopicDetailView({
           if (isMounted) {
             setIsLocked(true)
             setCheckingAccess(false)
+            toast.error('Bạn cần nâng cấp VIP để xem nội dung này')
+            router.replace('/checkout')
           }
           return
         }
 
         const { data: profile } = await supabase
           .from('profiles')
-          .select('is_premium, vip_until, role')
+          .select('id, is_premium, vip_until, role, email, plan_type')
           .eq('id', user.id)
           .maybeSingle()
 
         if (isMounted) {
-          const isVipValid =
-            profile?.is_premium === true &&
-            (!profile?.vip_until || new Date(profile.vip_until) > new Date())
-          const hasAccess = profile?.role === 'ADMIN' || isVipValid
+          const hasAccess = isVipProfile(profile)
           if (!hasAccess) {
             setIsLocked(true)
+            toast.error('Bạn cần nâng cấp VIP để xem nội dung này')
+            router.replace('/checkout')
+          } else {
+            setIsLocked(false)
           }
           setCheckingAccess(false)
         }
@@ -127,7 +132,7 @@ export default function TopicDetailView({
     return () => {
       isMounted = false
     }
-  }, [initialTopic])
+  }, [initialTopic, router])
 
   // Tự động cuộn Carousel ngang tới item đang chọn
   useEffect(() => {
@@ -168,10 +173,25 @@ export default function TopicDetailView({
     }
   }
 
-  // Khóa quyền truy cập nếu là VIP và user chưa nâng cấp
-  if (isLocked && !checkingAccess) {
+  // Đang kiểm tra quyền VIP
+  if (checkingAccess) {
     return (
-      <div className="max-w-xl mx-auto px-4 py-16 text-center">
+      <div className="max-w-xl mx-auto px-4 py-24 text-center">
+        <div className="bg-white/95 backdrop-blur-md rounded-3xl border-2 border-amber-200 p-8 shadow-sm">
+          <div className="w-16 h-16 rounded-2xl bg-amber-100 flex items-center justify-center mx-auto mb-4 animate-pulse">
+            <Lock className="w-8 h-8 text-amber-500" />
+          </div>
+          <h3 className="font-extrabold text-gray-800 text-lg mb-1">Đang kiểm tra quyền truy cập...</h3>
+          <p className="text-gray-500 text-sm">Vui lòng chờ trong giây lát.</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Khóa quyền truy cập nếu là VIP và user chưa nâng cấp
+  if (isLocked) {
+    return (
+      <div className="max-w-xl mx-auto px-4 py-16 text-center animate-fade-in">
         <div className="bg-white/95 backdrop-blur-md rounded-3xl border-4 border-amber-300 p-8 shadow-2xl">
           <div className="w-20 h-20 rounded-3xl bg-amber-100 text-amber-500 flex items-center justify-center mx-auto mb-5 shadow-inner">
             <Lock className="w-10 h-10" />
@@ -183,7 +203,7 @@ export default function TopicDetailView({
             {topic?.title || 'Chủ đề bị khóa'}
           </h2>
           <p className="text-gray-600 text-sm mb-6 leading-relaxed">
-            Chủ đề này chỉ dành riêng cho tài khoản đã nâng cấp VIP. Hãy nâng cấp ngay để bé mở khóa toàn bộ kho bài học thủ ngữ nhé!
+            Chủ đề này chỉ dành riêng cho tài khoản đã nâng cấp VIP. Đang chuyển hướng bạn đến trang nâng cấp...
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link

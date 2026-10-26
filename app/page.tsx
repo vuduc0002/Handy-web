@@ -1,7 +1,6 @@
-export const revalidate = 300
+export const dynamic = 'force-dynamic'
 
 import { Suspense } from 'react'
-import { unstable_cache } from 'next/cache'
 import { supabase } from '@/lib/supabaseClient'
 import HeroSection from '@/app/components/HeroSection'
 import StatsAndBenefitsSection from '@/app/components/StatsAndBenefitsSection'
@@ -10,32 +9,28 @@ import TestimonialsSection from '@/app/components/TestimonialsSection'
 import FAQSection from '@/app/components/FAQSection'
 import type { Topic } from '@/app/components/TopicsGrid'
 
-// Caching danh sách topics công khai bằng unstable_cache (5 phút) để truy xuất từ RAM dưới 1ms
-const getCachedTopics = unstable_cache(
-  async (): Promise<Topic[]> => {
-    try {
-      const { data: topics, error } = await supabase
-        .from('topics')
-        .select('id, title, description, is_free')
-        .order('created_at', { ascending: true })
+// Truy xuất danh sách topics mới nhất từ database (no-cache để phản ánh tức thì quyền VIP/Admin)
+async function getFreshTopics(): Promise<Topic[]> {
+  try {
+    const { data: topics, error } = await supabase
+      .from('topics')
+      .select('id, title, description, is_free')
+      .order('created_at', { ascending: true })
 
-      if (error) {
-        console.warn('Lỗi lấy topics trên server:', error.message)
-        return []
-      }
-      return (topics as Topic[]) ?? []
-    } catch (e) {
-      console.warn('Exception lấy topics:', e)
+    if (error) {
+      console.warn('Lỗi lấy topics trên server:', error.message)
       return []
     }
-  },
-  ['home-topics-cache-v1'],
-  { revalidate: 300, tags: ['topics'] }
-)
+    return (topics as Topic[]) ?? []
+  } catch (e) {
+    console.warn('Exception lấy topics:', e)
+    return []
+  }
+}
 
 // Server Component bất đồng bộ tải dữ liệu chủ đề
 async function AsyncTopicsSection() {
-  const topics = await getCachedTopics()
+  const topics = await getFreshTopics()
   return <TopicsSection initialTopics={topics} />
 }
 

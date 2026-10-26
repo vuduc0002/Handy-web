@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { Lock, ChevronRight, Crown, BookOpen, AlertCircle, Sparkles } from 'lucide-react'
+import { isVipProfile, Profile } from '@/lib/types'
+import { toast } from '@/lib/toast'
 
 export interface Topic {
   id: string
@@ -17,20 +18,6 @@ export interface Topic {
 export interface TopicsGridProps {
   initialTopics?: Topic[]
 }
-
-interface Profile {
-  id: string
-  email: string
-  role: string
-  is_premium: boolean
-  vip_until?: string | null
-  plan_type?: string | null
-}
-
-// Module-level in-memory cache để load tức thì trên Client (< 100ms)
-let cachedTopics: Topic[] | null = null
-let cachedAt = 0
-const CACHE_TTL_MS = 60 * 1000 // Cache 60s
 
 // Bảng màu rực rỡ, tươi sáng
 const CARD_COLORS = [
@@ -100,25 +87,9 @@ function TopicCardSkeleton({ delay = 0 }: { delay?: number }) {
 
 export default function TopicsGrid({ initialTopics }: TopicsGridProps = {}) {
   const router = useRouter()
-  // Sử dụng initialTopics từ Server Component ngay lập tức để render trong 0s
-  const [topics, setTopics] = useState<Topic[]>(() => {
-    if (initialTopics && initialTopics.length > 0) {
-      cachedTopics = initialTopics
-      cachedAt = Date.now()
-      return initialTopics
-    }
-    if (cachedTopics && Date.now() - cachedAt < CACHE_TTL_MS) {
-      return cachedTopics
-    }
-    return []
-  })
-
-  const [profile, setProfile] = useState<Profile | null>(null)
-  const [loading, setLoading] = useState<boolean>(() => {
-    if (initialTopics && initialTopics.length > 0) return false
-    if (cachedTopics && Date.now() - cachedAt < CACHE_TTL_MS) return false
-    return true
-  })
+  const [topics, setTopics] = useState<Topic[]>(initialTopics || [])
+  const [profile, setProfile] = useState<Partial<Profile> | null>(null)
+  const [loading, setLoading] = useState<boolean>(!initialTopics || initialTopics.length === 0)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -131,31 +102,22 @@ export default function TopicsGrid({ initialTopics }: TopicsGridProps = {}) {
         }
         setError(null)
 
-        // Tối ưu hóa: Chỉ select các trường cần thiết (không select('*'))
-        const topicsPromise =
-          initialTopics && initialTopics.length > 0
-            ? Promise.resolve({ data: initialTopics, error: null })
-            : supabase
-                .from('topics')
-                .select('id, title, description, is_free')
-                .order('created_at', { ascending: true })
-
         const [topicsRes, userRes] = await Promise.all([
-          topicsPromise,
+          supabase
+            .from('topics')
+            .select('id, title, description, is_free')
+            .order('created_at', { ascending: true }),
           supabase.auth.getUser(),
         ])
 
         if (topicsRes.error) {
-          throw new Error(topicsRes.error.message)
-        }
-
-        if (isMounted && topicsRes.data) {
-          cachedTopics = topicsRes.data
-          cachedAt = Date.now()
+          if (!topics || topics.length === 0) {
+            throw new Error(topicsRes.error.message)
+          }
+        } else if (isMounted && topicsRes.data) {
           setTopics(topicsRes.data)
         }
 
-        // Tải profile người dùng ở chế độ nền không chặn hiển thị danh sách chủ đề
         const currentUser = userRes.data?.user
         if (currentUser) {
           const { data: profileData } = await supabase
@@ -167,6 +129,8 @@ export default function TopicsGrid({ initialTopics }: TopicsGridProps = {}) {
           if (isMounted && profileData) {
             setProfile(profileData)
           }
+        } else if (isMounted) {
+          setProfile(null)
         }
       } catch (err: unknown) {
         if (isMounted) {
@@ -181,7 +145,9 @@ export default function TopicsGrid({ initialTopics }: TopicsGridProps = {}) {
 
     loadData()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(() => {
       loadData()
     })
 
@@ -190,6 +156,18 @@ export default function TopicsGrid({ initialTopics }: TopicsGridProps = {}) {
       subscription.unsubscribe()
     }
   }, [])
+
+  const isVip = isVipProfile(profile)
+
+  const handleTopicClick = (topic: Topic) => {
+    const canAccess = topic.is_free || isVip
+    if (canAccess) {
+      router.push(`/topics/${topic.id}`)
+    } else {
+      toast.error('Bạn cần nâng cấp VIP để xem nội dung này')
+      router.push('/checkout')
+    }
+  }
 
   if (loading) {
     return (
@@ -252,25 +230,28 @@ CREATE POLICY "Cho phép đọc vocabularies" ON public.vocabularies FOR SELECT 
     )
   }
 
-  const isPremium = (() => {
-    if (profile?.role === 'ADMIN') return true
-    return Boolean(profile?.is_premium && (!profile?.vip_until || new Date(profile.vip_until) > new Date()))
-  })()
-
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
       {topics.map((topic, idx) => {
-        const canAccess = topic.is_free || isPremium
+        const canAccess = topic.is_free || isVip
+        const isLocked = !canAccess
         const color = CARD_COLORS[idx % CARD_COLORS.length]
         const emoji = TOPIC_EMOJIS[idx % TOPIC_EMOJIS.length]
-        // Stagger animation delay
         const animDelay = Math.min(idx * 80, 480)
 
         if (canAccess) {
           return (
-            <Link
+            <div
               key={topic.id}
-              href={`/topics/${topic.id}`}
+              role="button"
+              tabIndex={0}
+              onClick={() => handleTopicClick(topic)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  handleTopicClick(topic)
+                }
+              }}
               style={{ animationDelay: `${animDelay}ms` }}
               className={`
                 group relative flex flex-col justify-between p-5 sm:p-6
@@ -278,23 +259,19 @@ CREATE POLICY "Cho phép đọc vocabularies" ON public.vocabularies FOR SELECT 
                 ${color.border} ${color.hover}
                 shadow-sm hover:shadow-xl hover:-translate-y-1.5
                 transition-all duration-300 ease-in-out
-                animate-slide-up
-                cursor-pointer
+                animate-slide-up cursor-pointer text-left focus:outline-none focus:ring-2 focus:ring-orange-400
               `}
             >
               <div>
                 {/* Khu vực Card Header: Icon + Tiêu đề + Nhãn */}
                 <div className="flex justify-between items-start gap-3 mb-3">
-                  {/* Khối chứa Icon + Text */}
                   <div className="flex items-start gap-3.5 flex-1 min-w-0">
-                    {/* Icon emoji */}
                     <div
                       className={`w-13 h-13 min-w-[52px] min-h-[52px] rounded-2xl ${color.icon} flex items-center justify-center text-2xl shadow-md shrink-0 group-hover:scale-110 transition-transform duration-300`}
                     >
                       {emoji}
                     </div>
 
-                    {/* Tiêu đề — tự do rớt dòng tự nhiên, không bị cắt ngắn */}
                     <div className="flex-1 min-w-0">
                       <h3 className="font-bold text-gray-900 text-base sm:text-lg leading-snug break-words whitespace-normal">
                         {topic.title}
@@ -302,19 +279,18 @@ CREATE POLICY "Cho phép đọc vocabularies" ON public.vocabularies FOR SELECT 
                     </div>
                   </div>
 
-                  {/* Nhãn Miễn phí / VIP neo cố định góc trên bên phải, không co bóp */}
                   {topic.is_free ? (
                     <span className="shrink-0 text-[11px] font-bold text-white px-2.5 py-1 rounded-full shadow-sm bg-gradient-to-r from-rose-500 to-pink-500">
                       Miễn phí
                     </span>
                   ) : (
-                    <span className="shrink-0 text-[11px] font-bold text-amber-800 bg-amber-100 px-2.5 py-1 rounded-full shadow-sm flex items-center gap-1">
+                    <span className="shrink-0 text-[11px] font-bold text-amber-900 bg-amber-100 border border-amber-300 px-2.5 py-1 rounded-full shadow-sm flex items-center gap-1">
                       <Crown className="w-3 h-3 text-amber-600" /> VIP
                     </span>
                   )}
                 </div>
 
-                {/* Mô tả — tối đa 2 dòng */}
+                {/* Mô tả */}
                 {topic.description && (
                   <p className="text-sm text-gray-500 line-clamp-2 mb-4 leading-relaxed">
                     {topic.description}
@@ -323,67 +299,90 @@ CREATE POLICY "Cho phép đọc vocabularies" ON public.vocabularies FOR SELECT 
               </div>
 
               {/* Footer CTA */}
-              <div className={`flex items-center gap-2 text-sm font-bold ${color.accent} pt-3 border-t border-gray-100 group-hover:gap-3 transition-all duration-200`}>
+              <div
+                className={`flex items-center gap-2 text-sm font-bold ${color.accent} pt-3 border-t border-gray-100 group-hover:gap-3 transition-all duration-200`}
+              >
                 <BookOpen className="w-4 h-4 shrink-0" />
                 <span>Bắt đầu học</span>
                 <ChevronRight className="w-4 h-4 ml-auto group-hover:translate-x-1 transition-transform duration-200" />
               </div>
-            </Link>
+            </div>
           )
         }
 
-        // Locked VIP card
+        // =========================================================================
+        // LOCKED VIP TOPIC CARD (UI Khóa nổi bật, mờ nhẹ, click chặn & chuyển hướng)
+        // =========================================================================
         return (
           <div
             key={topic.id}
+            role="button"
+            tabIndex={0}
+            onClick={() => handleTopicClick(topic)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                handleTopicClick(topic)
+              }
+            }}
             style={{ animationDelay: `${animDelay}ms` }}
-            className="relative flex flex-col justify-between p-5 sm:p-6 rounded-3xl border-2 border-amber-200 bg-white/80 overflow-hidden shadow-sm hover:-translate-y-1 hover:shadow-lg transition-all duration-300 ease-in-out animate-slide-up"
+            className="
+              group relative flex flex-col justify-between p-5 sm:p-6
+              rounded-3xl border-2 border-amber-300 bg-gradient-to-b from-amber-50/50 to-white
+              shadow-sm hover:shadow-xl hover:-translate-y-1.5
+              transition-all duration-300 ease-in-out
+              animate-slide-up cursor-pointer text-left overflow-hidden
+              opacity-90 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-amber-400
+            "
           >
-            {/* Overlay mờ */}
-            <div className="absolute inset-0 bg-amber-50/60 backdrop-blur-[1.5px] rounded-3xl z-10" />
+            {/* Watermark Lock icon background */}
+            <div className="absolute -right-4 -bottom-4 text-amber-200/40 pointer-events-none group-hover:scale-110 transition-transform duration-300">
+              <Lock className="w-32 h-32" />
+            </div>
 
-            {/* Nội dung mờ phía sau */}
-            <div className="opacity-35 pointer-events-none">
+            <div className="relative z-10">
               <div className="flex justify-between items-start gap-3 mb-3">
                 <div className="flex items-start gap-3.5 flex-1 min-w-0">
-                  <div className={`w-13 h-13 min-w-[52px] min-h-[52px] rounded-2xl ${color.icon} flex items-center justify-center text-2xl shadow-md shrink-0`}>
-                    {emoji}
+                  <div className="relative w-13 h-13 min-w-[52px] min-h-[52px] rounded-2xl bg-amber-100 border border-amber-300 text-amber-700 flex items-center justify-center text-2xl shadow-sm shrink-0 group-hover:scale-105 transition-transform duration-300">
+                    <span className="opacity-70">{emoji}</span>
+                    <span className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-md">
+                      <Lock className="w-3.5 h-3.5" />
+                    </span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-gray-900 text-base sm:text-lg leading-snug break-words whitespace-normal">
+                    <h3 className="font-bold text-gray-900 text-base sm:text-lg leading-snug break-words whitespace-normal group-hover:text-amber-900 transition-colors">
                       {topic.title}
                     </h3>
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 mt-1">
+                      <Lock className="w-3 h-3 text-amber-600" />
+                      Nội dung bài học VIP
+                    </span>
                   </div>
                 </div>
-                <span className="shrink-0 text-[11px] font-bold text-amber-800 bg-amber-100 px-2.5 py-1 rounded-full shadow-sm flex items-center gap-1">
-                  <Crown className="w-3 h-3 text-amber-600" /> VIP
+
+                {/* Badge "Nâng cấp VIP" */}
+                <span className="shrink-0 text-[11px] font-extrabold text-white bg-gradient-to-r from-amber-500 to-orange-500 px-3 py-1 rounded-full shadow-md shadow-amber-200/80 flex items-center gap-1 group-hover:from-amber-600 group-hover:to-orange-600 transition-all">
+                  <Crown className="w-3 h-3 text-amber-100" />
+                  Nâng cấp VIP
                 </span>
               </div>
+
               {topic.description && (
-                <p className="text-sm text-gray-600 line-clamp-2 mb-4">{topic.description}</p>
+                <p className="text-sm text-gray-500 line-clamp-2 mb-4 leading-relaxed opacity-85">
+                  {topic.description}
+                </p>
               )}
             </div>
 
-            {/* Hộp thoại mở khóa VIP */}
-            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center p-4">
-              <div className="bg-white rounded-2xl shadow-xl border-2 border-amber-300 px-5 py-4 flex flex-col items-center gap-3 w-full max-w-[220px]">
-                <div className="w-11 h-11 rounded-xl bg-amber-100 text-amber-500 border border-amber-300 flex items-center justify-center shadow-inner">
-                  <Lock className="w-5 h-5 text-amber-500" />
-                </div>
-                <div className="text-center">
-                  <p className="text-xs font-bold text-amber-700 uppercase tracking-wide flex items-center justify-center gap-1">
-                    <Crown className="w-3.5 h-3.5 text-amber-500" />
-                    Chủ đề VIP
-                  </p>
-                  <p className="text-xs text-gray-500 mt-0.5">Mở khóa toàn bộ nội dung</p>
-                </div>
-                <button
-                  onClick={() => router.push('/checkout')}
-                  className="flex items-center gap-2 bg-gradient-to-r from-orange-400 to-amber-400 hover:from-orange-500 hover:to-amber-500 text-white font-extrabold text-xs px-4 py-2.5 rounded-full shadow-md shadow-amber-200 transition-all duration-200 active:scale-95 w-full justify-center cursor-pointer"
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  Nâng cấp VIP
-                </button>
+            {/* Footer CTA */}
+            <div className="relative z-10 flex items-center justify-between pt-3 border-t border-amber-200/70 text-amber-800 text-sm font-bold group-hover:text-orange-600 transition-colors">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-amber-500 animate-pulse" />
+                <span>Mở khóa bài giảng</span>
+              </div>
+              <div className="flex items-center gap-1 text-xs bg-amber-100 group-hover:bg-amber-200 text-amber-900 px-2.5 py-1 rounded-xl transition-all shadow-xs">
+                <span>Nâng cấp ngay</span>
+                <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
               </div>
             </div>
           </div>

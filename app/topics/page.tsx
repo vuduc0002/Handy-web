@@ -1,4 +1,4 @@
-export const revalidate = 60
+export const dynamic = 'force-dynamic'
 
 import { supabase } from '@/lib/supabaseClient'
 import TopicsGrid, { Topic } from '@/app/components/TopicsGrid'
