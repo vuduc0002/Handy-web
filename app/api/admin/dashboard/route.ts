@@ -63,22 +63,25 @@ export async function GET(req: NextRequest) {
   if (authError) return authError
 
   try {
-    // 1. Fetch TOÀN BỘ profiles không bị giới hạn RLS
-    const { data: profiles, error: profilesError } = await supabaseAdmin
-      .from('profiles')
-      .select('id, email, role, is_premium, vip_until, plan_type, created_at')
-      .order('created_at', { ascending: false })
+    // 1 & 2. Fetch TOÀN BỘ profiles và transactions song song bằng Promise.all() để tối ưu hiệu năng
+    const [
+      { data: profiles, error: profilesError },
+      { data: transactions, error: transactionsError },
+    ] = await Promise.all([
+      supabaseAdmin
+        .from('profiles')
+        .select('id, email, role, is_premium, vip_until, plan_type, created_at')
+        .order('created_at', { ascending: false }),
+      supabaseAdmin
+        .from('transactions')
+        .select('*')
+        .order('created_at', { ascending: false }),
+    ])
 
     if (profilesError) {
       console.error('[Admin API] Lỗi khi lấy profiles:', profilesError)
       return Response.json({ error: profilesError.message }, { status: 500 })
     }
-
-    // 2. Fetch TOÀN BỘ transactions không bị giới hạn RLS
-    const { data: transactions, error: transactionsError } = await supabaseAdmin
-      .from('transactions')
-      .select('*')
-      .order('created_at', { ascending: false })
 
     if (transactionsError) {
       console.error('[Admin API] Lỗi khi lấy transactions:', transactionsError)

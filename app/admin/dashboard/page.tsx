@@ -18,7 +18,11 @@ import {
   PieChart as PieChartIcon,
   Crown,
   Clock,
+  Sparkles,
+  BarChart2,
 } from 'lucide-react'
+import UserAcquisitionChart from './components/UserAcquisitionChart'
+import TransactionHealthChart from './components/TransactionHealthChart'
 import {
   ResponsiveContainer,
   AreaChart,
@@ -699,7 +703,22 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* ========================================================================= */}
-        {/* HÀNG 3: BẢNG 10 GIAO DỊCH GẦN NHẤT                                        */}
+        {/* HÀNG 3: PHÂN TÍCH TĂNG TRƯỞNG & SỨC KHỎE GIAO DỊCH (BUSINESS INSIGHTS)     */}
+        {/* ========================================================================= */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Cột trái (chiếm 2/3): Biểu đồ tăng trưởng người dùng mới (Bar Chart) */}
+          <div className="lg:col-span-2">
+            <UserAcquisitionChart profiles={profiles} loading={loading} />
+          </div>
+
+          {/* Cột phải (chiếm 1/3): Sức khỏe giao dịch & Tỷ lệ rớt đơn (Donut Chart) */}
+          <div className="lg:col-span-1">
+            <TransactionHealthChart transactions={transactions} loading={loading} />
+          </div>
+        </div>
+
+        {/* ========================================================================= */}
+        {/* HÀNG 4: BẢNG 10 GIAO DỊCH GẦN NHẤT                                        */}
         {/* ========================================================================= */}
         <div className="space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
