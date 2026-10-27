@@ -9,6 +9,7 @@ import {
   Users,
   ArrowLeft,
   LogOut,
+  TrendingUp,
 } from 'lucide-react'
 import { logoutUser } from '@/lib/authUtils'
 
@@ -25,6 +26,12 @@ export default function AdminLayout({
       href: '/admin/dashboard',
       icon: <LayoutDashboard className="w-4 h-4" />,
       active: pathname.startsWith('/admin/dashboard'),
+    },
+    {
+      label: 'Marketing (Đồ án)',
+      href: '/admin/marketing',
+      icon: <TrendingUp className="w-4 h-4" />,
+      active: pathname.startsWith('/admin/marketing'),
     },
     {
       label: 'Nội dung',
