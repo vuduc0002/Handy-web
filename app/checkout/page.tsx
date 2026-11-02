@@ -1,27 +1,32 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, useCallback, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabaseClient'
 import {
   Crown,
   Check,
   Loader2,
-  ArrowLeft,
   Sparkles,
   PartyPopper,
   Copy,
   AlertTriangle,
   QrCode,
+  CreditCard,
+  ChevronRight,
+  ArrowLeft,
 } from 'lucide-react'
 
 interface Plan {
-  id: string          // '3m' | '6m' | '1y' | 'lifetime'
+  id: string // '3m' | '6m' | '1y' | 'lifetime'
   label: string
+  badge: string
   duration: string
-  price: number       // in VND
+  price: number // in VND
   priceDisplay: string
+  amountDisplay: string
+  code: string
   savings?: string
   highlight?: boolean
   features: string[]
@@ -30,10 +35,13 @@ interface Plan {
 const PLANS: Plan[] = [
   {
     id: '3m',
-    label: 'Gói 3 Tháng',
+    label: 'Gói 3 tháng',
+    badge: 'GÓI 3 THÁNG',
     duration: '3 tháng',
     price: 199000,
     priceDisplay: '199.000đ',
+    amountDisplay: '199.000 VNĐ',
+    code: 'HD3M',
     features: [
       'Mở khóa toàn bộ chủ đề',
       'Luyện tập không giới hạn',
@@ -42,10 +50,13 @@ const PLANS: Plan[] = [
   },
   {
     id: '6m',
-    label: 'Gói 6 Tháng',
+    label: 'Gói 6 tháng',
+    badge: 'GÓI 6 THÁNG',
     duration: '6 tháng',
     price: 349000,
     priceDisplay: '349.000đ',
+    amountDisplay: '349.000 VNĐ',
+    code: 'HD6M',
     savings: 'Tiết kiệm 49.000đ',
     features: [
       'Mở khóa toàn bộ chủ đề',
@@ -56,10 +67,13 @@ const PLANS: Plan[] = [
   },
   {
     id: '1y',
-    label: 'Gói 1 Năm',
+    label: 'Gói 1 năm',
+    badge: 'GÓI 1 NĂM',
     duration: '1 năm',
     price: 599000,
     priceDisplay: '599.000đ',
+    amountDisplay: '599.000 VNĐ',
+    code: 'HD1Y',
     savings: 'Tiết kiệm 79.000đ',
     highlight: true,
     features: [
@@ -72,10 +86,13 @@ const PLANS: Plan[] = [
   },
   {
     id: 'lifetime',
-    label: 'Gói Vĩnh Viễn',
+    label: 'Gói vĩnh viễn',
+    badge: 'GÓI VĨNH VIỄN',
     duration: 'Trọn đời',
     price: 999000,
     priceDisplay: '999.000đ',
+    amountDisplay: '999.000 VNĐ',
+    code: 'HDLIFETIME',
     savings: 'Không cần gia hạn',
     features: [
       'Mở khóa toàn bộ chủ đề',
@@ -95,16 +112,29 @@ interface ProfileData {
   email?: string | null
 }
 
-export default function CheckoutPage() {
+function CheckoutContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+
   const [user, setUser] = useState<{ id: string; email?: string } | null>(null)
   const [profile, setProfile] = useState<ProfileData | null>(null)
   const [loading, setLoading] = useState(true)
   const [selectedPlanId, setSelectedPlanId] = useState<string>('1y')
-  const [showQr, setShowQr] = useState(false)
   const [copiedField, setCopiedField] = useState<string | null>(null)
   const [isSuccess, setIsSuccess] = useState(false)
   const [pollCount, setPollCount] = useState(0)
+
+  // Đọc gói từ query param
+  useEffect(() => {
+    const planParam = searchParams.get('plan')
+    if (planParam) {
+      if (planParam === 'lt') {
+        setSelectedPlanId('lifetime')
+      } else if (PLANS.some((p) => p.id === planParam)) {
+        setSelectedPlanId(planParam)
+      }
+    }
+  }, [searchParams])
 
   // Thông tin ngân hàng từ biến môi trường
   const bankName = process.env.NEXT_PUBLIC_BANK_NAME || 'TPBank'
@@ -112,7 +142,11 @@ export default function CheckoutPage() {
   const bankOwner = process.env.NEXT_PUBLIC_BANK_OWNER || 'NGUYEN VU DUC'
 
   const copyToClipboard = (text: string, field: string) => {
-    navigator.clipboard.writeText(text)
+    try {
+      navigator.clipboard.writeText(text)
+    } catch {
+      // fallback
+    }
     setCopiedField(field)
     setTimeout(() => setCopiedField(null), 2500)
   }
@@ -129,7 +163,10 @@ export default function CheckoutPage() {
     let isMounted = true
     const checkAuthAndProfile = async () => {
       try {
-        const { data: { user: authUser } } = await supabase.auth.getUser()
+        const {
+          data: { user: authUser },
+        } = await supabase.auth.getUser()
+
         if (!authUser) {
           router.replace('/login')
           return
@@ -155,13 +192,15 @@ export default function CheckoutPage() {
       }
     }
     checkAuthAndProfile()
-    return () => { isMounted = false }
+    return () => {
+      isMounted = false
+    }
   }, [router, checkIsVipValid])
 
-  // Polling: sau khi hiển thị QR, poll mỗi 5 giây tối đa 60 giây (12 lần)
+  // Polling: sau khi vào trang thanh toán, poll mỗi 5 giây tối đa 60 giây (12 lần)
   useEffect(() => {
-    if (!showQr || isSuccess || !user) return
-    if (pollCount >= 12) return  // đã poll đủ 60 giây
+    if (isSuccess || !user) return
+    if (pollCount >= 12) return // đã poll đủ 60 giây
 
     const timer = setTimeout(async () => {
       const { data } = await supabase
@@ -174,12 +213,12 @@ export default function CheckoutPage() {
         setProfile(data)
         setIsSuccess(true)
       } else {
-        setPollCount(prev => prev + 1)
+        setPollCount((prev) => prev + 1)
       }
     }, 5000)
 
     return () => clearTimeout(timer)
-  }, [showQr, isSuccess, user, pollCount, checkIsVipValid])
+  }, [isSuccess, user, pollCount, checkIsVipValid])
 
   // Realtime: Lắng nghe thay đổi profile tức thì khi SePAY kích hoạt
   useEffect(() => {
@@ -213,330 +252,331 @@ export default function CheckoutPage() {
   if (loading) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center px-4">
-        <Loader2 className="w-10 h-10 text-orange-500 animate-spin mb-4" />
-        <p className="text-gray-600 font-bold">Đang tải trang thanh toán VIP...</p>
+        <Loader2 className="w-10 h-10 text-[#1A8CFF] animate-spin mb-4" />
+        <p className="text-[#4A4A4A] font-bold">Đang tải trang thanh toán VIP...</p>
       </div>
     )
   }
 
-  // Giao diện khi đã là VIP
+  // Giao diện khi đã là VIP thành công
   if (isSuccess) {
     const isLifetime = !profile?.vip_until
     const expiryStr = profile?.vip_until
       ? new Date(profile.vip_until).toLocaleDateString('vi-VN', {
-          day: '2-digit', month: '2-digit', year: 'numeric'
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
         })
       : null
-    const planLabel = PLANS.find(p => p.id === profile?.plan_type)?.label || 'VIP'
+    const planLabel =
+      PLANS.find((p) => p.id === profile?.plan_type)?.label || 'VIP'
 
     return (
-      <div className="max-w-xl mx-auto px-4 py-16 text-center">
-        <div className="bg-white rounded-3xl border-2 border-emerald-300 p-8 md:p-10 shadow-2xl relative overflow-hidden">
-          <div className="h-3 bg-gradient-to-r from-emerald-400 via-teal-400 to-green-500 absolute top-0 left-0 right-0" />
+      <div className="min-h-[75vh] flex items-center justify-center px-4 py-16">
+        <div className="max-w-xl w-full bg-white rounded-3xl border-2 border-[#17A673]/30 p-8 md:p-12 shadow-[0_20px_50px_rgba(23,166,115,0.12)] text-center relative overflow-hidden">
+          <div className="h-3 bg-gradient-to-r from-[#17A673] via-[#1A8CFF] to-[#F9C31F] absolute top-0 left-0 right-0" />
 
-          <div className="w-20 h-20 rounded-3xl bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-6 shadow-inner">
+          <div className="w-20 h-20 rounded-3xl bg-[#E3F7EE] text-[#0C8558] flex items-center justify-center mx-auto mb-6 shadow-inner">
             <PartyPopper className="w-10 h-10" />
           </div>
 
-          <span className="inline-block text-xs font-black text-emerald-800 bg-emerald-100 px-4 py-1.5 rounded-full uppercase tracking-wider mb-3">
+          <span className="inline-block text-xs font-black text-[#0C8558] bg-[#E3F7EE] px-4 py-1.5 rounded-full uppercase tracking-wider mb-4">
             Đã kích hoạt thành công
           </span>
 
-          <h1 className="text-3xl font-black text-gray-800 mb-3">
+          <h1 className="text-3xl font-extrabold text-[#1E1E1E] mb-3">
             🎉 Bạn đã là Thành viên VIP!
           </h1>
 
-          <div className="flex flex-col items-center gap-1 mb-2">
-            <span className="inline-flex items-center gap-1.5 text-sm font-black text-amber-700 bg-amber-100 px-3 py-1 rounded-full">
-              <Crown className="w-4 h-4" /> {planLabel}
+          <div className="flex flex-col items-center gap-1.5 mb-4">
+            <span className="inline-flex items-center gap-2 text-sm font-bold text-[#9A5B00] bg-[#FFF1C9] px-4 py-1.5 rounded-full">
+              <Crown className="w-4 h-4 fill-[#F7A21B] text-[#F7A21B]" /> {planLabel}
             </span>
             {!isLifetime && expiryStr && (
-              <span className="text-xs text-gray-500 font-bold mt-1">
-                Có hiệu lực đến: <span className="text-orange-600">{expiryStr}</span>
+              <span className="text-sm text-[#6B6B6B] font-semibold mt-1">
+                Có hiệu lực đến:{' '}
+                <span className="text-[#1A8CFF] font-bold">{expiryStr}</span>
               </span>
             )}
             {isLifetime && (
-              <span className="text-xs text-gray-500 font-bold mt-1">Hiệu lực trọn đời</span>
+              <span className="text-sm text-[#0C8558] font-bold mt-1">
+                Hiệu lực trọn đời
+              </span>
             )}
           </div>
 
-          <p className="text-gray-600 text-sm mb-8 leading-relaxed mt-4">
-            Cảm ơn bạn đã nâng cấp gói VIP HANDY. Giờ đây bạn có thể học không giới hạn toàn bộ các bài giảng thủ ngữ trên hệ thống!
+          <p className="text-[#4A4A4A] text-sm md:text-base mb-8 leading-relaxed">
+            Cảm ơn bạn đã nâng cấp gói VIP HANDY. Giờ đây bạn có thể mở khóa toàn bộ bài giảng thủ ngữ chất lượng cao và luyện tập không giới hạn trên hệ thống!
           </p>
 
-          <Link
-            href="/"
-            className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl bg-gradient-to-r from-orange-400 to-amber-400 hover:from-orange-500 hover:to-amber-500 text-white font-extrabold text-base shadow-lg shadow-amber-200 transition active:scale-95 w-full sm:w-auto"
-          >
-            <Sparkles className="w-5 h-5" />
-            Khám phá các bài học ngay
-          </Link>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link
+              href="/"
+              className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full bg-gradient-to-r from-[#1A8CFF] to-[#0B6FE0] hover:from-[#0B6FE0] hover:to-[#0050B3] text-white font-bold text-base shadow-[0_12px_24px_rgba(26,140,255,0.3)] transition active:scale-95 w-full sm:w-auto"
+            >
+              <Sparkles className="w-5 h-5" />
+              Khám phá bài học ngay
+            </Link>
+          </div>
         </div>
       </div>
     )
   }
 
-  const selectedPlan = PLANS.find(p => p.id === selectedPlanId) ?? PLANS[2]
-  const planCodeMap: Record<string, string> = {
-    '3m': 'HD3M',
-    '6m': 'HD6M',
-    '1y': 'HD1Y',
-    'lifetime': 'HDLIFETIME',
-  }
-  const planCode = planCodeMap[selectedPlan.id] || `HD${selectedPlan.id.toUpperCase()}`
+  const selectedPlan = PLANS.find((p) => p.id === selectedPlanId) ?? PLANS[2]
+  const planCode = selectedPlan.code
   const transferContent = `${planCode} ${user?.id || ''}`.trim()
   const qrUrl = `https://qr.sepay.vn/img?acc=${bankAccount}&bank=${bankName}&amount=${selectedPlan.price}&des=${encodeURIComponent(transferContent)}`
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 md:py-12">
-      {/* Nút quay lại */}
-      <Link
-        href="/"
-        className="inline-flex items-center gap-2 text-sm font-bold text-gray-600 hover:text-orange-500 mb-6 transition"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        Quay lại trang chủ
-      </Link>
+    <div className="relative overflow-hidden bg-[radial-gradient(45%_70%_at_100%_0%,#E2F0FF_0%,rgba(226,240,255,0)_70%),radial-gradient(40%_60%_at_0%_100%,#FFF1C9_0%,rgba(255,241,201,0)_70%),#F7FAFF] min-h-screen py-8 md:py-12">
+      <div className="relative max-w-6xl mx-auto px-6 flex flex-col gap-8">
+        {/* Breadcrumb */}
+        <nav
+          aria-label="Breadcrumb"
+          className="flex items-center gap-2 flex-wrap text-sm text-[#6B6B6B]"
+        >
+          <Link href="/" className="hover:text-[#1A8CFF] transition-colors">
+            Trang chủ
+          </Link>
+          <ChevronRight className="w-3.5 h-3.5 text-[#A0A0A0]" />
+          <Link href="/pricing" className="hover:text-[#1A8CFF] transition-colors">
+            Gói tài khoản VIP
+          </Link>
+          <ChevronRight className="w-3.5 h-3.5 text-[#A0A0A0]" />
+          <span className="text-[#1A8CFF] font-semibold">Thanh toán</span>
+        </nav>
 
-      {/* Tiêu đề */}
-      <div className="text-center mb-8">
-        <div className="inline-flex items-center gap-2 bg-amber-100 text-amber-800 px-4 py-1.5 rounded-full text-xs font-extrabold mb-3">
-          <Crown className="w-4 h-4 text-orange-500 fill-orange-400" />
-          NÂNG CẤP TÀI KHOẢN VIP
-        </div>
-        <h1 className="text-3xl md:text-4xl font-black text-gray-800">Chọn Gói Học Phù Hợp</h1>
-        <p className="text-gray-500 text-sm mt-2">Mở khóa toàn bộ bài giảng thủ ngữ chất lượng cao</p>
-      </div>
-
-      {/* === BƯỚC 1: Chọn gói === */}
-      {!showQr && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {PLANS.map((plan) => {
-              const isSelected = selectedPlanId === plan.id
-              return (
-                <button
-                  key={plan.id}
-                  onClick={() => setSelectedPlanId(plan.id)}
-                  className={`
-                    relative flex flex-col text-left p-5 rounded-3xl border-2 transition-all duration-200
-                    cursor-pointer active:scale-95
-                    ${isSelected
-                      ? 'border-orange-400 bg-orange-50 shadow-xl shadow-orange-100'
-                      : 'border-amber-200 bg-white hover:border-amber-400 hover:shadow-md'
-                    }
-                    ${plan.highlight && !isSelected ? 'ring-2 ring-amber-300 ring-offset-1' : ''}
-                  `}
-                >
-                  {plan.highlight && (
-                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-black bg-gradient-to-r from-orange-400 to-amber-400 text-white px-3 py-0.5 rounded-full whitespace-nowrap shadow">
-                      Phổ biến nhất
-                    </span>
-                  )}
-
-                  <div className="mb-3">
-                    <span className="text-sm font-black text-gray-800">{plan.label}</span>
-                    {plan.savings && (
-                      <span className="block text-[10px] font-bold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full w-fit mt-1">
-                        {plan.savings}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="mb-4">
-                    <span className="text-2xl font-black text-orange-600">{plan.priceDisplay}</span>
-                    <span className="text-xs text-gray-500 font-medium ml-1">/ {plan.duration}</span>
-                  </div>
-
-                  <ul className="space-y-1.5 flex-1">
-                    {plan.features.map((feature) => (
-                      <li key={feature} className="flex items-start gap-1.5 text-xs text-gray-700 font-medium">
-                        <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-
-                  {isSelected && (
-                    <div className="mt-4 pt-3 border-t border-orange-200 flex items-center gap-1.5 text-xs font-black text-orange-600">
-                      <Check className="w-4 h-4" /> Đang chọn
-                    </div>
-                  )}
-                </button>
-              )
-            })}
-          </div>
-
-          {/* Nút tiến hành thanh toán */}
-          <div className="flex justify-center">
-            <button
-              onClick={() => setShowQr(true)}
-              className="flex items-center gap-2.5 px-10 py-4 rounded-2xl bg-gradient-to-r from-orange-400 to-amber-400 hover:from-orange-500 hover:to-amber-500 text-white font-extrabold text-base shadow-lg shadow-amber-200 transition active:scale-95 cursor-pointer"
-            >
-              <QrCode className="w-5 h-5" />
-              Tiến hành thanh toán — {selectedPlan.priceDisplay}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* === BƯỚC 2: Hiển thị QR và thông tin chuyển khoản === */}
-      {showQr && (
+        {/* 2-Column Checkout Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* CỘT TRÁI: Mã QR */}
-          <div className="lg:col-span-5 bg-white rounded-3xl border-2 border-amber-300 p-6 md:p-8 shadow-xl text-center flex flex-col items-center">
-            <div className="flex items-center gap-2 bg-amber-100 text-amber-800 px-3.5 py-1.5 rounded-full text-xs font-extrabold mb-4">
+          {/* CỘT TRÁI: VietQR (lg:col-span-5) */}
+          <div className="lg:col-span-5 bg-white rounded-[26px] p-7 md:p-8 shadow-[0_20px_48px_rgba(20,30,60,0.08)] text-center flex flex-col items-center gap-5 border border-[#EBF1FA]">
+            {/* Tag QR */}
+            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#EAF4FF] text-[#0B6FE0] text-sm font-bold">
               <QrCode className="w-4 h-4" />
               Quét mã VietQR chuyển khoản
-            </div>
+            </span>
 
-            {/* Khung ảnh QR */}
-            <div className="relative w-64 h-64 bg-amber-50 rounded-2xl p-2 border-2 border-amber-200 shadow-inner flex items-center justify-center overflow-hidden mb-4">
+            {/* QR Container */}
+            <div className="w-full max-w-[270px] p-3.5 rounded-[22px] bg-white border-2 border-[#CFE3FB] shadow-[0_0_0_6px_#F4F9FF]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={qrUrl}
                 alt="Mã VietQR thanh toán SePAY"
-                className="w-full h-full object-contain rounded-xl"
+                className="w-full h-auto aspect-square object-contain rounded-xl"
               />
             </div>
 
-            <p className="text-xs text-gray-500 max-w-xs mb-4">
+            <p className="text-sm leading-relaxed text-[#4A4A4A] max-w-xs">
               Mở App ngân hàng bất kỳ (Vietcombank, MB, Techcombank, TPBank, MoMo...) và quét mã QR trên để chuyển khoản tự động.
             </p>
 
-            {/* Trạng thái chờ kích hoạt */}
-            <div className="flex items-center justify-center gap-2 px-4 py-2 bg-orange-50 border border-orange-200 text-orange-700 rounded-2xl text-xs font-bold w-full">
-              <Loader2 className="w-4 h-4 animate-spin text-orange-500 shrink-0" />
+            {/* Trạng thái kích hoạt tự động */}
+            <div className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-[#FFF6E5] border border-[#FBE3B5] text-[#B26A00] text-xs sm:text-sm font-semibold">
+              <Loader2 className="w-4 h-4 animate-spin text-[#F7A21B] shrink-0" />
               <span>Hệ thống tự động kích hoạt sau khi nhận tiền</span>
             </div>
 
             {/* Nút chọn lại gói */}
-            <button
-              onClick={() => { setShowQr(false); setPollCount(0) }}
-              className="mt-4 text-xs font-bold text-gray-500 hover:text-orange-500 transition underline cursor-pointer"
+            <Link
+              href="/pricing"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#4A4A4A] underline underline-offset-4 hover:text-[#1A8CFF] transition-colors pt-1"
             >
-              ← Chọn lại gói khác
-            </button>
+              <ArrowLeft className="w-4 h-4" />
+              Chọn lại gói khác
+            </Link>
           </div>
 
-          {/* CỘT PHẢI: Chi tiết chuyển khoản */}
-          <div className="lg:col-span-7 space-y-6">
-            {/* Card gói đã chọn */}
-            <div className="bg-gradient-to-br from-amber-500 via-orange-500 to-amber-600 rounded-3xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <div className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-black mb-3">
-                    <Crown className="w-4 h-4 text-yellow-300 fill-yellow-300" />
-                    {selectedPlan.label.toUpperCase()}
-                  </div>
-                  <h2 className="text-2xl md:text-3xl font-black mb-1">
-                    Nâng Cấp VIP HANDY
-                  </h2>
-                  <p className="text-amber-100 text-xs md:text-sm">
-                    Mở khóa toàn bộ từ vựng &amp; chủ đề thủ ngữ cao cấp
-                  </p>
-                </div>
-                <div className="text-right shrink-0">
-                  <span className="text-2xl md:text-3xl font-black">{selectedPlan.priceDisplay}</span>
-                  <span className="block text-xs text-amber-200 font-medium">{selectedPlan.duration}</span>
-                </div>
+          {/* CỘT PHẢI: Thông tin gói & Chuyển khoản (lg:col-span-7) */}
+          <div className="lg:col-span-7 flex flex-col gap-6">
+            {/* Plan Summary Card Banner */}
+            <div className="relative overflow-hidden flex items-start justify-between gap-5 flex-wrap p-7 md:p-8 rounded-[24px] bg-gradient-to-br from-[#2A97FF] to-[#1A6FE0] text-white shadow-[0_20px_44px_rgba(26,111,224,0.3)]">
+              {/* Decorative circle & dot matrix */}
+              <span
+                aria-hidden="true"
+                className="absolute -right-10 -bottom-14 w-44 h-44 rounded-full bg-[#FFD84D] opacity-80 pointer-events-none"
+              />
+              <span
+                aria-hidden="true"
+                className="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.14)_1.4px,transparent_1.6px)] [background-size:24px_24px] pointer-events-none"
+              />
+
+              <div className="relative flex flex-col gap-2 items-start min-w-0 flex-1">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-bold text-white tracking-wide">
+                  <Crown className="w-3.5 h-3.5 fill-[#FFD84D] text-[#FFD84D]" />
+                  {selectedPlan.badge}
+                </span>
+                <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
+                  Nâng cấp VIP HANDY
+                </h1>
+                <p className="text-xs md:text-sm text-[#E3ECF8] font-medium">
+                  Mở khóa toàn bộ từ vựng &amp; chủ đề thủ ngữ cao cấp
+                </p>
+              </div>
+
+              <div className="relative flex flex-col items-end gap-0.5 shrink-0">
+                <span className="text-2xl md:text-3xl font-black text-white tracking-tight">
+                  {selectedPlan.priceDisplay}
+                </span>
+                <span className="text-xs text-[#E3ECF8] font-medium">
+                  / {selectedPlan.duration}
+                </span>
               </div>
             </div>
 
-            {/* Thông tin chuyển khoản */}
-            <div className="bg-white rounded-3xl border-2 border-amber-200 p-6 md:p-7 shadow-sm space-y-4">
-              <h3 className="font-extrabold text-gray-800 text-base flex items-center gap-2">
-                <span>💳</span> Thông tin chuyển khoản
-              </h3>
+            {/* Thông tin chuyển khoản chi tiết */}
+            <div className="flex flex-col gap-4 p-6 sm:p-8 rounded-[24px] bg-white shadow-[0_20px_48px_rgba(20,30,60,0.08)] border border-[#EBF1FA]">
+              <h2 className="flex items-center gap-2.5 text-lg font-bold text-[#1E1E1E] mb-1">
+                <span className="w-8 h-8 rounded-xl bg-[#EAF4FF] text-[#1A8CFF] flex items-center justify-center">
+                  <CreditCard className="w-4 h-4" />
+                </span>
+                <span>Thông tin chuyển khoản</span>
+              </h2>
 
               {/* Ngân hàng */}
-              <div className="flex items-center justify-between p-3.5 bg-amber-50/60 rounded-2xl border border-amber-200">
-                <div>
-                  <span className="text-xs text-gray-500 font-bold block">Ngân hàng</span>
-                  <span className="text-sm font-black text-gray-800">{bankName}</span>
+              <div className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-[#F7FAFF] border border-[#E6ECF5]">
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-xs text-[#6B6B6B] font-semibold">Ngân hàng</span>
+                  <span className="text-base font-bold text-[#1E1E1E]">{bankName}</span>
                 </div>
                 <button
+                  type="button"
                   onClick={() => copyToClipboard(bankName, 'bank')}
-                  className="p-2 rounded-xl hover:bg-amber-100 text-amber-800 transition active:scale-95 cursor-pointer"
-                  title="Sao chép"
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-[#BFDDFF] bg-white hover:bg-[#F4F9FF] text-xs font-bold text-[#1A8CFF] transition-all cursor-pointer"
                 >
-                  {copiedField === 'bank' ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                  {copiedField === 'bank' ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-[#17A673]" />
+                      <span className="text-[#17A673]">Đã chép</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>Sao chép</span>
+                    </>
+                  )}
                 </button>
               </div>
 
               {/* Số tài khoản */}
-              <div className="flex items-center justify-between p-3.5 bg-amber-50/60 rounded-2xl border border-amber-200">
-                <div>
-                  <span className="text-xs text-gray-500 font-bold block">Số tài khoản</span>
-                  <span className="text-base font-black text-orange-600 tracking-wider">{bankAccount}</span>
+              <div className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-[#F7FAFF] border border-[#E6ECF5]">
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-xs text-[#6B6B6B] font-semibold">Số tài khoản</span>
+                  <span className="text-lg sm:text-xl font-black text-[#1A8CFF] tracking-wider font-mono">
+                    {bankAccount}
+                  </span>
                 </div>
                 <button
+                  type="button"
                   onClick={() => copyToClipboard(bankAccount, 'acc')}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-amber-300 text-xs font-extrabold text-amber-800 hover:bg-amber-100 transition active:scale-95 cursor-pointer"
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-[#BFDDFF] bg-white hover:bg-[#F4F9FF] text-xs font-bold text-[#1A8CFF] transition-all cursor-pointer"
                 >
                   {copiedField === 'acc' ? (
-                    <><Check className="w-3.5 h-3.5 text-emerald-600" /> Đã chép</>
+                    <>
+                      <Check className="w-3.5 h-3.5 text-[#17A673]" />
+                      <span className="text-[#17A673]">Đã chép</span>
+                    </>
                   ) : (
-                    <><Copy className="w-3.5 h-3.5" /> Sao chép</>
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>Sao chép</span>
+                    </>
                   )}
                 </button>
               </div>
 
               {/* Chủ tài khoản */}
-              <div className="p-3.5 bg-amber-50/60 rounded-2xl border border-amber-200">
-                <span className="text-xs text-gray-500 font-bold block">Chủ tài khoản</span>
-                <span className="text-sm font-black text-gray-800 uppercase">{bankOwner}</span>
+              <div className="flex flex-col gap-0.5 p-4 rounded-2xl bg-[#F7FAFF] border border-[#E6ECF5]">
+                <span className="text-xs text-[#6B6B6B] font-semibold">Chủ tài khoản</span>
+                <span className="text-base font-bold text-[#1E1E1E] uppercase">
+                  {bankOwner}
+                </span>
               </div>
 
               {/* Số tiền */}
-              <div className="flex items-center justify-between p-3.5 bg-amber-50/60 rounded-2xl border border-amber-200">
-                <div>
-                  <span className="text-xs text-gray-500 font-bold block">Số tiền</span>
-                  <span className="text-base font-black text-gray-800">{selectedPlan.price.toLocaleString('vi-VN')} VNĐ</span>
+              <div className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-[#F7FAFF] border border-[#E6ECF5]">
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-xs text-[#6B6B6B] font-semibold">Số tiền</span>
+                  <span className="text-base sm:text-lg font-bold text-[#1E1E1E]">
+                    {selectedPlan.amountDisplay}
+                  </span>
                 </div>
                 <button
-                  onClick={() => copyToClipboard(selectedPlan.price.toString(), 'amount')}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-amber-300 text-xs font-extrabold text-amber-800 hover:bg-amber-100 transition active:scale-95 cursor-pointer"
+                  type="button"
+                  onClick={() =>
+                    copyToClipboard(selectedPlan.price.toString(), 'amount')
+                  }
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-[#BFDDFF] bg-white hover:bg-[#F4F9FF] text-xs font-bold text-[#1A8CFF] transition-all cursor-pointer"
                 >
                   {copiedField === 'amount' ? (
-                    <><Check className="w-3.5 h-3.5 text-emerald-600" /> Đã chép</>
+                    <>
+                      <Check className="w-3.5 h-3.5 text-[#17A673]" />
+                      <span className="text-[#17A673]">Đã chép</span>
+                    </>
                   ) : (
-                    <><Copy className="w-3.5 h-3.5" /> Sao chép</>
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>Sao chép</span>
+                    </>
                   )}
                 </button>
               </div>
 
-              {/* NỘI DUNG CHUYỂN KHOẢN (RẤT QUAN TRỌNG) */}
-              <div className="p-4 bg-orange-50 rounded-2xl border-2 border-orange-300 relative">
-                <div className="flex items-start justify-between gap-2 mb-1">
-                  <span className="text-xs font-black text-orange-900 uppercase tracking-wide">
+              {/* NỘI DUNG CHUYỂN KHOẢN (BẮT BUỘC CHÍNH XÁC) */}
+              <div className="flex flex-col gap-3 p-5 rounded-[18px] bg-[#FFF5F7] border-2 border-[#F9C4D1]">
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <span className="text-xs font-bold tracking-wider text-[#B0173C] uppercase">
                     Nội dung chuyển khoản (Bắt buộc chính xác):
                   </span>
                   <button
+                    type="button"
                     onClick={() => copyToClipboard(transferContent, 'content')}
-                    className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-extrabold transition shadow-sm active:scale-95 shrink-0 cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-gradient-to-r from-[#B0173C] to-[#F0436A] hover:opacity-95 text-white text-xs font-bold shadow-sm transition active:scale-95 cursor-pointer"
                   >
                     {copiedField === 'content' ? (
-                      <><Check className="w-3.5 h-3.5" /> Đã chép mã</>
+                      <>
+                        <Check className="w-3.5 h-3.5" />
+                        <span>Đã chép mã</span>
+                      </>
                     ) : (
-                      <><Copy className="w-3.5 h-3.5" /> Sao chép mã</>
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Sao chép mã</span>
+                      </>
                     )}
                   </button>
                 </div>
 
-                <div className="font-mono font-black text-base md:text-lg text-orange-600 bg-white px-3 py-2 rounded-xl border border-orange-200 select-all break-all mt-1">
+                <div className="p-3.5 rounded-xl bg-white border border-[#F9C4D1] font-mono text-base sm:text-lg font-black text-[#C8284F] break-all select-all">
                   {transferContent}
                 </div>
 
-                <p className="text-xs text-orange-800 mt-2 flex items-center gap-1.5">
-                  <AlertTriangle className="w-3.5 h-3.5 text-orange-600 shrink-0" />
-                  Vui lòng giữ nguyên nội dung trên để hệ thống tự động kích hoạt VIP trong 10-30 giây.
-                </p>
+                <div className="flex items-start gap-2 text-xs sm:text-sm text-[#B0173C] leading-relaxed">
+                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-[#F0436A]" />
+                  <span>
+                    Vui lòng giữ nguyên nội dung trên để hệ thống tự động kích hoạt VIP trong 10-30 giây.
+                  </span>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      )}
+      </div>
     </div>
+  )
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-[70vh] flex flex-col items-center justify-center px-4">
+          <Loader2 className="w-10 h-10 text-[#1A8CFF] animate-spin mb-4" />
+          <p className="text-[#4A4A4A] font-bold">Đang tải trang thanh toán VIP...</p>
+        </div>
+      }
+    >
+      <CheckoutContent />
+    </Suspense>
   )
 }
