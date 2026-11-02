@@ -182,7 +182,7 @@ export default function PracticeView({
           </p>
           <div className="flex flex-col gap-2.5">
             <button
-              onClick={() => router.push('/checkout')}
+              onClick={() => router.push('/pricing')}
               className="w-full py-3 rounded-2xl bg-gradient-to-r from-orange-400 to-amber-400 text-white font-black text-sm shadow-md transition active:scale-95"
             >
               Nâng cấp VIP ngay

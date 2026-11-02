@@ -69,7 +69,7 @@ export default function Footer() {
             Luyện tập Quiz
           </Link>
           <Link
-            href="/checkout"
+            href="/pricing"
             className="text-[15px] text-[#4A4A4A] hover:text-[#0B6FE0] hover:translate-x-1 transition-all duration-200"
           >
             Gói tài khoản VIP
@@ -106,7 +106,7 @@ export default function Footer() {
             Chính sách bảo mật
           </Link>
           <Link
-            href="/checkout"
+            href="/pricing"
             className="text-[15px] text-[#4A4A4A] hover:text-[#0B6FE0] hover:translate-x-1 transition-all duration-200"
           >
             Hướng dẫn thanh toán

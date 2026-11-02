@@ -286,7 +286,7 @@ export default function RoadmapSection({ initialTopics }: RoadmapSectionProps) {
                     </Link>
                   ) : (
                     <Link
-                      href="/checkout"
+                      href="/pricing"
                       className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#FFF3E0] text-[#C96A00] hover:bg-[#F7931E] hover:text-white text-sm font-semibold shadow-sm hover:shadow-[0_8px_18px_rgba(247,147,30,0.32)] transition-all"
                     >
                       <span>Mở khóa chủ đề</span>

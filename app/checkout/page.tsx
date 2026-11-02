@@ -124,17 +124,23 @@ function CheckoutContent() {
   const [isSuccess, setIsSuccess] = useState(false)
   const [pollCount, setPollCount] = useState(0)
 
-  // Đọc gói từ query param
+  // Đọc gói từ query param hoặc chuyển hướng về /pricing nếu chưa chọn gói
   useEffect(() => {
+    if (loading) return
+    if (isSuccess) return
+
     const planParam = searchParams.get('plan')
-    if (planParam) {
-      if (planParam === 'lt') {
-        setSelectedPlanId('lifetime')
-      } else if (PLANS.some((p) => p.id === planParam)) {
-        setSelectedPlanId(planParam)
-      }
+    if (!planParam) {
+      router.replace('/pricing')
+      return
     }
-  }, [searchParams])
+
+    if (planParam === 'lt') {
+      setSelectedPlanId('lifetime')
+    } else if (PLANS.some((p) => p.id === planParam)) {
+      setSelectedPlanId(planParam)
+    }
+  }, [searchParams, loading, isSuccess, router])
 
   // Thông tin ngân hàng từ biến môi trường
   const bankName = process.env.NEXT_PUBLIC_BANK_NAME || 'TPBank'

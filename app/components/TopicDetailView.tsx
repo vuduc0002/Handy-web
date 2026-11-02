@@ -105,7 +105,7 @@ export default function TopicDetailView({
             setIsLocked(true)
             setCheckingAccess(false)
             toast.error('Bạn cần nâng cấp VIP để xem nội dung này')
-            router.replace('/checkout')
+            router.replace('/pricing')
           }
           return
         }
@@ -121,7 +121,7 @@ export default function TopicDetailView({
           if (!hasAccess) {
             setIsLocked(true)
             toast.error('Bạn cần nâng cấp VIP để xem nội dung này')
-            router.replace('/checkout')
+            router.replace('/pricing')
           } else {
             setIsLocked(false)
           }
@@ -213,7 +213,7 @@ export default function TopicDetailView({
               ← Về trang chủ
             </Link>
             <button
-              onClick={() => router.push('/checkout')}
+              onClick={() => router.push('/pricing')}
               className="flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-orange-400 to-amber-400 hover:from-orange-500 hover:to-amber-500 text-white font-extrabold text-sm shadow-lg shadow-amber-200 transition active:scale-95 cursor-pointer"
             >
               <Crown className="w-4 h-4" />

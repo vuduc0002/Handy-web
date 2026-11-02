@@ -490,7 +490,7 @@ export default function Header() {
                       {/* VIP upgrade / status */}
                       {isVip ? (
                         <Link
-                          href="/checkout"
+                          href="/pricing"
                           className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-[#FFF6E5] to-[#FFEFD6] text-[#B26A00] hover:opacity-95 transition"
                         >
                           <Crown className="w-4 h-4 text-[#F7931E]" />
@@ -505,7 +505,7 @@ export default function Header() {
                         </Link>
                       ) : (
                         <Link
-                          href="/checkout"
+                          href="/pricing"
                           className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-semibold text-[#1E1E1E] hover:bg-[#FFF6E5] hover:text-[#B26A00] transition"
                         >
                           <Crown className="w-4 h-4 text-[#F7931E]" />
@@ -656,6 +656,13 @@ export default function Header() {
                   >
                     <UserIcon className="w-4 h-4 text-[#6B6B6B]" />
                     <span>Tài khoản của tôi</span>
+                  </Link>
+                  <Link
+                    href="/pricing"
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-semibold text-[#B26A00] hover:bg-[#FFF6E5]"
+                  >
+                    <Crown className="w-4 h-4 text-[#F7931E]" />
+                    <span>{isVip ? 'Gói VIP đang dùng' : 'Nâng cấp VIP'}</span>
                   </Link>
                   <button
                     onClick={handleLogout}

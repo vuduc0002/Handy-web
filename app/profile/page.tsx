@@ -299,7 +299,7 @@ export default function ProfilePage() {
                             {profile?.vip_until || profile?.plan_type ? 'Đã hết hạn' : 'Chưa kích hoạt'}
                           </span>
                           <Link
-                            href="/checkout"
+                            href="/pricing"
                             className="inline-flex items-center gap-1 px-3 py-1 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-black text-xs shadow-xs transition active:scale-95"
                           >
                             <span>Nâng cấp ngay</span>
@@ -383,7 +383,7 @@ export default function ProfilePage() {
                   </div>
 
                   <Link
-                    href="/checkout"
+                    href="/pricing"
                     className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-black text-xs sm:text-sm shadow-md transition active:scale-95 whitespace-nowrap self-start sm:self-auto"
                   >
                     <CreditCard className="w-4 h-4" />
@@ -409,7 +409,7 @@ export default function ProfilePage() {
 
                   <div className="pt-2">
                     <Link
-                      href="/checkout"
+                      href="/pricing"
                       className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-white text-orange-600 font-black text-sm shadow-md hover:bg-amber-50 transition active:scale-95"
                     >
                       <QrCode className="w-4 h-4" />

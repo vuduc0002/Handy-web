@@ -165,7 +165,7 @@ export default function TopicsGrid({ initialTopics }: TopicsGridProps = {}) {
       router.push(`/topics/${topic.id}`)
     } else {
       toast.error('Bạn cần nâng cấp VIP để xem nội dung này')
-      router.push('/checkout')
+      router.push('/pricing')
     }
   }
 
