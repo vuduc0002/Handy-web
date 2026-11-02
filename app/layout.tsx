@@ -1,20 +1,28 @@
 import type { Metadata } from "next";
-import { Be_Vietnam_Pro } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import Header from "@/app/components/Header";
 import Footer from "@/app/components/Footer";
 import ToastContainer from "@/app/components/ToastContainer";
 
-const beVietnamPro = Be_Vietnam_Pro({
-  weight: ["400", "500", "600", "700"],
-  subsets: ["vietnamese"],
-  variable: "--font-be-vietnam",
+const googleSans = localFont({
+  src: [
+    {
+      path: "../public/fonts/GoogleSans-VariableFont_GRAD_opsz_wght.ttf",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/GoogleSans-Italic-VariableFont_GRAD_opsz_wght.ttf",
+      style: "italic",
+    },
+  ],
+  variable: "--font-google-sans",
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "HANDY - Học Từ Vựng Vui",
-  description: "Ứng dụng học từ vựng thú vị dành cho trẻ em",
+  title: "HANDY - Thế giới to trong bàn tay nhỏ",
+  description: "Giải pháp hỗ trợ học Ngôn ngữ ký hiệu ứng dụng công nghệ dành cho trẻ em và phụ huynh",
   icons: {
     icon: [
       { url: "/favicon.ico" },
@@ -34,15 +42,14 @@ export default function RootLayout({
   return (
     <html
       lang="vi"
-      className={`${beVietnamPro.variable} font-sans h-full`}
-      style={{ backgroundColor: "#fffbeb", colorScheme: "light" }}
+      className={`${googleSans.variable} font-sans h-full`}
+      style={{ colorScheme: "light" }}
     >
       <body
-        className="font-sans min-h-full flex flex-col bg-amber-50 text-gray-800"
-        style={{ backgroundColor: "#fffbeb", colorScheme: "light" }}
+        className={`${googleSans.className} font-sans min-h-full flex flex-col bg-white text-[#1E1E1E]`}
       >
         <Header />
-        <main className="flex-1 bg-amber-50 font-be-vietnam" style={{ backgroundColor: "#fffbeb" }}>
+        <main className="flex-1 bg-white">
           {children}
         </main>
         <Footer />

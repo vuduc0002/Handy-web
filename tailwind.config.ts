@@ -8,7 +8,17 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      colors: {
+        primary: '#1A8CFF',
+        'primary-hover': '#0B6FE0',
+        'accent-red': '#F0436A',
+        'accent-yellow': '#F9C31F',
+        'accent-green': '#17A673',
+        'accent-purple': '#7B5BB5',
+      },
       fontFamily: {
+        sans: ['var(--font-google-sans)', 'Google Sans', 'sans-serif'],
+        'google-sans': ['var(--font-google-sans)', 'Google Sans', 'sans-serif'],
         'be-vietnam': ['var(--font-be-vietnam)', 'sans-serif'],
       },
     },
