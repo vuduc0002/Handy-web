@@ -1,16 +1,23 @@
 export const dynamic = 'force-dynamic'
 
+import { Suspense } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import PracticeView from '@/app/components/PracticeView'
 
-export default async function PracticePage({
+export default async function PracticeByTopicPage({
   params,
 }: {
   params: Promise<{ topicId: string }>
 }) {
   const { topicId } = await params
 
-  // Lấy thông tin topic
+  // Lấy tất cả topics cho sidebar
+  const { data: allTopics } = await supabase
+    .from('topics')
+    .select('id, title, description, is_free')
+    .order('created_at', { ascending: true })
+
+  // Lấy thông tin topic hiện tại
   const { data: topicData } = await supabase
     .from('topics')
     .select('id, title, description, is_free')
@@ -26,10 +33,19 @@ export default async function PracticePage({
     .order('created_at', { ascending: true })
 
   return (
-    <PracticeView
-      topicId={topicId}
-      initialTopic={topicData ?? null}
-      initialVocabularies={vocabulariesData ?? []}
-    />
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-white flex items-center justify-center">
+          <div className="w-8 h-8 border-4 border-[#1A8CFF] border-t-transparent rounded-full animate-spin" />
+        </div>
+      }
+    >
+      <PracticeView
+        topicId={topicId}
+        initialTopic={topicData ?? null}
+        initialVocabularies={vocabulariesData ?? []}
+        allTopics={allTopics ?? []}
+      />
+    </Suspense>
   )
 }
