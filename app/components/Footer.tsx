@@ -87,12 +87,12 @@ export default function Footer() {
           <h4 className="font-bold text-lg text-[#1E1E1E] mb-1">
             Hỗ trợ
           </h4>
-          <a
-            href="mailto:support@handy.vn"
+          <Link
+            href="/support"
             className="text-[15px] text-[#4A4A4A] hover:text-[#0B6FE0] hover:translate-x-1 transition-all duration-200"
           >
             Liên hệ hỗ trợ
-          </a>
+          </Link>
           <Link
             href="/terms"
             className="text-[15px] text-[#4A4A4A] hover:text-[#0B6FE0] hover:translate-x-1 transition-all duration-200"
@@ -106,7 +106,7 @@ export default function Footer() {
             Chính sách bảo mật
           </Link>
           <Link
-            href="/pricing"
+            href="/payment-guide"
             className="text-[15px] text-[#4A4A4A] hover:text-[#0B6FE0] hover:translate-x-1 transition-all duration-200"
           >
             Hướng dẫn thanh toán
