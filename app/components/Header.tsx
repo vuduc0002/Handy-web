@@ -253,8 +253,14 @@ export default function Header() {
 
   const isMp4 = selectedModalVocab?.video_url?.toLowerCase().endsWith('.mp4')
 
-  // Hide header on admin pages (admin layout has its own header)
-  if (pathname?.startsWith('/admin')) {
+  // Hide header on admin and auth pages (login, register, forgot-password, reset-password)
+  const isAuthPage =
+    pathname?.startsWith('/login') ||
+    pathname?.startsWith('/register') ||
+    pathname?.startsWith('/forgot-password') ||
+    pathname?.startsWith('/reset-password')
+
+  if (pathname?.startsWith('/admin') || isAuthPage) {
     return null
   }
 

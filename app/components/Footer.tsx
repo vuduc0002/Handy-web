@@ -7,8 +7,14 @@ import { Download, ShieldCheck } from 'lucide-react'
 export default function Footer() {
   const pathname = usePathname()
 
-  // Không hiển thị Footer học sinh khi đang ở giao diện Quản trị (/admin/*)
-  if (pathname?.startsWith('/admin')) {
+  // Không hiển thị Footer khi đang ở giao diện Quản trị (/admin/*) hoặc các trang Auth
+  const isAuthPage =
+    pathname?.startsWith('/login') ||
+    pathname?.startsWith('/register') ||
+    pathname?.startsWith('/forgot-password') ||
+    pathname?.startsWith('/reset-password')
+
+  if (pathname?.startsWith('/admin') || isAuthPage) {
     return null
   }
 
