@@ -13,6 +13,7 @@ export default async function TopicDetailPage({
   // Lấy thông tin chủ đề theo id
   let topic: Topic | null = null;
   let vocabularies: Vocabulary[] = [];
+  let otherTopics: Topic[] = [];
 
   try {
     const { data: topicData, error } = await supabase
@@ -34,6 +35,16 @@ export default async function TopicDetailPage({
 
       vocabularies = vocabulariesData ?? [];
     }
+
+    // Lấy danh sách các chủ đề khác cho phần "Chủ đề tiếp theo"
+    const { data: otherTopicsData } = await supabase
+      .from('topics')
+      .select('*')
+      .neq('id', id)
+      .order('created_at', { ascending: true })
+      .limit(3);
+
+    otherTopics = otherTopicsData ?? [];
   } catch (err) {
     console.error('Lỗi khi tải thông tin chủ đề:', err);
   }
@@ -43,6 +54,7 @@ export default async function TopicDetailPage({
       topicId={id}
       initialTopic={topic}
       initialVocabularies={vocabularies}
+      otherTopics={otherTopics}
     />
   );
 }

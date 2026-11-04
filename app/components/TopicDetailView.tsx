@@ -20,6 +20,9 @@ import {
   QrCode,
   BrainCircuit,
   ClipboardCheck,
+  Users,
+  Smile,
+  Activity,
 } from 'lucide-react'
 import { getEmbedYoutubeUrl } from '@/lib/utils'
 import VideoQuizModal from '@/app/components/VideoQuizModal'
@@ -50,12 +53,44 @@ interface TopicDetailViewProps {
   topicId: string
   initialTopic: Topic | null
   initialVocabularies: Vocabulary[]
+  otherTopics?: Topic[]
 }
+
+const DEFAULT_OTHER_TOPICS: Topic[] = [
+  {
+    id: 'other-1',
+    title: 'Gia đình & Người thân',
+    description: 'Học các ký hiệu gọi tên thành viên trong gia đình và những người thân quen.',
+    is_free: false,
+  },
+  {
+    id: 'other-2',
+    title: 'Cảm xúc & Trạng thái',
+    description: 'Diễn tả niềm vui, nỗi buồn và những trạng thái quen thuộc bằng ký hiệu.',
+    is_free: false,
+  },
+  {
+    id: 'other-3',
+    title: 'Hoạt động hằng ngày',
+    description: 'Ký hiệu cho những việc làm quen thuộc trong ngày, từ thức dậy đến đi ngủ.',
+    is_free: false,
+  },
+]
+
+const CARD_GRADIENTS = [
+  'linear-gradient(135deg,#5CB0FF 0%,#1A6FE0 100%)',
+  'linear-gradient(135deg,#B48CF0 0%,#7B4FD0 100%)',
+  'linear-gradient(135deg,#FFE066 0%,#F7A21B 100%)',
+  'linear-gradient(135deg,#FFB36B 0%,#F0436A 100%)',
+]
+
+const CARD_ICONS = [Users, Smile, Activity, Hand]
 
 export default function TopicDetailView({
   topicId,
   initialTopic,
   initialVocabularies,
+  otherTopics = [],
 }: TopicDetailViewProps) {
   const router = useRouter()
   const [topic] = useState<Topic | null>(initialTopic)
@@ -65,6 +100,7 @@ export default function TopicDetailView({
   )
   const [isLocked, setIsLocked] = useState(false)
   const [checkingAccess, setCheckingAccess] = useState(false)
+  const [isUserVip, setIsUserVip] = useState(false)
   const [isQuizModalOpen, setIsQuizModalOpen] = useState(false)
   const [vocabSearch, setVocabSearch] = useState('')
   const [learnedIds, setLearnedIds] = useState<Set<string>>(new Set())
@@ -121,30 +157,33 @@ export default function TopicDetailView({
     }
   }, [isQuizModalOpen])
 
-  // Kiểm tra quyền VIP nếu chủ đề yêu cầu trả phí
+  // Kiểm tra quyền VIP và trạng thái người dùng
   useEffect(() => {
     let isMounted = true
-    if (initialTopic && !initialTopic.is_free) {
-      setCheckingAccess(true)
-      supabase.auth.getUser().then(async ({ data: { user } }) => {
-        if (!user) {
-          if (isMounted) {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) {
+        if (isMounted) {
+          setIsUserVip(false)
+          if (initialTopic && !initialTopic.is_free) {
             setIsLocked(true)
             setCheckingAccess(false)
             toast.error('Bạn cần nâng cấp VIP để xem nội dung này')
             router.replace('/pricing')
           }
-          return
         }
+        return
+      }
 
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('id, is_premium, vip_until, role, email, plan_type')
-          .eq('id', user.id)
-          .maybeSingle()
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id, is_premium, vip_until, role, email, plan_type')
+        .eq('id', user.id)
+        .maybeSingle()
 
-        if (isMounted) {
-          const hasAccess = isVipProfile(profile)
+      if (isMounted) {
+        const hasAccess = isVipProfile(profile)
+        setIsUserVip(hasAccess)
+        if (initialTopic && !initialTopic.is_free) {
           if (!hasAccess) {
             setIsLocked(true)
             toast.error('Bạn cần nâng cấp VIP để xem nội dung này')
@@ -154,12 +193,30 @@ export default function TopicDetailView({
           }
           setCheckingAccess(false)
         }
-      })
-    }
+      }
+    })
     return () => {
       isMounted = false
     }
   }, [initialTopic, router])
+
+  // Danh sách 3 chủ đề tiếp theo hiển thị ở cuối trang
+  const displayOtherTopics = useMemo(() => {
+    if (!otherTopics || otherTopics.length === 0) {
+      return DEFAULT_OTHER_TOPICS
+    }
+    if (otherTopics.length >= 3) {
+      return otherTopics.slice(0, 3)
+    }
+    const filled = [...otherTopics]
+    for (const def of DEFAULT_OTHER_TOPICS) {
+      if (filled.length >= 3) break
+      if (!filled.some((t) => t.id === def.id || t.title === def.title)) {
+        filled.push(def)
+      }
+    }
+    return filled
+  }, [otherTopics])
 
   // Phát âm từ vựng bằng Web Speech API
   const speakWord = (text: string) => {
@@ -395,29 +452,67 @@ export default function TopicDetailView({
             <div className="lg:col-span-8 flex flex-col gap-6">
               {selectedVocab && (
                 <>
-                  {/* Video Player Box */}
-                  <div className="relative w-full aspect-video rounded-[24px] overflow-hidden bg-black shadow-[0_20px_44px_rgba(15,42,92,0.22)] border-2 border-[#1A8CFF]/20">
-                    {isMp4 ? (
-                      <video
-                        ref={videoRef}
-                        key={selectedVocab.id}
-                        src={selectedVocab.video_url}
-                        controls
-                        autoPlay
-                        playsInline
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <iframe
-                        ref={iframeRef}
-                        key={selectedVocab.id}
-                        src={getEmbedYoutubeUrl(selectedVocab.video_url)}
-                        title={selectedVocab.word}
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                        className="w-full h-full border-0"
-                      />
-                    )}
+                  {/* Video & Thumbnails Container */}
+                  <div className="flex flex-col sm:flex-row gap-3.5 items-stretch">
+                    {/* 2 Ảnh nhỏ: Minh họa (illustration_url) & Cử chỉ tay (gesture_image_url) */}
+                    <div className="w-full sm:w-36 md:w-40 flex flex-row sm:flex-col justify-center gap-3 shrink-0">
+                      {/* Ảnh minh họa */}
+                      <div className="relative flex-1 sm:flex-none aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-[#F4F9FF] to-[#FFF3F6] border-[1.5px] border-[#E3EAF5] shadow-xs group">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={selectedVocab.illustration_url || '/assets/ctd-hands-dark.png'}
+                          alt={`Minh họa ${selectedVocab.word}`}
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).src = '/assets/ctd-hands-dark.png'
+                          }}
+                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        />
+                        <span className="absolute bottom-1.5 left-1.5 right-1.5 text-center text-[10px] font-bold text-white bg-black/60 backdrop-blur-xs py-0.5 px-1.5 rounded-md pointer-events-none">
+                          Ảnh minh họa
+                        </span>
+                      </div>
+
+                      {/* Ảnh cử chỉ */}
+                      <div className="relative flex-1 sm:flex-none aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-[#F4F9FF] to-[#FFF3F6] border-[1.5px] border-[#E3EAF5] shadow-xs group">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={selectedVocab.gesture_image_url || '/assets/ctd-hands-rings.png'}
+                          alt={`Cử chỉ ${selectedVocab.word}`}
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).src = '/assets/ctd-hands-rings.png'
+                          }}
+                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        />
+                        <span className="absolute bottom-1.5 left-1.5 right-1.5 text-center text-[10px] font-bold text-white bg-black/60 backdrop-blur-xs py-0.5 px-1.5 rounded-md pointer-events-none">
+                          Ảnh cử chỉ
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Video Player Box */}
+                    <div className="relative flex-1 min-w-0 aspect-video rounded-[24px] overflow-hidden bg-black shadow-[0_20px_44px_rgba(15,42,92,0.22)] border-2 border-[#1A8CFF]/20">
+                      {isMp4 ? (
+                        <video
+                          ref={videoRef}
+                          key={selectedVocab.id}
+                          src={selectedVocab.video_url}
+                          controls
+                          autoPlay
+                          playsInline
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <iframe
+                          ref={iframeRef}
+                          key={selectedVocab.id}
+                          src={getEmbedYoutubeUrl(selectedVocab.video_url)}
+                          title={selectedVocab.word}
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          className="w-full h-full border-0"
+                        />
+                      )}
+                    </div>
                   </div>
 
                   {/* Controls Bar: Prev - Learned - Speak - Next */}
@@ -497,39 +592,6 @@ export default function TopicDetailView({
                       </p>
                     </div>
                   </div>
-
-                  {/* Illustrations / Hand gestures if available */}
-                  {(selectedVocab.illustration_url || selectedVocab.gesture_image_url) && (
-                    <div className="p-6 rounded-[20px] bg-white border border-[#ECEEF3] shadow-sm flex flex-col gap-4">
-                      <span className="text-xs font-bold text-[#6B6B6B] uppercase tracking-wider">
-                        Hình ảnh minh họa &amp; Động tác đối chiếu
-                      </span>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {selectedVocab.illustration_url && (
-                          <div className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-[#F7FAFF] border border-[#E3ECF8]">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={selectedVocab.illustration_url}
-                              alt={`Minh họa ${selectedVocab.word}`}
-                              className="max-h-48 object-contain rounded-xl"
-                            />
-                            <span className="text-xs text-[#6B6B6B] font-medium">Hình ảnh khái niệm</span>
-                          </div>
-                        )}
-                        {selectedVocab.gesture_image_url && (
-                          <div className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-[#F7FAFF] border border-[#E3ECF8]">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={selectedVocab.gesture_image_url}
-                              alt={`Cử chỉ ${selectedVocab.word}`}
-                              className="max-h-48 object-contain rounded-xl"
-                            />
-                            <span className="text-xs text-[#6B6B6B] font-medium">Cử chỉ tay chi tiết</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
                 </>
               )}
             </div>
@@ -625,7 +687,7 @@ export default function TopicDetailView({
       </section>
 
       {/* 03 FLASHCARD SHOWCASE BANNER CHUẨN HANDY V2 */}
-      <section className="max-w-6xl mx-auto px-6 pb-20">
+      <section className="max-w-6xl mx-auto px-6 pb-14">
         <div className="flex items-center gap-6 flex-wrap p-7 md:p-10 rounded-[24px] bg-gradient-to-r from-[#FFF8EC] to-[#FFF5F7] border border-[#F6EBE2]">
           <div className="flex-none w-18 h-18 sm:w-20 sm:h-20 rounded-2xl bg-white shadow-[0_10px_24px_rgba(20,30,60,0.08)] flex items-center justify-center text-[#1E1E1E] -rotate-3">
             <QrCode className="w-10 h-10 text-[#1A8CFF]" />
@@ -638,6 +700,92 @@ export default function TopicDetailView({
               Quét mã QR trên mỗi thẻ học thực tế để mở đúng video ký hiệu trong chủ đề này, giúp bé và gia đình ôn lại mọi lúc mọi nơi.
             </p>
           </div>
+        </div>
+      </section>
+
+      {/* 04 CHỦ ĐỀ TIẾP THEO (Next Topics) CHUẨN HANDY V2 */}
+      <section className="max-w-6xl mx-auto px-6 pb-24 flex flex-col gap-7">
+        <div className="flex justify-between items-end gap-4 flex-wrap">
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#1E1E1E] tracking-tight">
+              Chủ đề <span className="text-[#1A8CFF]">tiếp theo</span>
+            </h2>
+            <p className="text-sm text-[#6B6B6B] mt-1">
+              Khám phá thêm các chủ đề khác để nâng cao vốn từ vựng ký hiệu của bạn.
+            </p>
+          </div>
+          <Link
+            href="/topics"
+            className="inline-flex items-center gap-1.5 text-sm sm:text-base font-bold text-[#1A8CFF] hover:text-[#0B6FE0] transition-colors"
+          >
+            <span>Xem tất cả chủ đề</span>
+            <ChevronRight className="w-4 h-4" />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {displayOtherTopics.map((other, idx) => {
+            const isTopicLocked = !other.is_free && !isUserVip
+            const gradient = CARD_GRADIENTS[idx % CARD_GRADIENTS.length]
+            const Icon = CARD_ICONS[idx % CARD_ICONS.length]
+
+            return (
+              <article
+                key={other.id}
+                className="group relative flex flex-col gap-3.5 p-6 rounded-[22px] bg-white border border-[#ECEEF3] hover:border-[#1A8CFF]/40 shadow-xs hover:shadow-[0_16px_32px_rgba(26,140,255,0.12)] transition-all duration-300"
+              >
+                <div className="flex items-start justify-between gap-2.5 mb-1.5">
+                  <div
+                    className="w-13 h-13 rounded-2xl flex items-center justify-center text-white shadow-[0_10px_22px_rgba(20,30,60,0.14)] transition-transform duration-300 group-hover:scale-105 group-hover:-rotate-3"
+                    style={{ background: gradient }}
+                  >
+                    <Icon className="w-6 h-6 stroke-[2.2]" />
+                  </div>
+                  {isTopicLocked ? (
+                    <span className="shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full bg-[#F3F4F7] text-[#6B6B6B]">
+                      <Lock className="w-3 h-3" />
+                      Đang khóa
+                    </span>
+                  ) : (
+                    <span className="shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full bg-[#E3F7EE] text-[#0C8558]">
+                      <Sparkles className="w-3 h-3" />
+                      {other.is_free ? 'Miễn phí' : 'Đã mở'}
+                    </span>
+                  )}
+                </div>
+
+                <span className="text-xs font-semibold text-[#8A8F99]">
+                  Chủ đề {String(idx + 2).padStart(2, '0')}
+                </span>
+
+                <h3 className="text-lg font-bold text-[#1E1E1E] group-hover:text-[#1A8CFF] transition-colors line-clamp-1">
+                  {other.title}
+                </h3>
+
+                <p className="text-sm text-[#4A4A4A] leading-relaxed line-clamp-2 flex-1">
+                  {other.description || 'Học các ký hiệu ngôn ngữ ký hiệu chủ đề này.'}
+                </p>
+
+                {isTopicLocked ? (
+                  <Link
+                    href="/pricing"
+                    className="mt-2 self-start inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#FFF3E0] hover:bg-[#F7931E] text-[#C96A00] hover:text-white text-sm font-semibold transition-all"
+                  >
+                    <span>Mở khóa chủ đề</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </Link>
+                ) : (
+                  <Link
+                    href={`/topics/${other.id}`}
+                    className="mt-2 self-start inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#EAF4FF] hover:bg-[#1A8CFF] text-[#1A8CFF] hover:text-white text-sm font-semibold transition-all"
+                  >
+                    <span>Bắt đầu học</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </Link>
+                )}
+              </article>
+            )
+          })}
         </div>
       </section>
 
