@@ -10,6 +10,7 @@ import {
   ArrowLeft,
   LogOut,
   TrendingUp,
+  Headphones,
 } from 'lucide-react'
 import { logoutUser } from '@/lib/authUtils'
 
@@ -44,6 +45,12 @@ export default function AdminLayout({
       href: '/admin/users',
       icon: <Users className="w-4 h-4" />,
       active: pathname.startsWith('/admin/users'),
+    },
+    {
+      label: 'Hỗ trợ khách hàng',
+      href: '/admin/support',
+      icon: <Headphones className="w-4 h-4" />,
+      active: pathname.startsWith('/admin/support'),
     },
   ]
 

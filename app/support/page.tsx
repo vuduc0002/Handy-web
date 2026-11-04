@@ -3,6 +3,8 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import SupportLayout from '@/components/support/SupportLayout'
+import { supabase } from '@/lib/supabaseClient'
+import { toast } from '@/lib/toast'
 
 const TOPICS = [
   'Tài khoản',
@@ -49,16 +51,38 @@ export default function SupportPage() {
     return Object.keys(errs).length === 0
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!validate()) return
 
     setLoading(true)
-    // Simulate API submission
-    setTimeout(() => {
-      setLoading(false)
+    try {
+      const { error } = await supabase.from('support_requests').insert([
+        {
+          full_name: form.name.trim(),
+          contact_info: form.contact.trim(),
+          category: topic,
+          content: form.message.trim(),
+          status: 'pending',
+        },
+      ])
+
+      if (error) {
+        console.error('Lỗi khi gửi yêu cầu hỗ trợ:', error)
+        toast.error('Có lỗi xảy ra khi gửi yêu cầu. Vui lòng thử lại!')
+        return
+      }
+
+      toast.success('Gửi yêu cầu hỗ trợ thành công!')
       setSent(true)
-    }, 400)
+      setForm({ name: '', contact: '', message: '' })
+      setErrors({})
+    } catch (err) {
+      console.error('Lỗi khi gửi form hỗ trợ:', err)
+      toast.error('Có lỗi xảy ra khi gửi yêu cầu. Vui lòng thử lại!')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleReset = () => {

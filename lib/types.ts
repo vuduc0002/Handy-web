@@ -21,3 +21,16 @@ export function isVipProfile(profile: Partial<Profile> | null | undefined): bool
   if (!profile.vip_until) return true
   return new Date(profile.vip_until) > new Date()
 }
+
+export type SupportStatus = 'pending' | 'in_progress' | 'resolved'
+
+export interface SupportRequest {
+  id: string
+  full_name: string
+  contact_info: string
+  category: string
+  content: string
+  status: SupportStatus
+  created_at: string
+  updated_at?: string | null
+}
