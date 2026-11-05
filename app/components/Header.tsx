@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter, usePathname } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import {
@@ -285,10 +286,12 @@ export default function Header() {
               aria-label="HANDY"
               className="flex items-center shrink-0 hover:opacity-90 transition-opacity"
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src="/assets/logo-handy-sm.png"
-                alt="HANDY"
+                alt="HANDY - Học ngôn ngữ ký hiệu"
+                width={120}
+                height={48}
+                priority
                 className="h-10 sm:h-11 w-auto block object-contain"
               />
             </Link>

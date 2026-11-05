@@ -885,7 +885,7 @@ export default function AdminPage() {
                             <a
                               href={vocab.video_url}
                               target="_blank"
-                              rel="noreferrer"
+                              rel="noopener noreferrer"
                               className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-700 hover:text-gray-900 hover:underline max-w-[140px] truncate"
                               title={vocab.video_url}
                             >
@@ -1101,6 +1101,7 @@ export default function AdminPage() {
                       <Link
                         href={`/topics/${t.id}`}
                         target="_blank"
+                        rel="noopener noreferrer"
                         className="px-2.5 py-1.5 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-medium transition inline-flex items-center gap-1.5"
                       >
                         <ExternalLink className="w-3.5 h-3.5 text-gray-400" />

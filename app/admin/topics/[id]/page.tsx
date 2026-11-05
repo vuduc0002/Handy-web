@@ -640,7 +640,7 @@ export default function AdminTopicDetailPage({
                         <a
                           href={vocab.video_url}
                           target="_blank"
-                          rel="noreferrer"
+                          rel="noopener noreferrer"
                           className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-700 hover:text-gray-900 hover:underline max-w-[160px] truncate"
                           title={vocab.video_url}
                         >

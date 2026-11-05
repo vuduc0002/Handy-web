@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { supabase } from '@/lib/supabaseClient'
 import {
   Lock,
@@ -155,10 +156,12 @@ export default function ResetPasswordPage() {
           aria-label="Về trang chủ HANDY"
           className="relative z-10 self-start flex items-center px-4 py-2.5 rounded-2xl bg-white shadow-md hover:opacity-95 transition"
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src="/assets/logo-handy-sm.png"
-            alt="HANDY"
+            alt="HANDY - Học ngôn ngữ ký hiệu"
+            width={140}
+            height={44}
+            priority
             className="h-11 w-auto block object-contain"
           />
         </Link>
@@ -211,10 +214,11 @@ export default function ResetPasswordPage() {
 
           <div className="lg:hidden">
             <Link href="/">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src="/assets/logo-handy-sm.png"
-                alt="HANDY"
+                alt="HANDY - Học ngôn ngữ ký hiệu"
+                width={120}
+                height={36}
                 className="h-9 w-auto block object-contain"
               />
             </Link>

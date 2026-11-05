@@ -1,15 +1,17 @@
 export const dynamic = 'force-dynamic'
 
 import { Suspense } from 'react'
+import nextDynamic from 'next/dynamic'
 import { supabase } from '@/lib/supabaseClient'
 import HeroSection from '@/app/components/landing/HeroSection'
 import HighlightsSection from '@/app/components/landing/HighlightsSection'
 import FeatureCardsSection from '@/app/components/landing/FeatureCardsSection'
 import RoadmapSection, { RoadmapTopic } from '@/app/components/landing/RoadmapSection'
 import AudienceSection from '@/app/components/landing/AudienceSection'
-import FeedbackSection from '@/app/components/landing/FeedbackSection'
-import FAQSection from '@/app/components/landing/FAQSection'
-import CTASection from '@/app/components/landing/CTASection'
+
+const FeedbackSection = nextDynamic(() => import('@/app/components/landing/FeedbackSection'))
+const FAQSection = nextDynamic(() => import('@/app/components/landing/FAQSection'))
+const CTASection = nextDynamic(() => import('@/app/components/landing/CTASection'))
 
 // Truy xuất danh sách topics mới nhất từ database
 async function getFreshTopics(): Promise<RoadmapTopic[]> {

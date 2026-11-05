@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { supabase } from '@/lib/supabaseClient'
 import {
   Mail,
@@ -180,10 +181,12 @@ function LoginContent() {
           aria-label="Về trang chủ HANDY"
           className="relative z-10 self-start flex items-center px-4 py-2.5 rounded-2xl bg-white shadow-md hover:opacity-95 transition"
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src="/assets/logo-handy-sm.png"
-            alt="HANDY"
+            alt="HANDY - Học ngôn ngữ ký hiệu"
+            width={140}
+            height={44}
+            priority
             className="h-11 w-auto block object-contain"
           />
         </Link>
@@ -240,10 +243,11 @@ function LoginContent() {
           {/* Logo on mobile only */}
           <div className="lg:hidden">
             <Link href="/">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src="/assets/logo-handy-sm.png"
-                alt="HANDY"
+                alt="HANDY - Học ngôn ngữ ký hiệu"
+                width={120}
+                height={36}
                 className="h-9 w-auto block object-contain"
               />
             </Link>

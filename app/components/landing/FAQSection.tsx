@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { ChevronRight } from 'lucide-react'
 
 export default function FAQSection() {
@@ -13,51 +14,42 @@ export default function FAQSection() {
     },
     {
       q: 'Người chưa biết gì có thể học ngôn ngữ ký hiệu không?',
-      a: 'Có. Bạn có thể bắt đầu từ những ký hiệu quen thuộc như chào hỏi, giới thiệu bản thân và các từ liên quan đến cuộc sống hằng ngày, sau đó học theo từng chủ đề.',
+      a: 'Hoàn toàn có thể. HANDY được thiết kế dành cho mọi đối tượng bắt đầu từ con số không, với các chủ đề từ chào hỏi, gia đình, đến các hoạt động sinh hoạt quen thuộc hàng ngày.',
     },
     {
-      q: 'Bảng ngôn ngữ ký hiệu dùng để làm gì?',
-      a: 'Bảng ngôn ngữ ký hiệu giúp người học tham khảo các ký hiệu theo từ hoặc chủ đề. Khi học, bạn nên kết hợp quan sát hình minh họa hoặc video để hiểu rõ hơn cách thực hiện ký hiệu.',
+      q: 'HANDY có hỗ trợ video minh họa không?',
+      a: 'Có. Mỗi từ vựng và câu trong từng chủ đề đều đi kèm video mẫu do người thành thạo ngôn ngữ ký hiệu thực hiện, giúp bạn quan sát chính xác khẩu hình và chuyển động tay.',
     },
     {
-      q: 'Từ điển ngôn ngữ ký hiệu trên HANDY hỗ trợ điều gì?',
-      a: 'HANDY hướng đến việc tổ chức nội dung ký hiệu thành nguồn tra cứu thuận tiện, giúp người học tìm kiếm và tham khảo các ký hiệu theo từ khóa hoặc chủ đề.',
+      q: 'Tôi có thể dùng HANDY trên điện thoại không?',
+      a: 'HANDY hoạt động mượt mà trên trình duyệt web của mọi thiết bị: máy tính bảng, điện thoại và máy tính cá nhân. Ngoài ra bạn cũng có thể cài đặt bản ứng dụng APK trực tiếp cho Android.',
     },
     {
-      q: 'Ngôn ngữ ký hiệu có giống nhau ở mọi nơi không?',
-      a: 'Không hoàn toàn. Ngôn ngữ ký hiệu có thể khác nhau giữa các quốc gia và cộng đồng, đồng thời có những biến thể theo vùng miền. Vì vậy, cần xem xét ngữ cảnh và nguồn tham khảo khi học một ký hiệu.',
+      q: 'Làm thế nào để nâng cấp tài khoản VIP?',
+      a: 'Bạn chỉ cần chọn gói thành viên trong mục Bảng giá và thanh toán tự động qua SePAY bằng VietQR. Tài khoản sẽ được kích hoạt tự động ngay sau khi hoàn tất chuyển khoản.',
     },
   ]
 
   const toggleFaq = (idx: number) => {
-    setOpenFaq(openFaq === idx ? null : idx)
+    setOpenFaq((prev) => (prev === idx ? null : idx))
   }
 
   return (
-    <section
-      id="faq"
-      className="relative overflow-hidden py-24 font-sans"
-      style={{
-        background: 'linear-gradient(180deg,#FFF8EC 0%,#FFF9F4 50%,#F7F2FD 100%)',
-      }}
-    >
-      {/* Decorative background items */}
+    <section id="faq" className="relative overflow-hidden bg-white py-24 font-sans">
+      {/* Decorative floating shapes */}
       <span
         aria-hidden="true"
-        className="absolute -right-52 top-[20%] w-[620px] h-[620px] rounded-full pointer-events-none"
-        style={{
-          background: 'radial-gradient(closest-side,rgba(123,91,181,0.09) 0%,rgba(123,91,181,0) 100%)',
-        }}
+        className="hidden sm:block absolute right-[4%] top-20 w-4 h-4 rounded-full bg-[#1A8CFF] pointer-events-none animate-handy-float"
       />
       <span
         aria-hidden="true"
-        className="absolute right-[3%] bottom-28 w-5 h-5 rounded-full bg-[#1A8CFF] pointer-events-none animate-handy-float"
+        className="hidden sm:block absolute left-[8%] bottom-16 w-3 h-3 rounded-full bg-[#F0436A] pointer-events-none"
       />
       <svg
         aria-hidden="true"
-        className="absolute left-[46%] top-24 pointer-events-none animate-handy-twinkle"
-        width="20"
-        height="20"
+        className="absolute right-[8%] bottom-24 pointer-events-none animate-handy-twinkle"
+        width="28"
+        height="28"
         viewBox="0 0 40 40"
       >
         <path
@@ -92,10 +84,11 @@ export default function FAQSection() {
             />
 
             {/* Illustration */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src="/assets/faq-girl.png"
               alt="Bé gái học ngôn ngữ ký hiệu"
+              width={410}
+              height={425}
               className="relative z-10 h-full w-auto max-w-full object-contain filter drop-shadow-[0_18px_24px_rgba(20,30,60,0.18)]"
             />
           </div>

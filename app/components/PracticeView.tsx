@@ -661,7 +661,10 @@ export default function PracticeView({
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={cardImg}
-                          alt={currentVocab.word}
+                          alt={`Ký hiệu ${currentVocab.word}`}
+                          width={640}
+                          height={480}
+                          loading="lazy"
                           className="absolute inset-0 w-full h-full object-cover block"
                         />
                       </div>

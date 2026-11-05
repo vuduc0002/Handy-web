@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { Download, ShieldCheck } from 'lucide-react'
 
@@ -30,10 +31,11 @@ export default function Footer() {
         {/* Col 1 & 2: Brand Info & APK Download */}
         <div className="lg:col-span-2 flex flex-col gap-5 items-start max-w-[420px]">
           <Link href="/" className="inline-block hover:opacity-90 transition">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src="/assets/logo-handy-sm.png"
-              alt="HANDY"
+              alt="HANDY - Học ngôn ngữ ký hiệu"
+              width={160}
+              height={64}
               className="h-14 sm:h-16 w-auto block object-contain"
             />
           </Link>
@@ -128,7 +130,7 @@ export default function Footer() {
             <a
               href="https://facebook.com"
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
               aria-label="Facebook Handy"
               className="w-10 h-10 rounded-xl bg-white text-[#1A8CFF] hover:bg-[#1A8CFF] hover:text-white flex items-center justify-center transition-colors duration-200 shadow-sm"
             >
@@ -139,7 +141,7 @@ export default function Footer() {
             <a
               href="https://youtube.com"
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
               aria-label="YouTube Handy"
               className="w-10 h-10 rounded-xl bg-white text-[#1A8CFF] hover:bg-[#F0436A] hover:text-white flex items-center justify-center transition-colors duration-200 shadow-sm"
             >

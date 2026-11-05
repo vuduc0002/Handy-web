@@ -125,7 +125,7 @@ export default function SupportPage() {
             <a
               href="https://facebook.com"
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
               className="text-[14px] text-[#F0436A] hover:underline font-medium"
             >
               fb.com/handy.vietnam

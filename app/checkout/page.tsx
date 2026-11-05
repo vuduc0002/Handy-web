@@ -369,6 +369,8 @@ function CheckoutContent() {
               <img
                 src={qrUrl}
                 alt="Mã VietQR thanh toán SePAY"
+                width={270}
+                height={270}
                 className="w-full h-auto aspect-square object-contain rounded-xl"
               />
             </div>

@@ -227,7 +227,9 @@ export default function ImageDropzone({
             {/* Ảnh thu nhỏ */}
             <img
               src={imageUrl}
-              alt={label || imageType}
+              alt={label || imageType || "Ảnh thu nhỏ"}
+              width={72}
+              height={72}
               className="w-full h-full object-cover"
               loading="lazy"
             />
@@ -325,7 +327,9 @@ export default function ImageDropzone({
             <div className="rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center max-h-[70vh]">
               <img
                 src={imageUrl}
-                alt="Preview"
+                alt="Xem trước ảnh phóng to"
+                width={600}
+                height={450}
                 className="max-h-[65vh] w-auto object-contain rounded-lg"
               />
             </div>

@@ -24,8 +24,11 @@ import {
   Smile,
   Activity,
 } from 'lucide-react'
+import dynamic from 'next/dynamic'
 import { getEmbedYoutubeUrl } from '@/lib/utils'
-import VideoQuizModal from '@/app/components/VideoQuizModal'
+const VideoQuizModal = dynamic(() => import('@/app/components/VideoQuizModal'), {
+  ssr: false,
+})
 import { isVipProfile } from '@/lib/types'
 import { toast } from '@/lib/toast'
 
@@ -462,6 +465,9 @@ export default function TopicDetailView({
                         <img
                           src={selectedVocab.illustration_url || '/assets/ctd-hands-dark.png'}
                           alt={`Minh họa ${selectedVocab.word}`}
+                          width={160}
+                          height={160}
+                          loading="lazy"
                           onError={(e) => {
                             (e.currentTarget as HTMLImageElement).src = '/assets/ctd-hands-dark.png'
                           }}
@@ -478,6 +484,9 @@ export default function TopicDetailView({
                         <img
                           src={selectedVocab.gesture_image_url || '/assets/ctd-hands-rings.png'}
                           alt={`Cử chỉ ${selectedVocab.word}`}
+                          width={160}
+                          height={160}
+                          loading="lazy"
                           onError={(e) => {
                             (e.currentTarget as HTMLImageElement).src = '/assets/ctd-hands-rings.png'
                           }}

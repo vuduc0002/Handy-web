@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { ArrowRight, Search } from 'lucide-react'
 
 export default function HeroSection() {
@@ -64,12 +65,13 @@ export default function HeroSection() {
 
         {/* Right Column: Hero Girl Image */}
         <div className="w-full max-w-[560px] mx-auto justify-self-center z-10">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src="/assets/hero-girl-sm.png"
             alt="Người học ngôn ngữ ký hiệu cùng HANDY"
+            width={560}
+            height={560}
+            priority
             className="w-full h-auto block object-contain select-none"
-            loading="eager"
           />
         </div>
       </div>
