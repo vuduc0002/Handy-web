@@ -8,16 +8,18 @@ import ToastContainer from "@/app/components/ToastContainer";
 const googleSans = localFont({
   src: [
     {
-      path: "../public/fonts/GoogleSans-VariableFont_GRAD_opsz_wght.ttf",
+      path: "../public/fonts/GoogleSans-VariableFont_GRAD_opsz_wght.woff2",
       style: "normal",
     },
     {
-      path: "../public/fonts/GoogleSans-Italic-VariableFont_GRAD_opsz_wght.ttf",
+      path: "../public/fonts/GoogleSans-Italic-VariableFont_GRAD_opsz_wght.woff2",
       style: "italic",
     },
   ],
   variable: "--font-google-sans",
   display: "swap",
+  preload: true,
+  fallback: ["system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
 });
 
 export const metadata: Metadata = {
@@ -26,8 +28,7 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       { url: "/favicon.ico" },
-      { url: "/favicon.png", type: "image/png" },
-      { url: "/handy-logo.png", type: "image/png" }
+      { url: "/favicon.png", type: "image/png" }
     ],
     shortcut: "/favicon.ico",
     apple: "/handy-logo.png",

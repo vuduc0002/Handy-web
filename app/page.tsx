@@ -7,8 +7,8 @@ import HeroSection from '@/app/components/landing/HeroSection'
 import HighlightsSection from '@/app/components/landing/HighlightsSection'
 import FeatureCardsSection from '@/app/components/landing/FeatureCardsSection'
 import RoadmapSection, { RoadmapTopic } from '@/app/components/landing/RoadmapSection'
-import AudienceSection from '@/app/components/landing/AudienceSection'
 
+const AudienceSection = nextDynamic(() => import('@/app/components/landing/AudienceSection'))
 const FeedbackSection = nextDynamic(() => import('@/app/components/landing/FeedbackSection'))
 const FAQSection = nextDynamic(() => import('@/app/components/landing/FAQSection'))
 const CTASection = nextDynamic(() => import('@/app/components/landing/CTASection'))

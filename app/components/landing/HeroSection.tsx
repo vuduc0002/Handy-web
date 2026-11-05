@@ -70,6 +70,7 @@ export default function HeroSection() {
             alt="Người học ngôn ngữ ký hiệu cùng HANDY"
             width={560}
             height={560}
+            sizes="(max-width: 768px) 100vw, 560px"
             priority
             className="w-full h-auto block object-contain select-none"
           />
