@@ -430,10 +430,30 @@ export default function PracticeView({
       <section
         id="luyen"
         data-screen-label="02 Khu luyện tập"
-        className="max-w-[1240px] mx-auto px-6 py-11 pb-24 flex flex-col lg:flex-row gap-7 items-start"
+        className="max-w-[1240px] mx-auto px-6 py-11 pb-24 flex flex-wrap gap-7 items-start"
+        style={{
+          maxWidth: '1240px',
+          margin: '0 auto',
+          padding: '44px 24px 96px',
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '28px',
+          alignItems: 'flex-start',
+        }}
       >
         {/* ASIDE: Chọn dạng bài & Chọn chủ đề */}
-        <aside className="w-full lg:w-[320px] shrink-0 flex flex-col gap-6 sticky top-24">
+        <aside
+          className="w-full lg:w-[300px] shrink-0 flex flex-col gap-6 sticky top-24"
+          style={{
+            flex: '1 1 300px',
+            minWidth: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '24px',
+            position: 'sticky',
+            top: '90px',
+          }}
+        >
           {/* 1. Chọn dạng bài */}
           <div className="flex flex-col gap-3">
             <h2 className="text-base font-bold text-[#1E1E1E]">
@@ -550,7 +570,19 @@ export default function PracticeView({
         </aside>
 
         {/* MAIN PRACTICE BOX */}
-        <div className="flex-1 min-w-0 w-full flex flex-col gap-4 p-6 sm:p-8 rounded-[28px] bg-[#F7FAFF] border border-[#E7EEF8]">
+        <div
+          className="flex-1 min-w-0 w-full flex flex-col gap-[18px] p-5 sm:p-8 rounded-[28px] bg-[#F7FAFF] border border-[#E7EEF8]"
+          style={{
+            flex: '2 1 560px',
+            minWidth: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '18px',
+            padding: 'clamp(18px, 3vw, 32px)',
+            borderRadius: '28px',
+            background: '#F7FAFF',
+          }}
+        >
           {/* Header Bar */}
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <span className="flex items-center gap-2.5 text-[15px] font-bold text-[#1E1E1E]">
@@ -579,11 +611,23 @@ export default function PracticeView({
 
           {/* ======================= MÀN 1: FLASHCARD ======================= */}
           {mode === 'flash' && !isFinished && currentVocab && (
-            <div className="flex flex-col items-center gap-5 pt-1">
+            <>
               {/* Starred Deck Filter Bar */}
-              <div className="flex items-center justify-between gap-3 flex-wrap w-full max-w-[560px]">
+              <div
+                className="flex items-center justify-between gap-2.5 flex-wrap w-full max-w-[560px] mx-auto mb-3.5"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '10px',
+                  flexWrap: 'wrap',
+                  width: '100%',
+                  maxWidth: '560px',
+                  margin: '0 auto 14px',
+                }}
+              >
                 <span className="flex items-center gap-2 text-sm font-semibold text-[#4A4A4A]">
-                  <span className="text-[#F7A21B]">★</span>
+                  <span className="text-[#F7A21B] flex">★</span>
                   <span>{starCount ? `${starCount} thẻ đã gắn sao` : 'Chạm ngôi sao để đánh dấu thẻ cần xem lại'}</span>
                 </span>
                 <div role="radiogroup" aria-label="Bộ thẻ" className="flex gap-1 p-1 rounded-full bg-[#EAF0F8]">
@@ -625,220 +669,396 @@ export default function PracticeView({
                 </div>
               </div>
 
-              {/* 3D Flip Card */}
-              <div className="relative w-full max-w-[560px]">
-                {/* Star Button */}
-                <button
-                  type="button"
-                  onClick={() => toggleStar(currentVocab.word)}
-                  aria-pressed={isCurrentStarred}
-                  title={isCurrentStarred ? 'Bỏ gắn sao' : 'Gắn sao thẻ này (phím S)'}
-                  className={`absolute top-3.5 right-3.5 z-20 w-11 h-11 rounded-full border-none cursor-pointer flex items-center justify-center transition-transform hover:scale-110 ${
-                    isCurrentStarred
-                      ? 'bg-[#FFC94D] text-[#8A4B00] shadow-[0_8px_20px_rgba(247,162,27,0.45)]'
-                      : 'bg-white/90 text-[#8A8F99] shadow-[0_6px_16px_rgba(15,42,92,0.18)]'
-                  }`}
-                >
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill={isCurrentStarred ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 2.5l2.9 5.9 6.6 1-4.8 4.6 1.1 6.5L12 17.4l-5.8 3.1 1.1-6.5-4.8-4.6 6.6-1z" />
-                  </svg>
-                </button>
-
-                {/* Perspective Container */}
+              {/* Card + Controls Column */}
+              <div
+                className="flex flex-col items-center gap-5 w-full"
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '20px',
+                }}
+              >
+                {/* 3D Flip Card Container */}
                 <div
-                  onClick={toggleFlip}
-                  className="w-full aspect-[4/3] [perspective:1400px] cursor-pointer shrink-0"
-                  style={{ aspectRatio: '4/3' }}
+                  className="relative w-full max-w-[560px]"
+                  style={{
+                    position: 'relative',
+                    width: '100%',
+                    maxWidth: '560px',
+                  }}
                 >
-                  <div
-                    className="relative w-full h-full [transform-style:preserve-3d] transition-transform duration-650 ease-[cubic-bezier(.3,.7,.25,1)]"
+                  {/* Star Button */}
+                  <button
+                    type="button"
+                    onClick={() => toggleStar(currentVocab.word)}
+                    aria-pressed={isCurrentStarred}
+                    aria-label={isCurrentStarred ? 'Bỏ gắn sao' : 'Gắn sao thẻ này (phím S)'}
+                    title={isCurrentStarred ? 'Bỏ gắn sao' : 'Gắn sao thẻ này (phím S)'}
                     style={{
-                      transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+                      position: 'absolute',
+                      top: '14px',
+                      right: '14px',
+                      zIndex: 3,
+                      width: '46px',
+                      height: '46px',
+                      borderRadius: '999px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'background 250ms, color 250ms, transform 200ms',
+                    }}
+                    className={`hover:scale-110 ${
+                      isCurrentStarred
+                        ? 'bg-[#FFC94D] text-[#8A4B00] shadow-[0_8px_20px_rgba(247,162,27,0.45)]'
+                        : 'bg-white/90 text-[#8A8F99] shadow-[0_6px_16px_rgba(15,42,92,0.18)]'
+                    }`}
+                  >
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill={isCurrentStarred ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 2.5l2.9 5.9 6.6 1-4.8 4.6 1.1 6.5L12 17.4l-5.8 3.1 1.1-6.5-4.8-4.6 6.6-1z" />
+                    </svg>
+                  </button>
+
+                  {/* Flip button / Perspective Trigger */}
+                  <button
+                    type="button"
+                    onClick={toggleFlip}
+                    aria-label="Lật thẻ"
+                    style={{
+                      all: 'unset',
+                      cursor: 'pointer',
+                      display: 'block',
+                      width: '100%',
+                      aspectRatio: '4 / 3',
+                      minHeight: '280px',
+                      perspective: '1400px',
                     }}
                   >
-                    {/* MẶT TRƯỚC (Front: Image & Word) */}
-                    <div className="absolute inset-0 [backface-visibility:hidden] [-webkit-backface-visibility:hidden] rounded-3xl overflow-hidden bg-white border-2 border-[#E3EAF5] flex flex-col shadow-[0_20px_44px_rgba(20,30,60,0.10)]">
-                      <div className="flex-1 min-h-0 relative bg-[#1B2A63] overflow-hidden">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={cardImg}
-                          alt={`Ký hiệu ${currentVocab.word}`}
-                          width={640}
-                          height={480}
-                          loading="lazy"
-                          className="absolute inset-0 w-full h-full object-cover block"
-                        />
-                      </div>
-                      <div className="shrink-0 flex items-center justify-between gap-3 p-4 sm:p-5 px-6 bg-white border-t border-[#EEF1F6]">
-                        <span className="text-[24px] sm:text-[30px] font-bold tracking-tight text-[#1E1E1E]">
-                          {currentVocab.word}
-                        </span>
-                        <span className="shrink-0 text-[13.5px] font-semibold text-[#1A8CFF]">
-                          Chạm để xem video
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* MẶT SAU (Back: Video Embed & Word detail) */}
                     <div
-                      className="absolute inset-0 [backface-visibility:hidden] [-webkit-backface-visibility:hidden] [transform:rotateY(180deg)] rounded-3xl overflow-hidden bg-[#0F2A5C] flex flex-col items-center justify-center gap-3.5 p-6 text-center shadow-[0_20px_44px_rgba(15,42,92,0.25)]"
                       style={{
-                        background:
-                          'radial-gradient(70% 90% at 30% 20%,#2A97FF 0%,rgba(42,151,255,0) 70%),#0F2A5C',
+                        position: 'relative',
+                        width: '100%',
+                        height: '100%',
+                        minHeight: '280px',
+                        transformStyle: 'preserve-3d',
+                        transition: 'transform 650ms cubic-bezier(.3,.7,.25,1)',
+                        transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
                       }}
-                      onClick={(e) => e.stopPropagation()}
                     >
-                      {/* Background placeholder pattern & play button (matches template) */}
-                      <span
-                        aria-hidden="true"
-                        className="absolute inset-0 pointer-events-none"
+                      {/* MẶT TRƯỚC (Front: Image & Word) */}
+                      <div
                         style={{
-                          backgroundImage:
-                            'radial-gradient(rgba(255,255,255,0.12) 1.4px, transparent 1.6px)',
-                          backgroundSize: '24px 24px',
+                          position: 'absolute',
+                          inset: 0,
+                          backfaceVisibility: 'hidden',
+                          WebkitBackfaceVisibility: 'hidden',
+                          borderRadius: '24px',
+                          overflow: 'hidden',
+                          background: '#fff',
+                          border: '2px solid #E3EAF5',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          boxShadow: '0 20px 44px rgba(20,30,60,0.10)',
                         }}
-                      />
-                      <span className="relative w-[76px] h-[76px] rounded-full bg-white text-[#1A8CFF] flex items-center justify-center shadow-[0_0_0_12px_rgba(255,255,255,0.18)]">
-                        <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" />
-                        </svg>
-                      </span>
-                      <span className="relative text-[15px] text-[#C7D7F0]">
-                        Video ký hiệu “{currentVocab.word}”
-                      </span>
+                      >
+                        <div
+                          style={{
+                            flex: 1,
+                            minHeight: 0,
+                            position: 'relative',
+                            background: '#1B2A63',
+                            overflow: 'hidden',
+                          }}
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={cardImg}
+                            alt={`Ảnh minh họa ký hiệu “${currentVocab.word}”`}
+                            style={{
+                              position: 'absolute',
+                              inset: 0,
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                              display: 'block',
+                            }}
+                          />
+                        </div>
+                        <div
+                          style={{
+                            flex: 'none',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: '12px',
+                            padding: '16px 22px',
+                            borderTop: '1px solid #EEF1F6',
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontSize: 'clamp(24px, 3.2vw, 34px)',
+                              fontWeight: 700,
+                              letterSpacing: '-0.01em',
+                              color: '#1E1E1E',
+                            }}
+                          >
+                            {currentVocab.word}
+                          </span>
+                          <span
+                            style={{
+                              flex: 'none',
+                              fontSize: '13.5px',
+                              fontWeight: 600,
+                              color: '#1A8CFF',
+                            }}
+                          >
+                            Chạm để xem video
+                          </span>
+                        </div>
+                      </div>
 
-                      {isFlipped && (
-                        isMp4 ? (
-                          <video
-                            src={currentVocab.video_url}
-                            autoPlay
-                            controls
-                            playsInline
-                            className="absolute inset-0 z-10 w-full h-full object-cover border-0"
-                          />
-                        ) : (
-                          <iframe
-                            src={getEmbedYoutubeUrl(currentVocab.video_url)}
-                            title={currentVocab.word}
-                            loading="lazy"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowFullScreen
-                            className="absolute inset-0 z-10 w-full h-full border-0"
-                          />
-                        )
-                      )}
-                      {/* Bottom banner on back side */}
-                      <div className="absolute bottom-0 left-0 right-0 z-20 p-3 bg-gradient-to-t from-black/80 to-transparent flex items-center justify-between px-5 text-white pointer-events-none">
-                        <span className="text-sm font-bold truncate">
+                      {/* MẶT SAU (Back: Video Embed & Word detail) */}
+                      <div
+                        style={{
+                          position: 'absolute',
+                          inset: 0,
+                          backfaceVisibility: 'hidden',
+                          WebkitBackfaceVisibility: 'hidden',
+                          transform: 'rotateY(180deg)',
+                          borderRadius: '24px',
+                          overflow: 'hidden',
+                          background:
+                            'radial-gradient(70% 90% at 30% 20%,#2A97FF 0%,rgba(42,151,255,0) 70%),#0F2A5C',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '14px',
+                          padding: '24px',
+                          textAlign: 'center',
+                          boxShadow: '0 20px 44px rgba(15,42,92,0.25)',
+                        }}
+                      >
+                        {/* Background placeholder pattern & play icon */}
+                        <span
+                          aria-hidden="true"
+                          style={{
+                            position: 'absolute',
+                            inset: 0,
+                            backgroundImage:
+                              'radial-gradient(rgba(255,255,255,0.12) 1.4px, transparent 1.6px)',
+                            backgroundSize: '24px 24px',
+                          }}
+                        />
+                        <span
+                          style={{
+                            position: 'relative',
+                            width: '76px',
+                            height: '76px',
+                            borderRadius: '999px',
+                            background: '#fff',
+                            color: '#1A8CFF',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxShadow: '0 0 0 12px rgba(255,255,255,0.18)',
+                          }}
+                        >
+                          <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" />
+                          </svg>
+                        </span>
+                        <span style={{ position: 'relative', fontSize: '15px', color: '#C7D7F0' }}>
                           Video ký hiệu “{currentVocab.word}”
                         </span>
-                        <span className="text-xs text-white/80">
-                          Chạm lật lại
-                        </span>
+
+                        {isFlipped && (
+                          isMp4 ? (
+                            <video
+                              src={currentVocab.video_url}
+                              autoPlay
+                              controls
+                              playsInline
+                              style={{
+                                position: 'absolute',
+                                inset: 0,
+                                zIndex: 3,
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover',
+                                border: 0,
+                              }}
+                            />
+                          ) : (
+                            <iframe
+                              src={getEmbedYoutubeUrl(currentVocab.video_url)}
+                              title={`Video ký hiệu ${currentVocab.word}`}
+                              loading="lazy"
+                              referrerPolicy="strict-origin-when-cross-origin"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                              allowFullScreen
+                              style={{
+                                position: 'absolute',
+                                inset: 0,
+                                zIndex: 3,
+                                width: '100%',
+                                height: '100%',
+                                border: 0,
+                              }}
+                            />
+                          )
+                        )}
                       </div>
                     </div>
-                  </div>
+                  </button>
                 </div>
-              </div>
 
-              {/* Controls below Card */}
-              <div className="w-full max-w-[560px] flex items-center justify-between gap-3">
-                {/* Prev Button */}
-                <button
-                  type="button"
-                  onClick={goToPrev}
-                  disabled={currentIndex === 0}
-                  aria-label="Thẻ trước"
-                  title="Thẻ trước (phím ←)"
-                  className="w-12 h-12 rounded-full border-[1.5px] border-[#D6E4F5] bg-white text-[#1A8CFF] hover:bg-[#1A8CFF] hover:border-[#1A8CFF] hover:text-white flex items-center justify-center shadow-xs transition disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer"
+                {/* Controls below Card */}
+                <div
+                  className="w-full max-w-[560px] flex items-center justify-between gap-3"
+                  style={{
+                    width: '100%',
+                    maxWidth: '560px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '12px',
+                  }}
                 >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="m15 6-6 6 6 6" />
-                  </svg>
-                </button>
+                  {/* Prev Button */}
+                  <button
+                    type="button"
+                    onClick={goToPrev}
+                    disabled={currentIndex === 0}
+                    aria-label="Thẻ trước"
+                    title="Thẻ trước (phím ←)"
+                    className="w-12 h-12 rounded-full border-[1.5px] border-[#D6E4F5] bg-white text-[#1A8CFF] hover:bg-[#1A8CFF] hover:border-[#1A8CFF] hover:text-white flex items-center justify-center shadow-xs transition disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer shrink-0"
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="m15 6-6 6 6 6" />
+                    </svg>
+                  </button>
 
-                {/* Flip or Mastered/NeedReview */}
-                <div className="flex-1 flex justify-center">
-                  {!isFlipped ? (
-                    <button
-                      type="button"
-                      onClick={toggleFlip}
-                      className="flex items-center gap-2 px-7 py-3 rounded-full text-white text-[15px] font-semibold bg-[#1A8CFF] hover:bg-[#0B6FE0] transition-colors shadow-sm"
-                    >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 12a9 9 0 1 1-3-6.7L21 8" />
-                        <path d="M21 3v5h-5" />
-                      </svg>
-                      <span>Lật thẻ</span>
-                    </button>
-                  ) : (
-                    <div className="flex gap-3 flex-wrap justify-center">
+                  {/* Flip or Mastered/NeedReview */}
+                  <div className="flex-1 min-w-0 flex justify-center">
+                    {!isFlipped ? (
                       <button
                         type="button"
-                        onClick={handleNeedReview}
-                        className="flex items-center gap-2 px-6 py-3 rounded-full border-2 border-[#F0436A] bg-white text-[#F0436A] hover:bg-[#F0436A] hover:text-white text-[15px] font-semibold transition-colors"
+                        onClick={toggleFlip}
+                        className="flex items-center gap-2 px-7 py-3 rounded-full text-white text-[15px] font-semibold bg-[#1A8CFF] hover:bg-[#0B6FE0] transition-colors shadow-sm"
                       >
-                        Chưa nhớ
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleMastered}
-                        className="flex items-center gap-2 px-6 py-3 rounded-full border-2 border-[#17A673] bg-[#17A673] hover:bg-[#0C8558] text-white text-[15px] font-semibold transition-colors shadow-sm"
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="m5 12 5 5L20 7" />
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M21 12a9 9 0 1 1-3-6.7L21 8" />
+                          <path d="M21 3v5h-5" />
                         </svg>
-                        <span>Đã nhớ</span>
+                        <span>Lật thẻ</span>
                       </button>
-                    </div>
-                  )}
-                </div>
+                    ) : (
+                      <div className="flex gap-3 flex-wrap justify-center">
+                        <button
+                          type="button"
+                          onClick={handleNeedReview}
+                          className="flex items-center gap-2 px-6 py-3 rounded-full border-2 border-[#F0436A] bg-white text-[#F0436A] hover:bg-[#F0436A] hover:text-white text-[15px] font-semibold transition-colors cursor-pointer"
+                        >
+                          Chưa nhớ
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleMastered}
+                          className="flex items-center gap-2 px-6 py-3 rounded-full border-2 border-[#17A673] bg-[#17A673] hover:bg-[#0C8558] text-white text-[15px] font-semibold transition-colors shadow-sm cursor-pointer"
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="m5 12 5 5L20 7" />
+                          </svg>
+                          <span>Đã nhớ</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
 
-                {/* Next Button */}
-                <button
-                  type="button"
-                  onClick={goToNext}
-                  disabled={currentIndex === total - 1}
-                  aria-label="Thẻ sau"
-                  title="Thẻ sau (phím →)"
-                  className="w-12 h-12 rounded-full border-[1.5px] border-[#D6E4F5] bg-white text-[#1A8CFF] hover:bg-[#1A8CFF] hover:border-[#1A8CFF] hover:text-white flex items-center justify-center shadow-xs transition disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer"
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="m9 6 6 6-6 6" />
-                  </svg>
-                </button>
+                  {/* Next Button */}
+                  <button
+                    type="button"
+                    onClick={goToNext}
+                    disabled={currentIndex === total - 1}
+                    aria-label="Thẻ sau"
+                    title="Thẻ sau (phím →)"
+                    className="w-12 h-12 rounded-full border-[1.5px] border-[#D6E4F5] bg-white text-[#1A8CFF] hover:bg-[#1A8CFF] hover:border-[#1A8CFF] hover:text-white flex items-center justify-center shadow-xs transition disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer shrink-0"
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="m9 6 6 6-6 6" />
+                    </svg>
+                  </button>
+                </div>
               </div>
-            </div>
+            </>
           )}
 
           {/* ======================= MÀN 2: QUIZ ======================= */}
           {mode === 'quiz' && !isFinished && currentVocab && (
-            <div className="flex flex-col gap-5 pt-1">
-              {/* Video Player Box - fixed ratio, non-collapsing */}
+            <div
+              className="flex flex-col gap-4.5 pt-1"
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '18px',
+              }}
+            >
+              {/* Video Player Box - fixed aspect ratio, minimum height fallback */}
               <div
-                className="relative w-full aspect-[16/8] min-h-[200px] sm:min-h-[260px] rounded-3xl overflow-hidden shrink-0 shadow-md flex flex-col items-center justify-center gap-3"
                 style={{
-                  aspectRatio: '16/8',
+                  position: 'relative',
+                  width: '100%',
+                  aspectRatio: '16 / 8',
+                  minHeight: '220px',
+                  borderRadius: '24px',
+                  overflow: 'hidden',
                   background:
                     'radial-gradient(70% 90% at 30% 20%,#2A97FF 0%,rgba(42,151,255,0) 70%),#0F2A5C',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '12px',
+                  boxShadow: '0 10px 24px rgba(15,42,92,0.14)',
                 }}
               >
                 {/* Background dot pattern & placeholder */}
                 <span
                   aria-hidden="true"
-                  className="absolute inset-0 pointer-events-none"
                   style={{
+                    position: 'absolute',
+                    inset: 0,
+                    pointerEvents: 'none',
                     backgroundImage:
                       'radial-gradient(rgba(255,255,255,0.12) 1.4px, transparent 1.6px)',
                     backgroundSize: '24px 24px',
                   }}
                 />
-                <span className="relative w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-full bg-white text-[#1A8CFF] flex items-center justify-center shadow-[0_0_0_12px_rgba(255,255,255,0.18)]">
+                <span
+                  style={{
+                    position: 'relative',
+                    width: '72px',
+                    height: '72px',
+                    borderRadius: '999px',
+                    background: '#fff',
+                    color: '#1A8CFF',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 0 0 12px rgba(255,255,255,0.18)',
+                  }}
+                >
                   <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" />
                   </svg>
                 </span>
-                <span className="relative text-[15px] text-[#C7D7F0]">Video ký hiệu</span>
+                <span style={{ position: 'relative', fontSize: '15px', color: '#C7D7F0' }}>
+                  Video ký hiệu
+                </span>
 
                 {/* Video / Iframe */}
                 {isMp4 ? (
@@ -847,15 +1067,32 @@ export default function PracticeView({
                     autoPlay
                     controls
                     playsInline
-                    className="absolute inset-0 z-10 w-full h-full object-cover border-0"
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      zIndex: 10,
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      border: 0,
+                    }}
                   />
                 ) : (
                   <iframe
                     src={getEmbedYoutubeUrl(currentVocab.video_url)}
-                    title={currentVocab.word}
+                    title={`Video ký hiệu ${currentVocab.word}`}
+                    loading="lazy"
+                    referrerPolicy="strict-origin-when-cross-origin"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
-                    className="absolute inset-0 z-10 w-full h-full border-0"
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      zIndex: 10,
+                      width: '100%',
+                      height: '100%',
+                      border: 0,
+                    }}
                   />
                 )}
               </div>
