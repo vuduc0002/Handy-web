@@ -647,7 +647,8 @@ export default function PracticeView({
                 {/* Perspective Container */}
                 <div
                   onClick={toggleFlip}
-                  className="w-full aspect-[4/3] [perspective:1400px] cursor-pointer"
+                  className="w-full aspect-[4/3] [perspective:1400px] cursor-pointer shrink-0"
+                  style={{ aspectRatio: '4/3' }}
                 >
                   <div
                     className="relative w-full h-full [transform-style:preserve-3d] transition-transform duration-650 ease-[cubic-bezier(.3,.7,.25,1)]"
@@ -680,13 +681,32 @@ export default function PracticeView({
 
                     {/* MẶT SAU (Back: Video Embed & Word detail) */}
                     <div
-                      className="absolute inset-0 [backface-visibility:hidden] [-webkit-backface-visibility:hidden] [transform:rotateY(180deg)] rounded-3xl overflow-hidden bg-[#0F2A5C] flex flex-col shadow-[0_20px_44px_rgba(15,42,92,0.25)]"
+                      className="absolute inset-0 [backface-visibility:hidden] [-webkit-backface-visibility:hidden] [transform:rotateY(180deg)] rounded-3xl overflow-hidden bg-[#0F2A5C] flex flex-col items-center justify-center gap-3.5 p-6 text-center shadow-[0_20px_44px_rgba(15,42,92,0.25)]"
                       style={{
                         background:
                           'radial-gradient(70% 90% at 30% 20%,#2A97FF 0%,rgba(42,151,255,0) 70%),#0F2A5C',
                       }}
                       onClick={(e) => e.stopPropagation()}
                     >
+                      {/* Background placeholder pattern & play button (matches template) */}
+                      <span
+                        aria-hidden="true"
+                        className="absolute inset-0 pointer-events-none"
+                        style={{
+                          backgroundImage:
+                            'radial-gradient(rgba(255,255,255,0.12) 1.4px, transparent 1.6px)',
+                          backgroundSize: '24px 24px',
+                        }}
+                      />
+                      <span className="relative w-[76px] h-[76px] rounded-full bg-white text-[#1A8CFF] flex items-center justify-center shadow-[0_0_0_12px_rgba(255,255,255,0.18)]">
+                        <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" />
+                        </svg>
+                      </span>
+                      <span className="relative text-[15px] text-[#C7D7F0]">
+                        Video ký hiệu “{currentVocab.word}”
+                      </span>
+
                       {isFlipped && (
                         isMp4 ? (
                           <video
@@ -694,7 +714,7 @@ export default function PracticeView({
                             autoPlay
                             controls
                             playsInline
-                            className="w-full h-full object-cover"
+                            className="absolute inset-0 z-10 w-full h-full object-cover border-0"
                           />
                         ) : (
                           <iframe
@@ -703,12 +723,12 @@ export default function PracticeView({
                             loading="lazy"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                             allowFullScreen
-                            className="w-full h-full border-0"
+                            className="absolute inset-0 z-10 w-full h-full border-0"
                           />
                         )
                       )}
                       {/* Bottom banner on back side */}
-                      <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent flex items-center justify-between px-5 text-white pointer-events-none">
+                      <div className="absolute bottom-0 left-0 right-0 z-20 p-3 bg-gradient-to-t from-black/80 to-transparent flex items-center justify-between px-5 text-white pointer-events-none">
                         <span className="text-sm font-bold truncate">
                           Video ký hiệu “{currentVocab.word}”
                         </span>
@@ -794,15 +814,40 @@ export default function PracticeView({
           {/* ======================= MÀN 2: QUIZ ======================= */}
           {mode === 'quiz' && !isFinished && currentVocab && (
             <div className="flex flex-col gap-5 pt-1">
-              {/* Video Player */}
-              <div className="relative w-full aspect-[16/9] sm:aspect-[16/8] rounded-3xl overflow-hidden bg-black shadow-md">
+              {/* Video Player Box - fixed ratio, non-collapsing */}
+              <div
+                className="relative w-full aspect-[16/8] min-h-[200px] sm:min-h-[260px] rounded-3xl overflow-hidden shrink-0 shadow-md flex flex-col items-center justify-center gap-3"
+                style={{
+                  aspectRatio: '16/8',
+                  background:
+                    'radial-gradient(70% 90% at 30% 20%,#2A97FF 0%,rgba(42,151,255,0) 70%),#0F2A5C',
+                }}
+              >
+                {/* Background dot pattern & placeholder */}
+                <span
+                  aria-hidden="true"
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    backgroundImage:
+                      'radial-gradient(rgba(255,255,255,0.12) 1.4px, transparent 1.6px)',
+                    backgroundSize: '24px 24px',
+                  }}
+                />
+                <span className="relative w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-full bg-white text-[#1A8CFF] flex items-center justify-center shadow-[0_0_0_12px_rgba(255,255,255,0.18)]">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" />
+                  </svg>
+                </span>
+                <span className="relative text-[15px] text-[#C7D7F0]">Video ký hiệu</span>
+
+                {/* Video / Iframe */}
                 {isMp4 ? (
                   <video
                     src={currentVocab.video_url}
                     autoPlay
                     controls
                     playsInline
-                    className="w-full h-full object-cover"
+                    className="absolute inset-0 z-10 w-full h-full object-cover border-0"
                   />
                 ) : (
                   <iframe
@@ -810,15 +855,18 @@ export default function PracticeView({
                     title={currentVocab.word}
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
-                    className="w-full h-full border-0"
+                    className="absolute inset-0 z-10 w-full h-full border-0"
                   />
                 )}
               </div>
 
               {/* Question */}
-              <h3 className="text-lg sm:text-xl font-bold text-[#1E1E1E]">
-                Ký hiệu trong video có nghĩa là gì?
-              </h3>
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <h3 className="text-lg sm:text-xl font-bold text-[#1E1E1E]">
+                  Ký hiệu trong video có nghĩa là gì?
+                </h3>
+                <span className="text-[13.5px] text-[#4A4A4A]">Chọn 1 trong 4 đáp án</span>
+              </div>
 
               {/* 4 Choices */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

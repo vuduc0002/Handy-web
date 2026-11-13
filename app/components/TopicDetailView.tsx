@@ -499,7 +499,10 @@ export default function TopicDetailView({
                     </div>
 
                     {/* Video Player Box */}
-                    <div className="relative flex-1 min-w-0 aspect-video rounded-[24px] overflow-hidden bg-black shadow-[0_20px_44px_rgba(15,42,92,0.22)] border-2 border-[#1A8CFF]/20">
+                    <div
+                      className="relative flex-1 min-w-0 aspect-video rounded-[24px] overflow-hidden bg-black shadow-[0_20px_44px_rgba(15,42,92,0.22)] border-2 border-[#1A8CFF]/20 shrink-0"
+                      style={{ aspectRatio: '16/9' }}
+                    >
                       {isMp4 ? (
                         <video
                           ref={videoRef}
@@ -508,7 +511,7 @@ export default function TopicDetailView({
                           controls
                           autoPlay
                           playsInline
-                          className="w-full h-full object-cover"
+                          className="absolute inset-0 z-10 w-full h-full object-cover"
                         />
                       ) : (
                         <iframe
@@ -518,7 +521,7 @@ export default function TopicDetailView({
                           title={selectedVocab.word}
                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                           allowFullScreen
-                          className="w-full h-full border-0"
+                          className="absolute inset-0 z-10 w-full h-full border-0"
                         />
                       )}
                     </div>

@@ -371,7 +371,10 @@ export default function VideoQuizModal({
                 ================================================================ */
             <div className="space-y-4">
               {/* KHUNG VIDEO KÝ HIỆU — TUYỆT ĐỐI KHÔNG HIỂN THỊ TÊN TỪ VỰNG */}
-              <div className="relative w-full aspect-video rounded-2xl overflow-hidden bg-black shadow-lg border-2 border-amber-300 flex items-center justify-center">
+              <div
+                className="relative w-full aspect-video rounded-2xl overflow-hidden bg-black shadow-lg border-2 border-amber-300 flex items-center justify-center shrink-0"
+                style={{ aspectRatio: '16/9' }}
+              >
                 {currentQuestion.targetWord.video_url ? (
                   isMp4 ? (
                     <video
@@ -382,7 +385,7 @@ export default function VideoQuizModal({
                       muted
                       loop
                       playsInline
-                      className="w-full h-full object-cover"
+                      className="absolute inset-0 z-10 w-full h-full object-cover"
                     />
                   ) : (
                     <iframe
@@ -391,7 +394,7 @@ export default function VideoQuizModal({
                       title="Video câu hỏi kiểm tra thủ ngữ"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
-                      className="w-full aspect-video border-0 h-full"
+                      className="absolute inset-0 z-10 w-full h-full border-0"
                     />
                   )
                 ) : (
