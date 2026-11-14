@@ -430,29 +430,11 @@ export default function PracticeView({
       <section
         id="luyen"
         data-screen-label="02 Khu luyện tập"
-        className="max-w-[1240px] mx-auto px-6 py-11 pb-24 flex flex-wrap gap-7 items-start"
-        style={{
-          maxWidth: '1240px',
-          margin: '0 auto',
-          padding: '44px 24px 96px',
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '28px',
-          alignItems: 'flex-start',
-        }}
+        className="max-w-[1240px] mx-auto px-4 sm:px-6 py-8 sm:py-11 pb-24 flex flex-col lg:flex-row gap-7 items-start w-full overflow-hidden"
       >
         {/* ASIDE: Chọn dạng bài & Chọn chủ đề */}
         <aside
-          className="w-full lg:w-[300px] shrink-0 flex flex-col gap-6 sticky top-24"
-          style={{
-            flex: '1 1 300px',
-            minWidth: 0,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '24px',
-            position: 'sticky',
-            top: '90px',
-          }}
+          className="w-full lg:w-[300px] shrink-0 flex flex-col gap-6 static lg:sticky lg:top-24 max-w-full"
         >
           {/* 1. Chọn dạng bài */}
           <div className="flex flex-col gap-3">
@@ -571,17 +553,7 @@ export default function PracticeView({
 
         {/* MAIN PRACTICE BOX */}
         <div
-          className="flex-1 min-w-0 w-full flex flex-col gap-[18px] p-5 sm:p-8 rounded-[28px] bg-[#F7FAFF] border border-[#E7EEF8]"
-          style={{
-            flex: '2 1 560px',
-            minWidth: 0,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '18px',
-            padding: 'clamp(18px, 3vw, 32px)',
-            borderRadius: '28px',
-            background: '#F7FAFF',
-          }}
+          className="flex-1 min-w-0 w-full flex flex-col gap-[18px] p-4 sm:p-8 rounded-[28px] bg-[#F7FAFF] border border-[#E7EEF8] max-w-full"
         >
           {/* Header Bar */}
           <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -615,16 +587,6 @@ export default function PracticeView({
               {/* Starred Deck Filter Bar */}
               <div
                 className="flex items-center justify-between gap-2.5 flex-wrap w-full max-w-[560px] mx-auto mb-3.5"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '10px',
-                  flexWrap: 'wrap',
-                  width: '100%',
-                  maxWidth: '560px',
-                  margin: '0 auto 14px',
-                }}
               >
                 <span className="flex items-center gap-2 text-sm font-semibold text-[#4A4A4A]">
                   <span className="text-[#F7A21B] flex">★</span>
@@ -671,22 +633,11 @@ export default function PracticeView({
 
               {/* Card + Controls Column */}
               <div
-                className="flex flex-col items-center gap-5 w-full"
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '20px',
-                }}
+                className="flex flex-col items-center gap-5 w-full max-w-full"
               >
                 {/* 3D Flip Card Container */}
                 <div
-                  className="relative w-full max-w-[560px]"
-                  style={{
-                    position: 'relative',
-                    width: '100%',
-                    maxWidth: '560px',
-                  }}
+                  className="relative w-full max-w-[560px] aspect-[4/3] min-h-[280px] [perspective:1400px]"
                 >
                   {/* Star Button */}
                   <button
@@ -695,22 +646,7 @@ export default function PracticeView({
                     aria-pressed={isCurrentStarred}
                     aria-label={isCurrentStarred ? 'Bỏ gắn sao' : 'Gắn sao thẻ này (phím S)'}
                     title={isCurrentStarred ? 'Bỏ gắn sao' : 'Gắn sao thẻ này (phím S)'}
-                    style={{
-                      position: 'absolute',
-                      top: '14px',
-                      right: '14px',
-                      zIndex: 3,
-                      width: '46px',
-                      height: '46px',
-                      borderRadius: '999px',
-                      border: 'none',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      transition: 'background 250ms, color 250ms, transform 200ms',
-                    }}
-                    className={`hover:scale-110 ${
+                    className={`absolute top-3.5 right-3.5 z-20 w-[46px] h-[46px] rounded-full border-none cursor-pointer flex items-center justify-center transition-all hover:scale-110 ${
                       isCurrentStarred
                         ? 'bg-[#FFC94D] text-[#8A4B00] shadow-[0_8px_20px_rgba(247,162,27,0.45)]'
                         : 'bg-white/90 text-[#8A8F99] shadow-[0_6px_16px_rgba(15,42,92,0.18)]'
@@ -721,212 +657,110 @@ export default function PracticeView({
                     </svg>
                   </button>
 
-                  {/* Flip button / Perspective Trigger */}
-                  <button
-                    type="button"
-                    onClick={toggleFlip}
-                    aria-label="Lật thẻ"
+                  {/* 3D Flip Card Inner */}
+                  <div
+                    className="relative w-full h-full transition-transform duration-700 [transform-style:preserve-3d]"
                     style={{
-                      all: 'unset',
-                      cursor: 'pointer',
-                      display: 'block',
-                      width: '100%',
-                      aspectRatio: '4 / 3',
-                      minHeight: '280px',
-                      perspective: '1400px',
+                      transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
                     }}
                   >
+                    {/* MẶT TRƯỚC (Front: Image & Word) */}
                     <div
-                      style={{
-                        position: 'relative',
-                        width: '100%',
-                        height: '100%',
-                        minHeight: '280px',
-                        transformStyle: 'preserve-3d',
-                        transition: 'transform 650ms cubic-bezier(.3,.7,.25,1)',
-                        transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
-                      }}
+                      className={`absolute inset-0 rounded-[24px] overflow-hidden bg-white border-2 border-[#E3EAF5] flex flex-col shadow-[0_20px_44px_rgba(20,30,60,0.10)] [backface-visibility:hidden] [-webkit-backface-visibility:hidden] ${
+                        isFlipped ? 'pointer-events-none' : ''
+                      }`}
                     >
-                      {/* MẶT TRƯỚC (Front: Image & Word) */}
                       <div
-                        style={{
-                          position: 'absolute',
-                          inset: 0,
-                          backfaceVisibility: 'hidden',
-                          WebkitBackfaceVisibility: 'hidden',
-                          borderRadius: '24px',
-                          overflow: 'hidden',
-                          background: '#fff',
-                          border: '2px solid #E3EAF5',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          boxShadow: '0 20px 44px rgba(20,30,60,0.10)',
+                        onClick={toggleFlip}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault()
+                            toggleFlip()
+                          }
                         }}
+                        className="flex-1 min-h-0 relative bg-[#1B2A63] overflow-hidden cursor-pointer"
+                        aria-label="Lật sang xem video"
                       >
-                        <div
-                          style={{
-                            flex: 1,
-                            minHeight: 0,
-                            position: 'relative',
-                            background: '#1B2A63',
-                            overflow: 'hidden',
-                          }}
-                        >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={cardImg}
-                            alt={`Ảnh minh họa ký hiệu “${currentVocab.word}”`}
-                            style={{
-                              position: 'absolute',
-                              inset: 0,
-                              width: '100%',
-                              height: '100%',
-                              objectFit: 'cover',
-                              display: 'block',
-                            }}
-                          />
-                        </div>
-                        <div
-                          style={{
-                            flex: 'none',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            gap: '12px',
-                            padding: '16px 22px',
-                            borderTop: '1px solid #EEF1F6',
-                          }}
-                        >
-                          <span
-                            style={{
-                              fontSize: 'clamp(24px, 3.2vw, 34px)',
-                              fontWeight: 700,
-                              letterSpacing: '-0.01em',
-                              color: '#1E1E1E',
-                            }}
-                          >
-                            {currentVocab.word}
-                          </span>
-                          <span
-                            style={{
-                              flex: 'none',
-                              fontSize: '13.5px',
-                              fontWeight: 600,
-                              color: '#1A8CFF',
-                            }}
-                          >
-                            Chạm để xem video
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* MẶT SAU (Back: Video Embed & Word detail) */}
-                      <div
-                        style={{
-                          position: 'absolute',
-                          inset: 0,
-                          backfaceVisibility: 'hidden',
-                          WebkitBackfaceVisibility: 'hidden',
-                          transform: 'rotateY(180deg)',
-                          borderRadius: '24px',
-                          overflow: 'hidden',
-                          background:
-                            'radial-gradient(70% 90% at 30% 20%,#2A97FF 0%,rgba(42,151,255,0) 70%),#0F2A5C',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '14px',
-                          padding: '24px',
-                          textAlign: 'center',
-                          boxShadow: '0 20px 44px rgba(15,42,92,0.25)',
-                        }}
-                      >
-                        {/* Background placeholder pattern & play icon */}
-                        <span
-                          aria-hidden="true"
-                          style={{
-                            position: 'absolute',
-                            inset: 0,
-                            backgroundImage:
-                              'radial-gradient(rgba(255,255,255,0.12) 1.4px, transparent 1.6px)',
-                            backgroundSize: '24px 24px',
-                          }}
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={cardImg}
+                          alt={`Ảnh minh họa ký hiệu “${currentVocab.word}”`}
+                          className="absolute inset-0 w-full h-full object-cover block"
                         />
-                        <span
-                          style={{
-                            position: 'relative',
-                            width: '76px',
-                            height: '76px',
-                            borderRadius: '999px',
-                            background: '#fff',
-                            color: '#1A8CFF',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            boxShadow: '0 0 0 12px rgba(255,255,255,0.18)',
-                          }}
+                      </div>
+                      <div className="flex-none flex items-center justify-between gap-3 px-5 py-4 border-t border-[#EEF1F6]">
+                        <span className="text-[clamp(22px,3.2vw,34px)] font-bold tracking-tight text-[#1E1E1E]">
+                          {currentVocab.word}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={toggleFlip}
+                          className="flex-none text-[13.5px] font-semibold text-[#1A8CFF] hover:underline cursor-pointer bg-transparent border-none p-0"
                         >
-                          <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" />
-                          </svg>
-                        </span>
-                        <span style={{ position: 'relative', fontSize: '15px', color: '#C7D7F0' }}>
-                          Video ký hiệu “{currentVocab.word}”
-                        </span>
-
-                        {isFlipped && (
-                          isMp4 ? (
-                            <video
-                              src={currentVocab.video_url}
-                              autoPlay
-                              controls
-                              playsInline
-                              style={{
-                                position: 'absolute',
-                                inset: 0,
-                                zIndex: 3,
-                                width: '100%',
-                                height: '100%',
-                                objectFit: 'cover',
-                                border: 0,
-                              }}
-                            />
-                          ) : (
-                            <iframe
-                              src={getEmbedYoutubeUrl(currentVocab.video_url)}
-                              title={`Video ký hiệu ${currentVocab.word}`}
-                              loading="lazy"
-                              referrerPolicy="strict-origin-when-cross-origin"
-                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                              allowFullScreen
-                              style={{
-                                position: 'absolute',
-                                inset: 0,
-                                zIndex: 3,
-                                width: '100%',
-                                height: '100%',
-                                border: 0,
-                              }}
-                            />
-                          )
-                        )}
+                          Chạm để xem video
+                        </button>
                       </div>
                     </div>
-                  </button>
+
+                    {/* MẶT SAU (Back: Video Embed & Word detail) */}
+                    <div
+                      className={`absolute inset-0 rounded-[24px] overflow-hidden bg-[#0F2A5C] flex flex-col items-center justify-center gap-3.5 p-6 text-center shadow-[0_20px_44px_rgba(15,42,92,0.25)] [transform:rotateY(180deg)] [backface-visibility:hidden] [-webkit-backface-visibility:hidden] ${
+                        !isFlipped ? 'pointer-events-none' : ''
+                      }`}
+                      style={{
+                        background:
+                          'radial-gradient(70% 90% at 30% 20%,#2A97FF 0%,rgba(42,151,255,0) 70%),#0F2A5C',
+                      }}
+                    >
+                      {/* Background placeholder pattern & play icon */}
+                      <span
+                        aria-hidden="true"
+                        className="absolute inset-0 pointer-events-none"
+                        style={{
+                          backgroundImage:
+                            'radial-gradient(rgba(255,255,255,0.12) 1.4px, transparent 1.6px)',
+                          backgroundSize: '24px 24px',
+                        }}
+                      />
+                      <span className="relative w-[76px] h-[76px] rounded-full bg-white text-[#1A8CFF] flex items-center justify-center shadow-[0_0_0_12px_rgba(255,255,255,0.18)]">
+                        <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" />
+                        </svg>
+                      </span>
+                      <span className="relative text-[15px] text-[#C7D7F0]">
+                        Video ký hiệu “{currentVocab.word}”
+                      </span>
+
+                      {isFlipped && (
+                        isMp4 ? (
+                          <video
+                            src={currentVocab.video_url}
+                            autoPlay
+                            controls
+                            playsInline
+                            className="absolute inset-0 z-10 w-full h-full object-cover border-0"
+                          />
+                        ) : (
+                          <iframe
+                            src={getEmbedYoutubeUrl(currentVocab.video_url)}
+                            title={`Video ký hiệu ${currentVocab.word}`}
+                            loading="lazy"
+                            referrerPolicy="strict-origin-when-cross-origin"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                            className="absolute inset-0 z-10 w-full h-full border-0"
+                          />
+                        )
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Controls below Card */}
                 <div
-                  className="w-full max-w-[560px] flex items-center justify-between gap-3"
-                  style={{
-                    width: '100%',
-                    maxWidth: '560px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '12px',
-                  }}
+                  className="w-full max-w-[560px] flex items-center justify-between gap-2.5 sm:gap-3"
                 >
                   {/* Prev Button */}
                   <button
@@ -935,7 +769,7 @@ export default function PracticeView({
                     disabled={currentIndex === 0}
                     aria-label="Thẻ trước"
                     title="Thẻ trước (phím ←)"
-                    className="w-12 h-12 rounded-full border-[1.5px] border-[#D6E4F5] bg-white text-[#1A8CFF] hover:bg-[#1A8CFF] hover:border-[#1A8CFF] hover:text-white flex items-center justify-center shadow-xs transition disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer shrink-0"
+                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-[1.5px] border-[#D6E4F5] bg-white text-[#1A8CFF] hover:bg-[#1A8CFF] hover:border-[#1A8CFF] hover:text-white flex items-center justify-center shadow-xs transition disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer shrink-0"
                   >
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                       <path d="m15 6-6 6 6 6" />
@@ -948,7 +782,7 @@ export default function PracticeView({
                       <button
                         type="button"
                         onClick={toggleFlip}
-                        className="flex items-center gap-2 px-7 py-3 rounded-full text-white text-[15px] font-semibold bg-[#1A8CFF] hover:bg-[#0B6FE0] transition-colors shadow-sm"
+                        className="flex items-center gap-2 px-5 sm:px-7 py-2.5 sm:py-3 rounded-full text-white text-[14px] sm:text-[15px] font-semibold bg-[#1A8CFF] hover:bg-[#0B6FE0] transition-colors shadow-sm cursor-pointer"
                       >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M21 12a9 9 0 1 1-3-6.7L21 8" />
@@ -957,18 +791,18 @@ export default function PracticeView({
                         <span>Lật thẻ</span>
                       </button>
                     ) : (
-                      <div className="flex gap-3 flex-wrap justify-center">
+                      <div className="flex gap-2 sm:gap-3 flex-wrap justify-center">
                         <button
                           type="button"
                           onClick={handleNeedReview}
-                          className="flex items-center gap-2 px-6 py-3 rounded-full border-2 border-[#F0436A] bg-white text-[#F0436A] hover:bg-[#F0436A] hover:text-white text-[15px] font-semibold transition-colors cursor-pointer"
+                          className="flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-full border-2 border-[#F0436A] bg-white text-[#F0436A] hover:bg-[#F0436A] hover:text-white text-[13.5px] sm:text-[15px] font-semibold transition-colors cursor-pointer"
                         >
                           Chưa nhớ
                         </button>
                         <button
                           type="button"
                           onClick={handleMastered}
-                          className="flex items-center gap-2 px-6 py-3 rounded-full border-2 border-[#17A673] bg-[#17A673] hover:bg-[#0C8558] text-white text-[15px] font-semibold transition-colors shadow-sm cursor-pointer"
+                          className="flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-full border-2 border-[#17A673] bg-[#17A673] hover:bg-[#0C8558] text-white text-[13.5px] sm:text-[15px] font-semibold transition-colors shadow-sm cursor-pointer"
                         >
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
                             <path d="m5 12 5 5L20 7" />
@@ -986,7 +820,7 @@ export default function PracticeView({
                     disabled={currentIndex === total - 1}
                     aria-label="Thẻ sau"
                     title="Thẻ sau (phím →)"
-                    className="w-12 h-12 rounded-full border-[1.5px] border-[#D6E4F5] bg-white text-[#1A8CFF] hover:bg-[#1A8CFF] hover:border-[#1A8CFF] hover:text-white flex items-center justify-center shadow-xs transition disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer shrink-0"
+                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-[1.5px] border-[#D6E4F5] bg-white text-[#1A8CFF] hover:bg-[#1A8CFF] hover:border-[#1A8CFF] hover:text-white flex items-center justify-center shadow-xs transition disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer shrink-0"
                   >
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                       <path d="m9 6 6 6-6 6" />
@@ -999,64 +833,31 @@ export default function PracticeView({
 
           {/* ======================= MÀN 2: QUIZ ======================= */}
           {mode === 'quiz' && !isFinished && currentVocab && (
-            <div
-              className="flex flex-col gap-4.5 pt-1"
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '18px',
-              }}
-            >
+            <div className="flex flex-col gap-4.5 pt-1 w-full max-w-full">
               {/* Video Player Box - fixed aspect ratio, minimum height fallback */}
               <div
+                className="relative w-full aspect-[16/9] sm:aspect-[16/8] min-h-[200px] sm:min-h-[240px] rounded-[24px] overflow-hidden flex flex-col items-center justify-center gap-3 shadow-[0_10px_24px_rgba(15,42,92,0.14)]"
                 style={{
-                  position: 'relative',
-                  width: '100%',
-                  aspectRatio: '16 / 8',
-                  minHeight: '220px',
-                  borderRadius: '24px',
-                  overflow: 'hidden',
                   background:
                     'radial-gradient(70% 90% at 30% 20%,#2A97FF 0%,rgba(42,151,255,0) 70%),#0F2A5C',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '12px',
-                  boxShadow: '0 10px 24px rgba(15,42,92,0.14)',
                 }}
               >
                 {/* Background dot pattern & placeholder */}
                 <span
                   aria-hidden="true"
+                  className="absolute inset-0 pointer-events-none"
                   style={{
-                    position: 'absolute',
-                    inset: 0,
-                    pointerEvents: 'none',
                     backgroundImage:
                       'radial-gradient(rgba(255,255,255,0.12) 1.4px, transparent 1.6px)',
                     backgroundSize: '24px 24px',
                   }}
                 />
-                <span
-                  style={{
-                    position: 'relative',
-                    width: '72px',
-                    height: '72px',
-                    borderRadius: '999px',
-                    background: '#fff',
-                    color: '#1A8CFF',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 0 0 12px rgba(255,255,255,0.18)',
-                  }}
-                >
+                <span className="relative w-[72px] h-[72px] rounded-full bg-white text-[#1A8CFF] flex items-center justify-center shadow-[0_0_0_12px_rgba(255,255,255,0.18)]">
                   <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" />
                   </svg>
                 </span>
-                <span style={{ position: 'relative', fontSize: '15px', color: '#C7D7F0' }}>
+                <span className="relative text-[15px] text-[#C7D7F0]">
                   Video ký hiệu
                 </span>
 
@@ -1067,15 +868,7 @@ export default function PracticeView({
                     autoPlay
                     controls
                     playsInline
-                    style={{
-                      position: 'absolute',
-                      inset: 0,
-                      zIndex: 10,
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      border: 0,
-                    }}
+                    className="absolute inset-0 z-10 w-full h-full object-cover border-0"
                   />
                 ) : (
                   <iframe
@@ -1085,14 +878,7 @@ export default function PracticeView({
                     referrerPolicy="strict-origin-when-cross-origin"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
-                    style={{
-                      position: 'absolute',
-                      inset: 0,
-                      zIndex: 10,
-                      width: '100%',
-                      height: '100%',
-                      border: 0,
-                    }}
+                    className="absolute inset-0 z-10 w-full h-full border-0"
                   />
                 )}
               </div>
