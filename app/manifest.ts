@@ -9,7 +9,7 @@ export default function manifest(): MetadataRoute.Manifest {
     display: 'standalone',
     background_color: '#FFFFFF',
     theme_color: '#1A8CFF',
-    orientation: 'portrait-primary',
+    orientation: 'any',
     icons: [
       {
         src: '/icons/icon-192x192.png',
@@ -34,6 +34,45 @@ export default function manifest(): MetadataRoute.Manifest {
         sizes: '512x512',
         type: 'image/png',
         purpose: 'maskable',
+      },
+    ],
+    screenshots: [
+      {
+        src: '/screenshots/screenshot-wide.png',
+        sizes: '1280x720',
+        type: 'image/png',
+        form_factor: 'wide',
+        label: 'Màn hình học tập ngôn ngữ ký hiệu HANDY',
+      },
+      {
+        src: '/screenshots/screenshot-narrow.png',
+        sizes: '720x1280',
+        type: 'image/png',
+        form_factor: 'narrow',
+        label: 'Giao diện luyện tập trên điện thoại di động',
+      },
+    ],
+    shortcuts: [
+      {
+        name: 'Luyện tập',
+        short_name: 'Luyện tập',
+        description: 'Luyện tập phản xạ thẻ ghi nhớ và trắc nghiệm',
+        url: '/practice',
+        icons: [{ src: '/icons/icon-192x192.png', sizes: '192x192' }],
+      },
+      {
+        name: 'Chủ đề bài học',
+        short_name: 'Chủ đề',
+        description: 'Khám phá danh sách các chủ đề từ vựng',
+        url: '/topics',
+        icons: [{ src: '/icons/icon-192x192.png', sizes: '192x192' }],
+      },
+      {
+        name: 'Trắc nghiệm',
+        short_name: 'Quiz',
+        description: 'Kiểm tra kiến thức ngôn ngữ ký hiệu',
+        url: '/quiz',
+        icons: [{ src: '/icons/icon-192x192.png', sizes: '192x192' }],
       },
     ],
   }

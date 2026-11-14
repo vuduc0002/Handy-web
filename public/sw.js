@@ -1,4 +1,4 @@
-const CACHE_NAME = 'handy-cache-v1';
+const CACHE_NAME = 'handy-cache-v2';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
@@ -6,6 +6,8 @@ const STATIC_ASSETS = [
   '/assets/logo-handy-sm.png',
   '/icons/icon-192x192.png',
   '/icons/icon-512x512.png',
+  '/screenshots/screenshot-wide.png',
+  '/screenshots/screenshot-narrow.png',
 ];
 
 self.addEventListener('install', (event) => {
@@ -53,6 +55,17 @@ self.addEventListener('fetch', (event) => {
         }
         return response;
       })
-      .catch(() => caches.match(event.request))
+      .catch(async () => {
+        const cached = await caches.match(event.request);
+        if (cached) return cached;
+        if (event.request.mode === 'navigate') {
+          const homeCached = await caches.match('/');
+          if (homeCached) return homeCached;
+        }
+        return new Response('Network error occurred', {
+          status: 408,
+          headers: { 'Content-Type': 'text/plain' },
+        });
+      })
   );
 });
