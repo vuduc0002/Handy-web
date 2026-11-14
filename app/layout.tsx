@@ -4,6 +4,7 @@ import "./globals.css";
 import Header from "@/app/components/Header";
 import Footer from "@/app/components/Footer";
 import ToastContainer from "@/app/components/ToastContainer";
+import CapacitorBridge from "@/app/components/CapacitorBridge";
 
 const googleSans = localFont({
   src: [
@@ -25,12 +26,6 @@ const googleSans = localFont({
 export const metadata: Metadata = {
   title: "HANDY - Thế giới to trong bàn tay nhỏ",
   description: "Giải pháp hỗ trợ học Ngôn ngữ ký hiệu ứng dụng công nghệ dành cho trẻ em và phụ huynh",
-  manifest: "/manifest.json",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: "HANDY",
-  },
   icons: {
     icon: [
       { url: "/favicon.ico" },
@@ -52,9 +47,6 @@ export default function RootLayout({
       className={`${googleSans.variable} font-sans h-full`}
       style={{ colorScheme: "light" }}
     >
-      <head>
-        <meta name="theme-color" content="#1A8CFF" />
-      </head>
       <body
         className={`${googleSans.className} font-sans min-h-full flex flex-col bg-white text-[#1E1E1E]`}
       >
@@ -64,17 +56,7 @@ export default function RootLayout({
         </main>
         <Footer />
         <ToastContainer />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              if ('serviceWorker' in navigator) {
-                window.addEventListener('load', function() {
-                  navigator.serviceWorker.register('/sw.js').catch(function() {});
-                });
-              }
-            `,
-          }}
-        />
+        <CapacitorBridge />
       </body>
     </html>
   );
