@@ -2,14 +2,20 @@ import type { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
+    id: '/',
     name: 'HANDY - Thế giới to trong bàn tay nhỏ',
     short_name: 'HANDY',
     description: 'Giải pháp hỗ trợ học Ngôn ngữ ký hiệu ứng dụng công nghệ dành cho trẻ em và phụ huynh',
     start_url: '/',
+    scope: '/',
     display: 'standalone',
     background_color: '#FFFFFF',
     theme_color: '#1A8CFF',
     orientation: 'any',
+    lang: 'vi',
+    dir: 'ltr',
+    categories: ['education', 'lifestyle', 'books'],
+    prefer_related_applications: false,
     icons: [
       {
         src: '/icons/icon-192x192.png',
@@ -77,3 +83,4 @@ export default function manifest(): MetadataRoute.Manifest {
     ],
   }
 }
+
