@@ -44,8 +44,10 @@ export default function Footer() {
           </p>
 
           <a
-            href="#"
-            className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-[#1E1E1E] hover:bg-[#1A8CFF] text-white transition-colors duration-200 shadow-sm"
+            href="/downloads/handy.apk"
+            download="handy.apk"
+            className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-[#1E1E1E] hover:bg-[#1A8CFF] text-white transition-colors duration-200 shadow-sm cursor-pointer"
+            title="Tải ứng dụng HANDY cho Android (.apk)"
           >
             <Download className="w-6 h-6 shrink-0" />
             <span className="flex flex-col text-left leading-tight">
